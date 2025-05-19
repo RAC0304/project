@@ -131,6 +131,19 @@ const Header: React.FC = () => {
             <Search className="w-4 h-4" />
             <span>Search</span>
           </button>
+
+          <Link
+            to="/login"
+            className={`flex items-center space-x-1 px-4 py-1.5 rounded-full transition
+              ${
+                isScrolled
+                  ? "bg-teal-600 text-white hover:bg-teal-700"
+                  : "bg-white text-teal-800 hover:bg-white/90"
+              }`}
+          >
+            <User className="w-4 h-4" />
+            <span>Login</span>
+          </Link>
         </div>
 
         <button
@@ -182,11 +195,20 @@ const Header: React.FC = () => {
             ))}
           </nav>
 
-          <div className="mt-auto pt-8">
+          <div className="mt-auto pt-8 space-y-4">
             <button className="w-full flex items-center justify-center space-x-2 bg-white text-teal-800 py-3 px-4 rounded-full font-medium">
               <Search className="w-5 h-5" />
               <span>Search Destinations</span>
             </button>
+
+            <Link
+              to="/login"
+              onClick={toggleMenu}
+              className="w-full flex items-center justify-center space-x-2 bg-teal-600 text-white py-3 px-4 rounded-full font-medium hover:bg-teal-700 transition-colors"
+            >
+              <User className="w-5 h-5" />
+              <span>Login</span>
+            </Link>
           </div>
         </div>
       </div>

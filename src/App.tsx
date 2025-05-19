@@ -11,6 +11,7 @@ import TourGuidesPage from "./pages/TourGuidesPage";
 import TourGuideProfilePage from "./pages/TourGuideProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
