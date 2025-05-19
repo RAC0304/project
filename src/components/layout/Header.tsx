@@ -72,6 +72,11 @@ const Header: React.FC = () => {
       icon: <StarIcon className="w-5 h-5" />,
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
+    {
+      name: "Login",
+      path: "/login",
+      icon: <User className="w-5 h-5" />,
+    },
   ];
 
   const headerClass = isScrolled
