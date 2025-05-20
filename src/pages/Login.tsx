@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10"
+        className="bg-white/85 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10"
       >
         <motion.div
           initial={{ scale: 0.9 }}
@@ -54,13 +54,14 @@ const LoginPage: React.FC = () => {
             initial={{ rotate: -5 }}
             animate={{ rotate: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-32 h-32 mb-6 rounded-2xl overflow-hidden shadow-[0_8px_25px_-5px_rgba(0,0,0,0.1)] border-4 border-white"
+            className="w-32 h-32 mb-6 relative group"
           >
             <img
-              src="/src/asset/image/logologin.jpg"
+              src="/src/asset/image/logologin.png"
               alt="Wanderwise Logo"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
             />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-teal-500/10 pointer-events-none"></div>
           </motion.div>
           <motion.h1
             initial={{ scale: 0.95 }}
