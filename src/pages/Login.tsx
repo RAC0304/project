@@ -1,7 +1,40 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Demo user credentials
+  const DEMO_USER = {
+    email: "demo@wanderwise.com",
+    password: "demo123",
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (email === DEMO_USER.email && password === DEMO_USER.password) {
+      // Successful login
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("user", JSON.stringify({ email: DEMO_USER.email }));
+      navigate("/");
+    } else {
+      setError("Invalid email or password. Try demo@wanderwise.com / demo123");
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 via-teal-500 to-emerald-600 p-4">
       <div className="absolute inset-0 bg-pattern opacity-10"></div>
@@ -40,7 +73,17 @@ const LoginPage: React.FC = () => {
           <div className="h-1 w-20 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full mt-4"></div>
         </motion.div>
 
-        <form className="space-y-6">
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <motion.div
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -56,6 +99,8 @@ const LoginPage: React.FC = () => {
               <input
                 type="email"
                 id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-5 py-3.5 border-2 border-teal-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300 bg-white/50 backdrop-blur-sm pl-12"
                 placeholder="Enter your email"
                 required
@@ -92,6 +137,8 @@ const LoginPage: React.FC = () => {
               <input
                 type="password"
                 id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-5 py-3.5 border-2 border-teal-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300 bg-white/50 backdrop-blur-sm pl-12"
                 placeholder="Enter your password"
                 required
@@ -114,41 +161,31 @@ const LoginPage: React.FC = () => {
           </motion.div>
 
           <motion.button
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
             type="submit"
-            whileHover={{
-              scale: 1.02,
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-lg"
+            disabled={isLoading}
+            className={`w-full py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-medium tracking-wide 
+              transform hover:scale-[1.02] transition-all duration-300 hover:shadow-lg
+              ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
           >
-            Sign In
+            {isLoading ? "Logging in..." : "Login"}
           </motion.button>
-        </form>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 text-center space-y-2"
-        >
-          <a
-            href="#"
-            className="block text-sm text-teal-600 hover:text-teal-800 transition-colors duration-300"
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-center text-sm text-teal-800 mt-4"
           >
-            Forgot your password?
-          </a>
-          <p className="text-teal-800/80 text-sm">
-            Don't have an account?{" "}
-            <a
-              href="/register"
-              className="text-teal-600 font-semibold hover:text-teal-800 hover:underline transition-all duration-300"
-            >
-              Create Account
-            </a>
-          </p>
-        </motion.div>
+            Demo credentials:
+            <br />
+            Email: demo@wanderwise.com
+            <br />
+            Password: demo123
+          </motion.p>
+        </form>
       </motion.div>
     </div>
   );

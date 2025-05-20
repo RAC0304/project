@@ -29,7 +29,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {!isAuthPage && <Header />}
-      <main className="flex-grow">
+      <main className={`flex-grow ${!isAuthPage ? "pt-24 lg:pt-28" : ""}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/destinations" element={<DestinationsListPage />} />

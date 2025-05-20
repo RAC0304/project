@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -10,13 +10,42 @@ import {
   Search,
   Info,
   Star as StarIcon,
+  LogOut,
 } from "lucide-react";
 import Logo from "../common/Logo";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check login status when component mounts
+    const checkLoginStatus = () => {
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      const userData = localStorage.getItem("user");
+      if (isLoggedIn === "true" && userData) {
+        const { email } = JSON.parse(userData);
+        setUserEmail(email);
+      } else {
+        setUserEmail(null);
+      }
+    };
+
+    checkLoginStatus();
+    // Add event listener for storage changes
+    window.addEventListener("storage", checkLoginStatus);
+    return () => window.removeEventListener("storage", checkLoginStatus);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");
+    setUserEmail(null);
+    navigate("/login");
+  };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -73,146 +102,234 @@ const Header: React.FC = () => {
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
   ];
-
-  const headerClass = isScrolled
-    ? "bg-white shadow-md text-gray-800"
-    : "bg-transparent text-white";
-
   return (
     <header
-      className={`fixed w-full z-50 transition-all duration-300 ${headerClass}`}
+      className={`fixed w-full top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-sm ${
+        isScrolled
+          ? "bg-white/95 shadow-lg text-gray-800"
+          : "bg-transparent text-white"
+      }`}
     >
-      {" "}
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center">
+      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+        <Link to="/" className="flex items-center group hover:opacity-80">
           <Logo
-            className={isScrolled ? "text-teal-600" : "text-white"}
+            className={`transform transition-transform duration-300 group-hover:scale-105 ${
+              isScrolled ? "text-teal-600" : "text-white"
+            }`}
             width={80}
             height={80}
           />
           <span
-            className={`font-bold text-2xl -ml-2 ${
+            className={`font-bold text-2xl -ml-2 transition-colors duration-300 ${
               isScrolled ? "text-teal-600" : "text-white"
             }`}
           >
             WanderWise
           </span>
         </Link>
-        <div className="hidden md:flex items-center space-x-6">
+
+        <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
-              className={`flex items-center space-x-1 px-2 py-1 rounded-full transition hover:bg-teal-500/10
+              className={`group flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-300
                 ${
                   location.pathname === link.path
-                    ? "font-medium"
-                    : "font-normal"
-                }
-                ${
-                  isScrolled
-                    ? "text-gray-700 hover:text-teal-600"
-                    : "text-white hover:text-white"
+                    ? isScrolled
+                      ? "bg-teal-50 text-teal-600 font-medium"
+                      : "bg-white/10 text-white font-medium"
+                    : isScrolled
+                    ? "text-gray-700 hover:text-teal-600 hover:bg-teal-50/80"
+                    : "text-white hover:text-teal-400 hover:bg-white/10"
                 }`}
             >
               {React.cloneElement(link.icon, {
-                className: `w-4 h-4 ${
-                  isScrolled ? "text-teal-600" : "text-white"
+                className: `w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${
+                  location.pathname === link.path
+                    ? "text-teal-500"
+                    : isScrolled
+                    ? "text-gray-500 group-hover:text-teal-600"
+                    : "text-white group-hover:text-teal-400"
                 }`,
               })}
-              <span>{link.name}</span>
+              <span className="transform transition-all duration-300 group-hover:translate-x-0.5">
+                {link.name}
+              </span>
             </Link>
           ))}
 
           <button
-            className={`flex items-center space-x-1 px-3 py-1.5 border border-teal-500 rounded-full transition
+            className={`group flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300
               ${
                 isScrolled
-                  ? "text-teal-600 hover:bg-teal-50"
-                  : "text-white border-white/70 hover:bg-white/10"
+                  ? "bg-teal-50 text-teal-600 hover:bg-teal-100"
+                  : "bg-white/10 text-white hover:text-teal-400 hover:bg-white/20"
               }`}
           >
-            <Search className="w-4 h-4" />
-            <span>Search</span>
+            <Search
+              className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${
+                isScrolled
+                  ? "group-hover:text-teal-600"
+                  : "group-hover:text-teal-400"
+              }`}
+            />
+            <span className="transform transition-all duration-300 group-hover:translate-x-0.5">
+              Search
+            </span>
           </button>
 
-          <Link
-            to="/login"
-            className={`flex items-center space-x-1 px-4 py-1.5 rounded-full transition
-              ${
-                isScrolled
-                  ? "bg-teal-600 text-white hover:bg-teal-700"
-                  : "bg-white text-teal-800 hover:bg-white/90"
-              }`}
-          >
-            <User className="w-4 h-4" />
-            <span>Login</span>
-          </Link>
+          {userEmail ? (
+            <div className="flex items-center space-x-4">
+              <div
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-300 ${
+                  isScrolled
+                    ? "bg-gray-50 hover:bg-teal-50"
+                    : "bg-white/10 hover:bg-white/20"
+                }`}
+              >
+                <User
+                  className={`w-4 h-4 ${
+                    isScrolled ? "text-teal-600" : "text-white"
+                  }`}
+                />
+                <span
+                  className={`text-sm font-medium ${
+                    isScrolled ? "text-gray-700" : "text-white"
+                  }`}
+                >
+                  {userEmail}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className={`group flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300
+                  ${
+                    isScrolled
+                      ? "bg-red-50 text-red-600 hover:bg-red-100"
+                      : "bg-white/10 text-white hover:text-red-400 hover:bg-white/20"
+                  }`}
+              >
+                <LogOut className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                <span className="transform transition-all duration-300 group-hover:translate-x-0.5">
+                  Logout
+                </span>
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className={`group flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300
+                ${
+                  isScrolled
+                    ? "bg-teal-500 text-white hover:bg-teal-600"
+                    : "bg-white/10 text-white hover:text-teal-400 hover:bg-white/20"
+                }`}
+            >
+              <User className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+              <span className="transform transition-all duration-300 group-hover:translate-x-0.5">
+                Login
+              </span>
+            </Link>
+          )}
         </div>
+
+        {/* Mobile menu button */}
         <button
-          className="md:hidden text-2xl focus:outline-none"
+          className="md:hidden rounded-lg p-2 transition-colors duration-300"
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
           {isMenuOpen ? (
-            <X className={isScrolled ? "text-gray-800" : "text-white"} />
+            <X
+              className={`w-6 h-6 ${
+                isScrolled ? "text-gray-800" : "text-white"
+              }`}
+            />
           ) : (
-            <Menu className={isScrolled ? "text-gray-800" : "text-white"} />
+            <Menu
+              className={`w-6 h-6 ${
+                isScrolled ? "text-gray-800" : "text-white"
+              }`}
+            />
           )}
         </button>
       </div>
-      {/* Mobile menu */}
-      <div
-        className={`fixed inset-0 bg-teal-900 z-40 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        } md:hidden`}
-      >
-        <div className="flex flex-col h-full p-8">
-          {" "}
-          <div className="flex justify-between items-center mb-8">
-            <Link to="/" className="flex items-center">
-              <Logo className="text-white" width={80} height={80} />
-              <span className="font-bold text-2xl -ml-1 text-white">
-                WanderWise
-              </span>
-            </Link>
-            <button
-              onClick={toggleMenu}
-              className="text-white text-2xl focus:outline-none"
-              aria-label="Close menu"
-            >
-              <X />
-            </button>
-          </div>
-          <nav className="flex flex-col space-y-6 mt-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className="flex items-center space-x-3 text-white text-xl py-2 border-b border-teal-800"
-              >
-                {link.icon}
-                <span>{link.name}</span>
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-auto pt-8 space-y-4">
-            <button className="w-full flex items-center justify-center space-x-2 bg-white text-teal-800 py-3 px-4 rounded-full font-medium">
-              <Search className="w-5 h-5" />
-              <span>Search Destinations</span>
-            </button>
 
-            <Link
-              to="/login"
-              onClick={toggleMenu}
-              className="w-full flex items-center justify-center space-x-2 bg-teal-600 text-white py-3 px-4 rounded-full font-medium hover:bg-teal-700 transition-colors"
-            >
-              <User className="w-5 h-5" />
-              <span>Login</span>
-            </Link>
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300">
+          <div className="fixed inset-y-0 right-0 w-72 bg-white shadow-2xl p-6 transform transition-all duration-300 ease-out z-50">
+            <div className="flex flex-col h-full">
+              <div className="flex justify-between items-center mb-8">
+                <span className="text-xl font-bold text-gray-800">Menu</span>
+                <button
+                  onClick={toggleMenu}
+                  className="p-2 rounded-lg text-gray-600 hover:text-teal-600 hover:bg-teal-50 transition-colors duration-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <nav className="flex-1">
+                <ul className="space-y-2">
+                  {navLinks.map((link) => (
+                    <li key={link.path}>
+                      <Link
+                        to={link.path}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-300
+                          ${
+                            location.pathname === link.path
+                              ? "bg-teal-50 text-teal-600"
+                              : "text-gray-600 hover:bg-teal-50 hover:text-teal-600"
+                          }`}
+                      >
+                        {React.cloneElement(link.icon, {
+                          className: `w-5 h-5 ${
+                            location.pathname === link.path
+                              ? "text-teal-500"
+                              : "text-gray-500 group-hover:text-teal-600"
+                          }`,
+                        })}
+                        <span>{link.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+
+                  <li className="pt-4 mt-4 border-t border-gray-100">
+                    {userEmail ? (
+                      <>
+                        <div className="px-4 py-3 rounded-lg bg-teal-50 mb-3">
+                          <div className="flex items-center space-x-3 text-gray-700">
+                            <User className="w-5 h-5 text-teal-500" />
+                            <span className="text-sm font-medium">
+                              {userEmail}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-300"
+                        >
+                          <LogOut className="w-5 h-5" />
+                          <span>Logout</span>
+                        </button>
+                      </>
+                    ) : (
+                      <Link
+                        to="/login"
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-500 text-white hover:bg-teal-600 transition-colors duration-300"
+                      >
+                        <User className="w-5 h-5" />
+                        <span>Login</span>
+                      </Link>
+                    )}
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };
