@@ -72,7 +72,6 @@ const Header: React.FC = () => {
       icon: <StarIcon className="w-5 h-5" />,
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
-    
   ];
 
   const headerClass = isScrolled
@@ -83,18 +82,22 @@ const Header: React.FC = () => {
     <header
       className={`fixed w-full z-50 transition-all duration-300 ${headerClass}`}
     >
+      {" "}
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
-          <Logo className={isScrolled ? "text-teal-600" : "text-white"} />
+          <Logo
+            className={isScrolled ? "text-teal-600" : "text-white"}
+            width={80}
+            height={80}
+          />
           <span
-            className={`ml-2 font-bold text-2xl ${
+            className={`font-bold text-2xl -ml-2 ${
               isScrolled ? "text-teal-600" : "text-white"
             }`}
           >
             WanderWise
           </span>
         </Link>
-
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
             <Link
@@ -146,7 +149,6 @@ const Header: React.FC = () => {
             <span>Login</span>
           </Link>
         </div>
-
         <button
           className="md:hidden text-2xl focus:outline-none"
           onClick={toggleMenu}
@@ -159,7 +161,6 @@ const Header: React.FC = () => {
           )}
         </button>
       </div>
-
       {/* Mobile menu */}
       <div
         className={`fixed inset-0 bg-teal-900 z-40 transform transition-transform duration-300 ease-in-out ${
@@ -167,10 +168,11 @@ const Header: React.FC = () => {
         } md:hidden`}
       >
         <div className="flex flex-col h-full p-8">
+          {" "}
           <div className="flex justify-between items-center mb-8">
             <Link to="/" className="flex items-center">
-              <Logo className="text-white" />
-              <span className="ml-2 font-bold text-2xl text-white">
+              <Logo className="text-white" width={80} height={80} />
+              <span className="font-bold text-2xl -ml-1 text-white">
                 WanderWise
               </span>
             </Link>
@@ -182,7 +184,6 @@ const Header: React.FC = () => {
               <X />
             </button>
           </div>
-
           <nav className="flex flex-col space-y-6 mt-8">
             {navLinks.map((link) => (
               <Link
@@ -195,7 +196,6 @@ const Header: React.FC = () => {
               </Link>
             ))}
           </nav>
-
           <div className="mt-auto pt-8 space-y-4">
             <button className="w-full flex items-center justify-center space-x-2 bg-white text-teal-800 py-3 px-4 rounded-full font-medium">
               <Search className="w-5 h-5" />

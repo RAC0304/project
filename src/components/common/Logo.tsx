@@ -1,14 +1,30 @@
-import React from 'react';
-import { Compass } from 'lucide-react';
+import React from "react";
+import logoImage from "../../asset/image/logologin.png";
 
 interface LogoProps {
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = '' }) => {
+const Logo: React.FC<LogoProps> = ({
+  className = "",
+  width = 100,
+  height = 100,
+}) => {
   return (
     <div className={`flex items-center justify-center ${className}`}>
-      <Compass className={`w-8 h-8 ${className}`} strokeWidth={2.5} />
+      <img
+        src={logoImage}
+        alt="WanderWise Logo"
+        style={{
+          width: width,
+          height: height,
+          objectFit: "contain",
+          backgroundColor: "transparent",
+          mixBlendMode: "multiply",
+        }}
+      />
     </div>
   );
 };

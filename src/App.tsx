@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage";
@@ -12,16 +17,18 @@ import TourGuideProfilePage from "./pages/TourGuideProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/Login"; // Import halaman login
+import RegisterPage from "./pages/Register"; // Import halaman register
 
 function App() {
   const location = useLocation();
 
-  // Check if the current path is the login route
-  const isLoginPage = location.pathname === "/login";
+  // Check if the current path is the login or register route
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {!isLoginPage && <Header />}
+      {!isAuthPage && <Header />}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -34,10 +41,12 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/login" element={<LoginPage />} /> {/* Rute login */}
+          <Route path="/register" element={<RegisterPage />} />{" "}
+          {/* Rute register */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      {!isLoginPage && <Footer />}
+      {!isAuthPage && <Footer />}
     </div>
   );
 }
