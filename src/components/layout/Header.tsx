@@ -110,7 +110,9 @@ const Header: React.FC = () => {
   return (
     <header
       className={`fixed w-full z-50 transition-all duration-300 ${headerClass}`}
-    >      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+    >
+      {" "}
+      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <Logo
             className={isScrolled ? "text-teal-600" : "text-teal-600"}
@@ -128,7 +130,8 @@ const Header: React.FC = () => {
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
             <Link
-              key={link.name}              to={link.path}
+              key={link.name}
+              to={link.path}
               className={`flex items-center space-x-1 px-2 py-0.5 rounded-full transition hover:bg-teal-500/10
                 ${
                   location.pathname === link.path
@@ -167,7 +170,8 @@ const Header: React.FC = () => {
               {" "}
               <span className="text-sm text-teal-600">{userEmail}</span>
               <button
-                onClick={handleLogout}              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                   bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
               >
                 <LogOut className="w-4 h-4" />
@@ -176,7 +180,8 @@ const Header: React.FC = () => {
             </div>
           ) : (
             <Link
-              to="/login"              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
+              to="/login"
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                 ${
                   isScrolled
                     ? "bg-teal-500 text-white hover:bg-teal-600"
@@ -202,7 +207,6 @@ const Header: React.FC = () => {
           )}
         </button>
       </div>
-
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40">
