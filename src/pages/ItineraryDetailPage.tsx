@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   Clock,
@@ -21,6 +21,8 @@ const ItineraryDetailPage: React.FC = () => {
   const itinerary = id ? getItineraryById(id) : undefined;
   const [activeDay, setActiveDay] = useState(1);
   const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Reset active day when itinerary changes
@@ -30,12 +32,30 @@ const ItineraryDetailPage: React.FC = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
+  const handlePlanTripClick = () => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    if (isLoggedIn) {
+      setIsPlanningModalOpen(true);
+    } else {
+      setShowWarningModal(true);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowWarningModal(false);
+    navigate("/login");
+  };
+
+  const handleCancelClick = () => {
+    setShowWarningModal(false);
+  };
+
   if (!itinerary) {
     return <NotFoundPage />;
   }
 
   return (
-    <div className="pt-24 pb-16">
+    <div className="pt-14 pb-16">
       <div className="container mx-auto px-4">
         {/* Back Button */}
         <Link
@@ -250,7 +270,7 @@ const ItineraryDetailPage: React.FC = () => {
                 transportation, and accommodation.
               </p>
               <button
-                onClick={() => setIsPlanningModalOpen(true)}
+                onClick={handlePlanTripClick}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg text-center font-medium transition-colors"
               >
                 Plan This Trip
@@ -307,6 +327,36 @@ const ItineraryDetailPage: React.FC = () => {
           itinerary={itinerary}
           onClose={() => setIsPlanningModalOpen(false)}
         />
+      )}
+
+      {/* Warning Modal */}
+      {showWarningModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={handleCancelClick} />
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 relative">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Authentication Required
+            </h3>
+            <p className="text-gray-700 mb-4">
+              You need to be logged in to plan a trip. Please log in or sign up
+              to continue.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleCancelClick}
+                className="px-4 py-2 bg-gray-200 rounded-lg text-gray-800 hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLoginClick}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Log In
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

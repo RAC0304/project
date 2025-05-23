@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, MapPin, Globe, MessageCircle, Calendar } from "lucide-react";
 import { TourGuide } from "../../types";
 import BookingModal from "./BookingModal";
@@ -10,6 +10,26 @@ interface TourGuideCardProps {
 
 const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handleBookNowClick = () => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    if (isLoggedIn) {
+      setIsBookingModalOpen(true);
+    } else {
+      setShowWarningModal(true);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowWarningModal(false);
+    navigate("/login");
+  };
+
+  const handleCancelClick = () => {
+    setShowWarningModal(false);
+  };
 
   const renderSpecialties = () => {
     return guide.specialties.map((specialty) => (
@@ -94,7 +114,7 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => setIsBookingModalOpen(true)}
+                onClick={handleBookNowClick}
                 className="inline-flex items-center bg-teal-600 text-white px-3 py-1.5 rounded-full text-sm hover:bg-teal-700 transition-colors"
               >
                 <Calendar className="w-4 h-4 mr-1" />
@@ -117,6 +137,38 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
           guide={guide}
           onClose={() => setIsBookingModalOpen(false)}
         />
+      )}
+
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4 animate-fadeIn">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <MessageCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Authentication Required
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Please login to book a tour with our guides.
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={handleLoginClick}
+                  className="bg-teal-600 text-white px-4 py-2 rounded-md text-sm font-semibold shadow-sm hover:bg-teal-700 transition-colors"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={handleCancelClick}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold shadow-sm hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

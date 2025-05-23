@@ -18,6 +18,7 @@ import ReviewsPage from "./pages/ReviewsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/Login"; // Import halaman login
 import RegisterPage from "./pages/Register"; // Import halaman register
+import UserProfilePage from "./pages/UserProfilePage"; // Import user profile page
 
 function App() {
   const location = useLocation();
@@ -29,7 +30,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {!isAuthPage && <Header />}
-      <main className={`flex-grow ${!isAuthPage ? "pt-24 lg:pt-28" : ""}`}>
+      <main className={`flex-grow ${!isAuthPage ? "pt-14" : ""}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/destinations" element={<DestinationsListPage />} />
@@ -40,6 +41,7 @@ function App() {
           <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/login" element={<LoginPage />} /> {/* Rute login */}
           <Route path="/register" element={<RegisterPage />} />{" "}
           {/* Rute register */}

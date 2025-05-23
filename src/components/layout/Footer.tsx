@@ -1,7 +1,14 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Twitter, Mail, MapPin, Phone } from 'lucide-react';
-import Logo from '../common/Logo';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Instagram,
+  Facebook,
+  Twitter,
+  Mail,
+  MapPin,
+  Phone,
+} from "lucide-react";
+// import Logo from "../common/Logo";
 
 const Footer: React.FC = () => {
   return (
@@ -9,21 +16,27 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center">
-              <Logo className="text-white" />
-              <span className="ml-2 font-bold text-2xl">WanderWise</span>
-            </div>
             <p className="text-teal-100 max-w-xs">
-              Discover the beauty and culture of Indonesia with WanderWise, your trusted guide to unforgettable experiences.
+              Discover the beauty and culture of Indonesia with WanderWise, your
+              trusted guide to unforgettable experiences.
             </p>
             <div className="flex space-x-4 pt-2">
-              <a href="https://instagram.com" className="text-white hover:text-teal-300 transition-colors">
+              <a
+                href="https://instagram.com"
+                className="text-white hover:text-teal-300 transition-colors"
+              >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="https://facebook.com" className="text-white hover:text-teal-300 transition-colors">
+              <a
+                href="https://facebook.com"
+                className="text-white hover:text-teal-300 transition-colors"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="https://twitter.com" className="text-white hover:text-teal-300 transition-colors">
+              <a
+                href="https://twitter.com"
+                className="text-white hover:text-teal-300 transition-colors"
+              >
                 <Twitter className="w-5 h-5" />
               </a>
             </div>
@@ -33,27 +46,42 @@ const Footer: React.FC = () => {
             <h3 className="font-semibold text-lg mb-4 text-white">Explore</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/destinations" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/destinations"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Destinations
                 </Link>
               </li>
               <li>
-                <Link to="/itineraries" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/itineraries"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Itineraries
                 </Link>
               </li>
               <li>
-                <Link to="/#experiences" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/#experiences"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Experiences
                 </Link>
               </li>
               <li>
-                <Link to="/#culture" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/#culture"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Culture
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   About Indonesia
                 </Link>
               </li>
@@ -61,30 +89,47 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold text-lg mb-4 text-white">Information</h3>
+            <h3 className="font-semibold text-lg mb-4 text-white">
+              Information
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/about#travel-tips" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about#travel-tips"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Travel Tips
                 </Link>
               </li>
               <li>
-                <Link to="/about#visa" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about#visa"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Visa Requirements
                 </Link>
               </li>
               <li>
-                <Link to="/about#transportation" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about#transportation"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Transportation
                 </Link>
               </li>
               <li>
-                <Link to="/about#accommodation" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about#accommodation"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   Accommodation
                 </Link>
               </li>
               <li>
-                <Link to="/about#faq" className="text-teal-100 hover:text-white transition-colors">
+                <Link
+                  to="/about#faq"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   FAQs
                 </Link>
               </li>
@@ -100,13 +145,19 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-teal-300 mr-2" />
-                <a href="mailto:info@wanderwise.com" className="text-teal-100 hover:text-white transition-colors">
+                <a
+                  href="mailto:info@wanderwise.com"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   info@wanderwise.com
                 </a>
               </li>
               <li className="flex items-center">
                 <Phone className="w-5 h-5 text-teal-300 mr-2" />
-                <a href="tel:+6281234567890" className="text-teal-100 hover:text-white transition-colors">
+                <a
+                  href="tel:+6281234567890"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
                   +62 812 3456 7890
                 </a>
               </li>
@@ -115,11 +166,19 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-teal-800 text-center text-teal-200">
-          <p>&copy; {new Date().getFullYear()} WanderWise. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} WanderWise. All rights reserved.
+          </p>
           <div className="mt-2 flex justify-center space-x-6 text-sm">
-            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link to="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
+            <Link to="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/sitemap" className="hover:text-white transition-colors">
+              Sitemap
+            </Link>
           </div>
         </div>
       </div>

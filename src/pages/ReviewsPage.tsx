@@ -100,7 +100,7 @@ const ReviewsPage: React.FC = () => {
     searchQuery;
 
   return (
-    <div className="pt-24 pb-16">
+    <div className="pt-16 pb-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">

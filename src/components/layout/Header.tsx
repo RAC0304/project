@@ -18,32 +18,56 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const checkLoginStatus = () => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const userData = localStorage.getItem("user");
+    const userProfile = localStorage.getItem("userProfile");
+
+    if (isLoggedIn === "true" && userData) {
+      const { email } = JSON.parse(userData);
+      const profile = userProfile ? JSON.parse(userProfile) : null;
+      setUserEmail(email);
+      setUsername(profile?.username || email.split("@")[0]);
+    } else {
+      setUserEmail(null);
+      setUsername(null);
+    }
+  };
+
+  // Function to handle storage changes specifically for userProfile
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === "userProfile") {
+      const userProfile = e.newValue;
+      const userData = localStorage.getItem("user");
+      if (userData && userProfile) {
+        const { email } = JSON.parse(userData);
+        const profile = JSON.parse(userProfile);
+        setUsername(profile?.username || email.split("@")[0]);
+      }
+    }
+  };
 
   useEffect(() => {
-    // Check login status when component mounts
-    const checkLoginStatus = () => {
-      const isLoggedIn = localStorage.getItem("isLoggedIn");
-      const userData = localStorage.getItem("user");
-      if (isLoggedIn === "true" && userData) {
-        const { email } = JSON.parse(userData);
-        setUserEmail(email);
-      } else {
-        setUserEmail(null);
-      }
-    };
-
     checkLoginStatus();
-    // Add event listener for storage changes
-    window.addEventListener("storage", checkLoginStatus);
-    return () => window.removeEventListener("storage", checkLoginStatus);
+    // Listen for storage changes from other tabs/windows
+    window.addEventListener("storage", handleStorageChange);
+    // Create a custom event listener for same-tab updates
+    window.addEventListener("userProfileUpdate", checkLoginStatus);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userProfileUpdate", checkLoginStatus);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("user");
+    localStorage.removeItem("userProfile");
     setUserEmail(null);
+    setUsername(null);
     navigate("/login");
   };
 
@@ -102,17 +126,16 @@ const Header: React.FC = () => {
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
   ];
-
   const headerClass = isScrolled
-    ? "bg-white shadow-md text-gray-800"
-    : "bg-transparent text-white";
+    ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
+    : "bg-white/10 backdrop-blur-sm text-white";
 
   return (
     <header
-      className={`fixed w-full z-50 transition-all duration-300 ${headerClass}`}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${headerClass}`}
     >
       {" "}
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+      <div className="container mx-auto px-4 py-1 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <Logo
             className={isScrolled ? "text-teal-600" : "text-teal-600"}
@@ -120,7 +143,7 @@ const Header: React.FC = () => {
             height={60}
           />
           <span
-            className={`font-bold text-xl -ml-2 ${
+            className={`font-bold text-xl ml-2 ${
               isScrolled ? "text-teal-600" : "text-teal-600"
             }`}
           >
@@ -167,15 +190,19 @@ const Header: React.FC = () => {
 
           {userEmail ? (
             <div className="flex items-center space-x-4">
-              {" "}
-              <span className="text-sm text-teal-600">{userEmail}</span>
+              <Link
+                to="/profile"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/20 text-teal-600 hover:bg-teal-50 transition-colors duration-300"
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm">{username}</span>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                   bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Logout</span>
               </button>
             </div>
           ) : (
@@ -185,7 +212,7 @@ const Header: React.FC = () => {
                 ${
                   isScrolled
                     ? "bg-teal-500 text-white hover:bg-teal-600"
-                    : "bg-white/20 hover:bg-white/30"
+                    : "bg-white/20 text-teal-500 hover:bg-white/30"
                 } transition-colors duration-300`}
             >
               <User className="w-4 h-4" />
@@ -237,9 +264,13 @@ const Header: React.FC = () => {
                   {userEmail ? (
                     <>
                       <li className="pt-4 border-t">
-                        <span className="text-sm text-gray-600">
-                          {userEmail}
-                        </span>
+                        <Link
+                          to="/profile"
+                          className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors duration-300"
+                        >
+                          <User className="w-4 h-4" />
+                          <span>{username}</span>
+                        </Link>
                       </li>
                       <li>
                         <button

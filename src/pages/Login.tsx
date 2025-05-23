@@ -13,6 +13,8 @@ const LoginPage: React.FC = () => {
   const DEMO_USER = {
     email: "demo@wanderwise.com",
     password: "demo123",
+    username: "Demo User",
+    location: "Indonesia",
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,13 +39,38 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 via-teal-500 to-emerald-600 p-4">
-      <div className="absolute inset-0 bg-pattern opacity-10"></div>
+      <div className="absolute inset-0 bg-pattern opacity-10"></div>{" "}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="bg-white/85 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10"
       >
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => navigate("/")}
+          type="button"
+          className="absolute left-4 top-4 p-2 rounded-xl text-teal-600 hover:bg-teal-50/50 
+            transform hover:scale-[1.05] transition-all duration-300
+            focus:outline-none focus:ring-2 focus:ring-teal-500"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+        </motion.button>
         <motion.div
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
@@ -122,7 +149,6 @@ const LoginPage: React.FC = () => {
               </svg>
             </div>
           </motion.div>
-
           <motion.div
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -160,7 +186,6 @@ const LoginPage: React.FC = () => {
               </svg>
             </div>
           </motion.div>
-
           <motion.button
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -172,8 +197,19 @@ const LoginPage: React.FC = () => {
               ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
           >
             {isLoading ? "Logging in..." : "Login"}
+          </motion.button>{" "}
+          <motion.button
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            onClick={() => navigate("/register")}
+            type="button"
+            className="w-full mt-4 py-3 bg-white/50 text-teal-700 rounded-xl font-medium tracking-wide
+              transform hover:scale-[1.02] transition-all duration-300 hover:shadow-lg
+              hover:bg-teal-50 border-2 border-transparent hover:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            Don't have an account? Register here
           </motion.button>
-
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
