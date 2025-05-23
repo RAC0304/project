@@ -332,7 +332,10 @@ const ItineraryDetailPage: React.FC = () => {
       {/* Warning Modal */}
       {showWarningModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black/50" onClick={handleCancelClick} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleCancelClick}
+          />
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 relative">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Authentication Required
