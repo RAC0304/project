@@ -129,3 +129,43 @@ export interface Review {
   helpfulCount: number;
   tags: string[];
 }
+
+// User Authentication Types
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
+  profile: UserProfile;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  location?: string;
+  avatar?: string;
+  bio?: string;
+  phone?: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  language: string;
+  currency: string;
+  notifications: boolean;
+  theme: "light" | "dark";
+}
+
+export type UserRole = "user" | "tour_guide" | "admin";
+
+export interface Permission {
+  action: string;
+  resource: string;
+}
+
+export interface RolePermissions {
+  role: UserRole;
+  permissions: Permission[];
+}

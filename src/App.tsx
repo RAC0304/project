@@ -16,21 +16,36 @@ import TourGuidesPage from "./pages/TourGuidesPage";
 import TourGuideProfilePage from "./pages/TourGuideProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import LoginPage from "./pages/Login"; // Import halaman login
-import RegisterPage from "./pages/Register"; // Import halaman register
-import UserProfilePage from "./pages/UserProfilePage"; // Import user profile page
+import LoginPage from "./pages/Login";
+import RegisterPage from "./pages/Register";
+import UserProfilePage from "./pages/UserProfilePage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import TourGuideDashboard from "./pages/TourGuideDashboard";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 function App() {
   const location = useLocation();
 
-  // Check if the current path is the login or register route
+  // Check if the current path is the login, register, unauthorized page, or guide dashboard
   const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login" ||
+    location.pathname === "/register" ||
+    location.pathname === "/unauthorized";
+
+  // Check if it's the guide dashboard page to hide header and footer
+  const isGuideDashboard = location.pathname === "/guide/dashboard";
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {!isAuthPage && <Header />}
-      <main className={`flex-grow ${!isAuthPage ? "pt-14" : ""}`}>
+      {" "}
+      {!isAuthPage && !isGuideDashboard && <Header />}
+      <main
+        className={`flex-grow ${
+          !isAuthPage && !isGuideDashboard ? "pt-14" : ""
+        }`}
+      >
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/destinations" element={<DestinationsListPage />} />
@@ -41,14 +56,44 @@ function App() {
           <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
-          <Route path="/profile" element={<UserProfilePage />} />
-          <Route path="/login" element={<LoginPage />} /> {/* Rute login */}
-          <Route path="/register" element={<RegisterPage />} />{" "}
-          {/* Rute register */}
+
+          {/* Protected Routes */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Only Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Tour Guide Only Routes */}
+          <Route
+            path="/guide/dashboard"
+            element={
+              <ProtectedRoute requiredRole="tour_guide">
+                <TourGuideDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        </Routes>{" "}
       </main>
-      {!isAuthPage && <Footer />}
+      {!isAuthPage && !isGuideDashboard && <Footer />}
     </div>
   );
 }
@@ -56,7 +101,9 @@ function App() {
 export default function AppWrapper() {
   return (
     <Router>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </Router>
   );
 }

@@ -1,37 +1,66 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { User, Shield, MapPin } from "lucide-react";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Demo user credentials
-  const DEMO_USER = {
-    email: "demo@wanderwise.com",
-    password: "demo123",
-    username: "Demo User",
-    location: "Indonesia",
-  };
-
+  // Demo user credentials with different roles
+  const demoUsers = [
+    {
+      email: "user@wanderwise.com",
+      password: "user123",
+      role: "Traveler",
+      icon: User,
+      description: "Regular user with booking and review access",
+      color: "text-blue-600",
+    },
+    {
+      email: "guide@wanderwise.com",
+      password: "guide123",
+      role: "Tour Guide",
+      icon: MapPin,
+      description: "Guide with booking management and content creation",
+      color: "text-green-600",
+    },
+    {
+      email: "admin@wanderwise.com",
+      password: "admin123",
+      role: "Administrator",
+      icon: Shield,
+      description: "Full system access and user management",
+      color: "text-purple-600",
+    },
+  ];
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const result = await login(email, password);
 
-    if (email === DEMO_USER.email && password === DEMO_USER.password) {
-      // Successful login
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("user", JSON.stringify({ email: DEMO_USER.email }));
-      navigate("/");
+    if (result.success) {
+      // Check user role from local storage since the context might not be updated yet
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (user.role === "tour_guide") {
+          navigate("/guide/dashboard");
+        } else {
+          navigate("/");
+        }
+      } else {
+        navigate("/");
+      }
     } else {
-      setError("Invalid email or password. Try demo@wanderwise.com / demo123");
+      setError(result.error || "Login failed");
     }
 
     setIsLoading(false);
@@ -209,19 +238,64 @@ const LoginPage: React.FC = () => {
               hover:bg-teal-50 border-2 border-transparent hover:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
             Don't have an account? Register here
-          </motion.button>
-          <motion.p
+          </motion.button>{" "}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center text-sm text-teal-800 mt-4"
+            className="mt-6 p-4 bg-teal-50/50 rounded-xl border border-teal-200"
           >
-            Demo credentials:
-            <br />
-            Email: demo@wanderwise.com
-            <br />
-            Password: demo123
-          </motion.p>
+            <h3 className="text-sm font-semibold text-teal-800 mb-3 text-center">
+              Demo Accounts by Role
+            </h3>
+            <div className="space-y-3">
+              {demoUsers.map((user, index) => {
+                const IconComponent = user.icon;
+                return (
+                  <motion.div
+                    key={user.email}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    className="bg-white/70 rounded-lg p-3 border border-teal-100"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <IconComponent
+                          className={`w-4 h-4 mr-2 ${user.color}`}
+                        />
+                        <span className="font-medium text-teal-800 text-sm">
+                          {user.role}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail(user.email);
+                          setPassword(user.password);
+                        }}
+                        className="text-xs text-teal-600 hover:text-teal-800 font-medium px-2 py-1 rounded bg-teal-100 hover:bg-teal-200 transition-colors"
+                      >
+                        Use
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-2">
+                      {user.description}
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      <div>Email: {user.email}</div>
+                      <div>Password: {user.password}</div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            <div className="mt-3 text-center">
+              <p className="text-xs text-teal-600">
+                Click "Use" to auto-fill credentials
+              </p>
+            </div>
+          </motion.div>
         </form>
       </motion.div>
     </div>

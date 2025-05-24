@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -11,65 +11,17 @@ import {
   Info,
   Star as StarIcon,
   LogOut,
+  Settings,
+  Shield,
 } from "lucide-react";
 import Logo from "../common/Logo";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
   const location = useLocation();
-  const navigate = useNavigate();
-  const checkLoginStatus = () => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const userData = localStorage.getItem("user");
-    const userProfile = localStorage.getItem("userProfile");
-
-    if (isLoggedIn === "true" && userData) {
-      const { email } = JSON.parse(userData);
-      const profile = userProfile ? JSON.parse(userProfile) : null;
-      setUserEmail(email);
-      setUsername(profile?.username || email.split("@")[0]);
-    } else {
-      setUserEmail(null);
-      setUsername(null);
-    }
-  };
-
-  // Function to handle storage changes specifically for userProfile
-  const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === "userProfile") {
-      const userProfile = e.newValue;
-      const userData = localStorage.getItem("user");
-      if (userData && userProfile) {
-        const { email } = JSON.parse(userData);
-        const profile = JSON.parse(userProfile);
-        setUsername(profile?.username || email.split("@")[0]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkLoginStatus();
-    // Listen for storage changes from other tabs/windows
-    window.addEventListener("storage", handleStorageChange);
-    // Create a custom event listener for same-tab updates
-    window.addEventListener("userProfileUpdate", checkLoginStatus);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("userProfileUpdate", checkLoginStatus);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userProfile");
-    setUserEmail(null);
-    setUsername(null);
-    navigate("/login");
-  };
+  const { user, logout } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -126,6 +78,34 @@ const Header: React.FC = () => {
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
   ];
+
+  // Add role-specific navigation links
+  const getRoleSpecificLinks = () => {
+    if (!user) return [];
+
+    const roleLinks = [];
+
+    if (user.role === "admin") {
+      roleLinks.push({
+        name: "Admin Dashboard",
+        path: "/admin/dashboard",
+        icon: <Shield className="w-5 h-5" />,
+      });
+    }
+
+    if (user.role === "tour_guide") {
+      roleLinks.push({
+        name: "Guide Dashboard",
+        path: "/guide/dashboard",
+        icon: <Settings className="w-5 h-5" />,
+      });
+    }
+
+    return roleLinks;
+  };
+
+  const allNavLinks = [...navLinks, ...getRoleSpecificLinks()];
+
   const headerClass = isScrolled
     ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
     : "bg-white/10 backdrop-blur-sm text-white";
@@ -134,7 +114,6 @@ const Header: React.FC = () => {
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${headerClass}`}
     >
-      {" "}
       <div className="container mx-auto px-4 py-1 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <Logo
@@ -151,7 +130,7 @@ const Header: React.FC = () => {
           </span>
         </Link>
         <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
+          {allNavLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
@@ -175,7 +154,6 @@ const Header: React.FC = () => {
               <span>{link.name}</span>
             </Link>
           ))}
-
           <button
             className={`flex items-center space-x-1 px-3 py-1.5 border border-teal-500 rounded-full transition
               ${
@@ -186,19 +164,20 @@ const Header: React.FC = () => {
           >
             <Search className="w-4 h-4" />
             <span>Search</span>
-          </button>
-
-          {userEmail ? (
+          </button>{" "}
+          {user ? (
             <div className="flex items-center space-x-4">
               <Link
                 to="/profile"
                 className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/20 text-teal-600 hover:bg-teal-50 transition-colors duration-300"
               >
                 <User className="w-4 h-4" />
-                <span className="text-sm">{username}</span>
+                <span className="text-sm">
+                  {user.profile.firstName} {user.profile.lastName}
+                </span>
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={logout}
                 className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                   bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
               >
@@ -250,7 +229,7 @@ const Header: React.FC = () => {
               </div>
               <nav className="flex-1">
                 <ul className="space-y-4">
-                  {navLinks.map((link) => (
+                  {allNavLinks.map((link) => (
                     <li key={link.path}>
                       <Link
                         to={link.path}
@@ -260,8 +239,8 @@ const Header: React.FC = () => {
                         <span>{link.name}</span>
                       </Link>
                     </li>
-                  ))}
-                  {userEmail ? (
+                  ))}{" "}
+                  {user ? (
                     <>
                       <li className="pt-4 border-t">
                         <Link
@@ -269,12 +248,14 @@ const Header: React.FC = () => {
                           className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors duration-300"
                         >
                           <User className="w-4 h-4" />
-                          <span>{username}</span>
+                          <span>
+                            {user.profile.firstName} {user.profile.lastName}
+                          </span>
                         </Link>
                       </li>
                       <li>
                         <button
-                          onClick={handleLogout}
+                          onClick={logout}
                           className="flex items-center space-x-2 text-red-500 hover:text-red-600 transition-colors duration-300"
                         >
                           <LogOut className="w-4 h-4" />
