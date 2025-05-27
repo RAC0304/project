@@ -24,11 +24,443 @@ import {
   X,
 } from "lucide-react";
 
+// Define tour data interface
+interface TourData {
+  title: string;
+  description: string;
+  location: string;
+  duration: string;
+  price: string;
+  date: string;
+  time: string;
+  capacity: string;
+  id?: number; // Added for editing existing tours
+}
+
+// Edit Tour Modal component
+const EditTourModal: React.FC<{
+  isOpen: boolean;
+  tourData: TourData;
+  onClose: () => void;
+  onSave: (tourData: TourData) => void;
+}> = ({ isOpen, tourData: initialTourData, onClose, onSave }) => {
+  const [tourData, setTourData] = useState<TourData>(initialTourData);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setTourData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(tourData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-800">Edit Tour</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tour Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={tourData.title}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                placeholder="e.g. Historic City Center Walking Tour"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={tourData.description}
+                onChange={handleChange}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                placeholder="Describe your tour and what makes it special..."
+                required
+              ></textarea>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={tourData.location}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. Rome, Italy"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Duration (hours)
+                </label>
+                <input
+                  type="text"
+                  name="duration"
+                  value={tourData.duration}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 2.5"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per Person ($)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={tourData.price}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 49.99"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Maximum Capacity
+                </label>
+                <input
+                  type="number"
+                  name="capacity"
+                  value={tourData.capacity}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 10"
+                  min="1"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={tourData.date}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  name="time"
+                  value={tourData.time}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const CreateTourModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (tourData: TourData) => void;
+}> = ({ isOpen, onClose, onSave }) => {
+  const [tourData, setTourData] = useState<TourData>({
+    title: "",
+    description: "",
+    location: "",
+    duration: "",
+    price: "",
+    date: "",
+    time: "",
+    capacity: "",
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setTourData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(tourData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Create New Tour
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tour Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={tourData.title}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                placeholder="e.g. Historic City Center Walking Tour"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={tourData.description}
+                onChange={handleChange}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                placeholder="Describe your tour and what makes it special..."
+                required
+              ></textarea>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={tourData.location}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. Rome, Italy"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Duration (hours)
+                </label>
+                <input
+                  type="text"
+                  name="duration"
+                  value={tourData.duration}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 2.5"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per Person ($)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={tourData.price}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 49.99"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Maximum Capacity
+                </label>
+                <input
+                  type="number"
+                  name="capacity"
+                  value={tourData.capacity}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  placeholder="e.g. 10"
+                  min="1"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={tourData.date}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  name="time"
+                  value={tourData.time}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              Create Tour
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const TourGuideDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = React.useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [tourToEdit, setTourToEdit] = useState<TourData | null>(null);
+
+  // Handle creating a new tour
+  const handleCreateTour = (tourData: TourData) => {
+    // In a real app, this would send data to an API
+    console.log("Creating new tour:", tourData);
+
+    // Add tour to the list (in a real app this would happen after API confirms creation)
+    // For this demo, we're just showing a success message
+    alert("Tour created successfully!");
+
+    // Close the modal
+    setIsCreateModalOpen(false);
+  };
+
+  // Handle editing a tour
+  const handleEditTour = (tourData: TourData) => {
+    // In a real app, this would send data to an API
+    console.log("Updating tour:", tourData);
+
+    // Update tour in the list (in a real app this would happen after API confirms update)
+    // For this demo, we're just showing a success message
+    alert("Tour updated successfully!");
+
+    // Close the modal
+    setIsEditModalOpen(false);
+    setTourToEdit(null);
+  };
+
+  // Open edit modal with tour data
+  const openEditModal = (tour: TourData) => {
+    setTourToEdit(tour);
+    setIsEditModalOpen(true);
+  };
 
   // Sample tour guide data - in a real app, this would come from an API
   const guideStats = {
@@ -139,6 +571,8 @@ const TourGuideDashboard: React.FC = () => {
     logout();
     navigate("/login");
   };
+  // handleCreateTour function is defined above
+
   return (
     <div className="min-h-screen bg-gray-50 flex relative">
       {/* Overlay when mobile menu is open */}
@@ -335,7 +769,10 @@ const TourGuideDashboard: React.FC = () => {
               Welcome back, {user?.profile.firstName} {user?.profile.lastName}
             </p>
           </div>
-          <button className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2 sm:self-start">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2 sm:self-start"
+          >
             <Plus className="w-4 h-4" />
             <span>Create Tour</span>
           </button>
@@ -762,10 +1199,6 @@ const TourGuideDashboard: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">My Tours</h2>
-              <button className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
-                <span>Create Tour</span>
-              </button>
             </div>
 
             <div className="overflow-hidden rounded-lg border border-gray-200">
@@ -834,7 +1267,23 @@ const TourGuideDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-teal-600 hover:text-teal-900 mr-3">
+                      <button
+                        className="text-teal-600 hover:text-teal-900 mr-3"
+                        onClick={() =>
+                          openEditModal({
+                            id: 1,
+                            title: "Historic Rome Walking Tour",
+                            description:
+                              "Visit the most iconic sites of ancient Rome with an expert historian guide.",
+                            location: "Roman Forum, Rome",
+                            duration: "3",
+                            price: "50",
+                            date: "2024-01-15",
+                            time: "09:00",
+                            capacity: "10",
+                          })
+                        }
+                      >
                         Edit
                       </button>
                       <button className="text-red-600 hover:text-red-900">
@@ -863,7 +1312,23 @@ const TourGuideDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-teal-600 hover:text-teal-900 mr-3">
+                      <button
+                        className="text-teal-600 hover:text-teal-900 mr-3"
+                        onClick={() =>
+                          openEditModal({
+                            id: 2,
+                            title: "Vatican Museums Private Tour",
+                            description:
+                              "Skip the lines and explore the Vatican Museums, Sistine Chapel, and St. Peter's Basilica with a private guide.",
+                            location: "Vatican City",
+                            duration: "4",
+                            price: "75",
+                            date: "2024-01-16",
+                            time: "14:00",
+                            capacity: "6",
+                          })
+                        }
+                      >
                         Edit
                       </button>
                       <button className="text-red-600 hover:text-red-900">
@@ -949,6 +1414,26 @@ const TourGuideDashboard: React.FC = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Create Tour Modal */}
+        <CreateTourModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreateTour}
+        />
+
+        {/* Edit Tour Modal */}
+        {tourToEdit && (
+          <EditTourModal
+            isOpen={isEditModalOpen}
+            tourData={tourToEdit}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setTourToEdit(null);
+            }}
+            onSave={handleEditTour}
+          />
         )}
       </div>
     </div>
