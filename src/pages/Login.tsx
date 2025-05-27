@@ -44,15 +44,15 @@ const LoginPage: React.FC = () => {
     setError("");
     setIsLoading(true);
 
-    const result = await login(email, password);
-
-    if (result.success) {
+    const result = await login(email, password);    if (result.success) {
       // Check user role from local storage since the context might not be updated yet
       const userData = localStorage.getItem("user");
       if (userData) {
         const user = JSON.parse(userData);
         if (user.role === "tour_guide") {
           navigate("/guide/dashboard");
+        } else if (user.role === "admin") {
+          navigate("/admin/dashboard");
         } else {
           navigate("/");
         }

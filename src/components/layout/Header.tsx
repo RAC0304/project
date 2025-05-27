@@ -12,7 +12,6 @@ import {
   Star as StarIcon,
   LogOut,
   Settings,
-  Shield,
 } from "lucide-react";
 import Logo from "../common/Logo";
 import { useAuth } from "../../contexts/AuthContext";
@@ -78,20 +77,14 @@ const Header: React.FC = () => {
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
   ];
-
   // Add role-specific navigation links
   const getRoleSpecificLinks = () => {
     if (!user) return [];
 
     const roleLinks = [];
 
-    if (user.role === "admin") {
-      roleLinks.push({
-        name: "Admin Dashboard",
-        path: "/admin/dashboard",
-        icon: <Shield className="w-5 h-5" />,
-      });
-    }
+    // Admin dashboard is now accessed directly after login, not from header
+    // No admin link is added to navigation
 
     if (user.role === "tour_guide") {
       roleLinks.push({

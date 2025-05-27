@@ -28,24 +28,23 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 function App() {
   const location = useLocation();
 
-  // Check if the current path is the login, register, unauthorized page, or guide dashboard
+  // Check if the current path is the login, register, unauthorized page
   const isAuthPage =
     location.pathname === "/login" ||
     location.pathname === "/register" ||
     location.pathname === "/unauthorized";
 
-  // Check if it's the guide dashboard page to hide header and footer
+  // Check if it's the guide or admin dashboard page to hide header and footer
   const isGuideDashboard = location.pathname === "/guide/dashboard";
+  const isAdminDashboard = location.pathname === "/admin/dashboard";
+
+  // Combined condition to check if header/footer should be hidden
+  const hideHeaderFooter = isAuthPage || isGuideDashboard || isAdminDashboard;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {" "}
-      {!isAuthPage && !isGuideDashboard && <Header />}
-      <main
-        className={`flex-grow ${
-          !isAuthPage && !isGuideDashboard ? "pt-14" : ""
-        }`}
-      >
+      {!hideHeaderFooter && <Header />}
+      <main className={`flex-grow ${!hideHeaderFooter ? "pt-14" : ""}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/destinations" element={<DestinationsListPage />} />
@@ -93,7 +92,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>{" "}
       </main>
-      {!isAuthPage && !isGuideDashboard && <Footer />}
+      {!hideHeaderFooter && <Footer />}
     </div>
   );
 }

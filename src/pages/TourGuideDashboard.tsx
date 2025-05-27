@@ -148,7 +148,6 @@ const TourGuideDashboard: React.FC = () => {
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}
-
       {/* Mobile menu toggle */}
       <div className="lg:hidden fixed top-4 left-4 z-30">
         <button
@@ -161,22 +160,22 @@ const TourGuideDashboard: React.FC = () => {
             <Menu className="h-6 w-6" />
           )}
         </button>
-      </div>
-
+      </div>{" "}
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
       <div
         className={`${
           mobileMenuOpen
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
-        } w-64 bg-white h-screen shadow-lg fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out`}
+        } w-64 bg-white h-screen shadow-lg fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out flex flex-col`}
       >
         {/* Logo/Brand */}
-        <div className="h-20 bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center px-6">
+        <div className="h-20 bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center px-6 flex-shrink-0">
           <h1 className="text-xl font-bold text-white">WanderWise</h1>
-        </div>{" "}
+        </div>
+
         {/* Profile Summary */}
-        <div className="p-4 border-b border-gray-200 bg-white shadow-sm">
+        <div className="p-4 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white">
               {user?.profile.avatar ? (
@@ -202,8 +201,9 @@ const TourGuideDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* Navigation */}
-        <nav className="mt-4 px-4">
+
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 overflow-y-auto px-4 py-4">
           <ul className="space-y-2">
             <li>
               <button
@@ -283,6 +283,7 @@ const TourGuideDashboard: React.FC = () => {
                 <span>Messages</span>
               </button>
             </li>
+
             {/* Separator for Profile */}
             <div className="my-2 border-t border-gray-100"></div>
 
@@ -299,10 +300,14 @@ const TourGuideDashboard: React.FC = () => {
                 <span>My Profile</span>
               </button>
             </li>
+
+            {/* Add some extra space at the bottom for better scrolling experience */}
+            <div className="h-16"></div>
           </ul>
-        </nav>{" "}
+        </nav>
+
         {/* Logout at bottom */}
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-gray-50 shadow-inner">
+        <div className="w-full p-4 bg-gray-50 shadow-inner flex-shrink-0">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center space-x-2 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
