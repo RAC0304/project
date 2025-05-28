@@ -89,8 +89,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>{" "}
+          <Route path="*" element={<NotFoundPage />} />        </Routes>
       </main>
       {!hideHeaderFooter && <Footer />}
     </div>
