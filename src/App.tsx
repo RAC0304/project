@@ -13,7 +13,7 @@ import ItinerariesPage from "./pages/ItinerariesPage";
 import ItineraryDetailPage from "./pages/ItineraryDetailPage";
 import AboutPage from "./pages/AboutPage";
 import TourGuidesPage from "./pages/TourGuidesPage";
-import TourGuideProfilePage from "./pages/TourGuideProfilePage";
+// import TourGuideProfilePage from "./pages/TourGuideProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/Login";
@@ -52,7 +52,7 @@ function App() {
           <Route path="/itineraries" element={<ItinerariesPage />} />
           <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
           <Route path="/tour-guides" element={<TourGuidesPage />} />
-          <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} />
+          {/* <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} /> */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
 
