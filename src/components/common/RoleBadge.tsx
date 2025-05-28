@@ -31,14 +31,13 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({
           bgColor: "bg-green-100",
           textColor: "text-green-800",
           borderColor: "border-green-200",
-        };
-      case "admin":
+        }; case "admin":
         return {
           label: getRoleDisplayName(role),
           icon: Shield,
-          bgColor: "bg-purple-100",
-          textColor: "text-purple-800",
-          borderColor: "border-purple-200",
+          bgColor: "bg-teal-100",
+          textColor: "text-teal-800",
+          borderColor: "border-teal-200",
         };
       default:
         return {

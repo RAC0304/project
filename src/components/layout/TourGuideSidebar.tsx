@@ -61,13 +61,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
 
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
       <div
-        className={`${
-          mobileMenuOpen
+        className={`${mobileMenuOpen
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
-        } ${
-          sidebarCollapsed ? "w-30" : "w-65"
-        } bg-white h-screen shadow-lg fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col`}
+          } ${sidebarCollapsed ? "w-30" : "w-65"
+          } bg-white h-screen shadow-lg fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col`}
         style={{ height: "100vh" }}
       >
         {/* Logo/Brand - Fixed */}{" "}
@@ -76,9 +74,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <img
               src="/src/asset/image/logologin.png"
               alt="WanderWise Logo"
-              className={`${
-                sidebarCollapsed ? "w-20 h-20" : "w-20 h-20"
-              } object-contain mr-2`}
+              className={`${sidebarCollapsed ? "w-20 h-20" : "w-20 h-20"
+                } object-contain mr-2`}
             />
             {!sidebarCollapsed && (
               <h1 className="text-xl font-bold text-white">WanderWise</h1>
@@ -87,14 +84,12 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
         </div>
         {/* Profile Summary - Fixed */}
         <div
-          className={`${
-            sidebarCollapsed ? "py-4" : "p-4"
-          } border-b border-gray-200 bg-white shadow-sm flex-shrink-0`}
+          className={`${sidebarCollapsed ? "py-4" : "p-4"
+            } border-b border-gray-200 bg-white shadow-sm flex-shrink-0`}
         >
           <div
-            className={`flex items-center ${
-              sidebarCollapsed ? "justify-center" : "space-x-3"
-            }`}
+            className={`flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+              }`}
           >
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white flex items-center justify-center">
               <img
@@ -121,13 +116,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("dashboard")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "dashboard"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "dashboard"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="Dashboard"
               >
                 <Layout className="w-5 h-5" />
@@ -137,13 +130,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("tours")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "tours"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "tours"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="My Tours"
               >
                 <MapPin className="w-5 h-5" />
@@ -153,13 +144,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("bookings")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "bookings"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "bookings"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="Bookings"
               >
                 <Calendar className="w-5 h-5" />
@@ -169,13 +158,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("clients")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "clients"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "clients"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="Clients"
               >
                 <Users className="w-5 h-5" />
@@ -185,13 +172,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("reviews")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "reviews"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "reviews"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="Reviews"
               >
                 <Star className="w-5 h-5" />
@@ -201,13 +186,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("messages")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "messages"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "messages"
                     ? "bg-teal-500 text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
                 title="Messages"
               >
                 <MessageSquare className="w-5 h-5" />
@@ -221,13 +204,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <li>
               <button
                 onClick={() => setActivePage("profile")}
-                className={`w-full flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "space-x-3"
-                } p-3 rounded-lg transition-colors ${
-                  activePage === "profile"
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "space-x-3"
+                  } p-3 rounded-lg transition-colors ${activePage === "profile"
                     ? "bg-teal-500 text-white"
                     : "text-teal-600 bg-teal-50 hover:bg-teal-100"
-                }`}
+                  }`}
                 title="My Profile"
               >
                 <User className="w-5 h-5" />

@@ -20,7 +20,7 @@ import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import UserProfilePage from "./pages/UserProfilePage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import TourGuideDashboard from "./pages/TourGuideDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
