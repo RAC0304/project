@@ -6,7 +6,8 @@ import {
     Calendar,
     UserCheck,
     LogOut,
-    Layout
+    Layout,
+    ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,36 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         navigate('/login');
     };
 
+    // Define menu item groups for better organization
+    const menuItems = [
+        {
+            group: "Main",
+            items: [
+                { id: "dashboard", label: "Dashboard", icon: <Layout className="w-[18px] h-[18px]" /> }
+            ]
+        },
+        {
+            group: "Management",
+            items: [
+                { id: "users", label: "Users", icon: <Users className="w-[18px] h-[18px]" /> },
+                { id: "guides", label: "Tour Guides", icon: <UserCheck className="w-[18px] h-[18px]" /> }
+            ]
+        },
+        {
+            group: "Content",
+            items: [
+                { id: "destinations", label: "Destinations", icon: <MapPin className="w-[18px] h-[18px]" /> }
+            ]
+        },
+        {
+            group: "Operations",
+            items: [
+                { id: "bookings", label: "Bookings", icon: <Calendar className="w-[18px] h-[18px]" /> },
+                { id: "analytics", label: "Analytics", icon: <BarChart3 className="w-[18px] h-[18px]" /> }
+            ]
+        }
+    ];
+
     return (
         <>
             {/* Overlay when mobile menu is open */}
@@ -41,20 +72,26 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
                     onClick={() => setMobileMenuOpen(false)}
                 ></div>
-            )}
-
-            {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
-            <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-                } w-64 bg-white h-screen shadow-lg fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out flex flex-col`}>
+            )}            {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}            <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+                } w-72 bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out flex flex-col`}>
                 {/* Logo/Brand */}
-                <div className="h-20 bg-gradient-to-r from-teal-500 to-emerald-500 flex items-center px-6 flex-shrink-0">
-                    <h1 className="text-xl font-bold text-white">WanderWise Admin</h1>
+                <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center px-6 flex-shrink-0">
+                    <div className="flex items-center space-x-2">
+                        <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md">
+                            <img
+                                src={"/src/asset/image/logologin.png"}
+                                alt="WanderWise Logo"
+                                className="w-8 h-8 object-contain"
+                            />
+                        </div>
+                        <h1 className="text-xl font-bold text-white tracking-wide">WanderWise</h1>
+                    </div>
                 </div>
 
-                {/* Profile Summary */}
-                <div className="p-4 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white">
+                {/* Profile Summary - Improved with better spacing and shadow */}
+                <div className="p-5 border-b border-gray-100 bg-white shadow-sm flex-shrink-0">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
                             <img
                                 src={"/src/asset/image/logologin.png"}
                                 alt="Profile Logo"
@@ -62,7 +99,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                             />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-sm font-medium text-gray-900 truncate">
+                            <h2 className="text-sm font-semibold text-gray-800 truncate">
                                 {user?.profile.firstName} {user?.profile.lastName}
                             </h2>
                             <div className="flex items-center mt-1">
@@ -70,90 +107,50 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>                {/* Navigation with scrollable content */}
+                <nav className="flex-1 px-4 py-4 flex flex-col">
+                    <div className="overflow-y-auto flex-1">
+                        {menuItems.map((menuGroup, groupIdx) => (
+                            <div key={groupIdx} className="mb-5">
+                                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">
+                                    {menuGroup.group}
+                                </h3>
+                                <ul className="space-y-1">
+                                    {menuGroup.items.map((item) => (
+                                        <li key={item.id}>
+                                            <button
+                                                onClick={() => setActivePage(item.id)}
+                                                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${activePage === item.id
+                                                    ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
+                                                    : "text-gray-700 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    {item.icon}
+                                                    <span className="font-medium">{item.label}</span>
+                                                </div>
+                                                {activePage === item.id && (
+                                                    <ChevronRight className="w-4 h-4 text-white" />
+                                                )}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
 
-                {/* Navigation - Scrollable */}
-                <nav className="flex-1 overflow-y-auto px-4 py-4">
-                    <ul className="space-y-2">
-                        <li>
-                            <button
-                                onClick={() => setActivePage("dashboard")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "dashboard" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <Layout className="w-5 h-5" />
-                                <span>Dashboard</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => setActivePage("users")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "users" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <Users className="w-5 h-5" />
-                                <span>Users</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => setActivePage("guides")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "guides" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <UserCheck className="w-5 h-5" />
-                                <span>Tour Guides</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => setActivePage("destinations")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "destinations" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <MapPin className="w-5 h-5" />
-                                <span>Destinations</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => setActivePage("bookings")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "bookings" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <Calendar className="w-5 h-5" />
-                                <span>Bookings</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => setActivePage("analytics")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "analytics" ? "bg-teal-500 text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                            >
-                                <BarChart3 className="w-5 h-5" />
-                                <span>Analytics</span>
-                            </button>
-                        </li>
-
-
-
-
-                        {/* Add some extra space at the bottom for better scrolling experience */}
-                        <div className="h-16"></div>
-                    </ul>
+                    {/* Logout button positioned directly after navigation items */}
+                    <div className=" pt-4 border-t border-gray-100">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center justify-center space-x-2 p-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="font-medium">Sign Out</span>
+                        </button>
+                    </div>
                 </nav>
-
-                {/* Logout at bottom */}
-                <div className="w-full p-4 bg-gray-50 shadow-inner flex-shrink-0">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-center space-x-2 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span>Logout</span>
-                    </button>
-                </div>
             </div>
         </>
     );

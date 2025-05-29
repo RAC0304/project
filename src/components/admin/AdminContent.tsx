@@ -22,13 +22,13 @@ const AdminContent: React.FC<AdminContentProps> = ({
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 gap-4">
                 <div>                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                        {activePage === "dashboard" && "Admin Dashboard"}
-                        {activePage === "users" && "User Management"}
-                        {activePage === "guides" && "Tour Guide Management"}
-                        {activePage === "destinations" && "Destinations"}
-                        {activePage === "bookings" && "Bookings"}
-                        {activePage === "analytics" && "Analytics"}
-                    </h1>
+                    {activePage === "dashboard" && "Admin Dashboard"}
+                    {activePage === "users" && "User Management"}
+                    {activePage === "guides" && "Tour Guide Management"}
+                    {activePage === "destinations" && "Destinations"}
+                    {activePage === "bookings" && "Bookings"}
+                    {activePage === "analytics" && "Analytics"}
+                </h1>
                     <p className="text-gray-600 mt-1">
                         Welcome back, {user?.profile.firstName} {user?.profile.lastName}
                     </p>

@@ -3,6 +3,7 @@ import { User, UserRole } from '../../types';
 import { DEMO_USERS } from '../../data/users';
 import { Search, Filter, Edit, UserX, MoreHorizontal, UserPlus, ChevronLeft, ChevronRight, X, Camera, AlertCircle, Check, Mail, Phone, MapPin, ExternalLink, UserCheck } from 'lucide-react';
 import RoleBadge from '../common/RoleBadge';
+import { DEFAULT_AVATAR } from '../../asset/image/defaultAvatar';
 import './admin.css';
 
 interface UsersContentProps {
@@ -434,16 +435,15 @@ const UsersContent: React.FC<UsersContentProps> = ({ user }) => {
                                 currentUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
-                                                    {user.profile.avatar ? (
-                                                        <img src={user.profile.avatar} alt={user.username} className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        <div className="h-full w-full flex items-center justify-center bg-teal-100 text-teal-800 font-semibold">
-                                                            {user.profile.firstName.charAt(0)}{user.profile.lastName.charAt(0)}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            <div className="flex items-center">                                                <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                                                {user.profile.avatar ? (
+                                                    <img src={user.profile.avatar} alt={user.username} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center bg-teal-100 text-teal-800 font-semibold">
+                                                        {user.profile.firstName.charAt(0)}{user.profile.lastName.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
                                                 <div className="ml-4">
                                                     <div className="text-sm font-medium text-gray-900">
                                                         {user.profile.firstName} {user.profile.lastName}
