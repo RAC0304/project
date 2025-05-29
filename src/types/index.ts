@@ -169,3 +169,83 @@ export interface RolePermissions {
   role: UserRole;
   permissions: Permission[];
 }
+
+export interface Booking {
+  id: string;
+  tourId: string;
+  tourName: string;
+  tourGuideId: string;
+  tourGuideName: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  date: string;
+  participants: number;
+  status: "pending" | "confirmed" | "cancelled";
+  specialRequests?: string;
+  totalAmount: number;
+  paymentStatus: "pending" | "paid" | "refunded";
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Analytics Types
+export type AnalyticsMetric = 'bookings' | 'revenue' | 'users';
+export type AnalyticsReportType = 'revenue' | 'users' | 'destinations' | 'guides' | 'bookings';
+export type AnalyticsReportPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type AnalyticsReportStatus = 'available' | 'processing' | 'error';
+
+export interface AnalyticsItem {
+  date: string;
+  value: number;
+}
+
+export interface TopDestinationItem {
+  name: string;
+  bookings: number;
+  revenue: number;
+  rating: number;
+}
+
+export interface TopTourGuideItem {
+  name: string;
+  bookings: number;
+  revenue: number;
+  rating: number;
+}
+
+export interface AnalyticsReport {
+  id: string;
+  title: string;
+  description: string;
+  type: AnalyticsReportType;
+  period: AnalyticsReportPeriod;
+  createdAt: string;
+  lastUpdated: string;
+  status: AnalyticsReportStatus;
+}
+
+export interface AnalyticsData {
+  overview: {
+    totalUsers: number;
+    activeUsers: number;
+    newUsersThisMonth: number;
+    totalBookings: number;
+    bookingsThisMonth: number;
+    totalRevenue: number;
+    revenueThisMonth: number;
+    averageRating: number;
+    totalDestinations: number;
+    totalTourGuides: number;
+    activeTourGuides: number;
+  };
+  timeSeries: {
+    bookings: AnalyticsItem[];
+    revenue: AnalyticsItem[];
+    users: AnalyticsItem[];
+  };
+  topDestinations: TopDestinationItem[];
+  topTourGuides: TopTourGuideItem[];
+  reports: AnalyticsReport[];
+}

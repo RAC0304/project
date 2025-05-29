@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     Users,
-    Settings,
     BarChart3,
     MapPin,
     Calendar,
@@ -137,21 +136,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                             </button>
                         </li>
 
-                        {/* Separator for Settings */}
-                        <div className="my-2 border-t border-gray-100"></div>
 
-                        <li>
-                            <button
-                                onClick={() => setActivePage("settings")}
-                                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${activePage === "settings"
-                                    ? "bg-teal-500 text-white"
-                                    : "text-teal-600 bg-teal-50 hover:bg-teal-100"
-                                    }`}
-                            >
-                                <Settings className="w-5 h-5" />
-                                <span>Settings</span>
-                            </button>
-                        </li>
+
 
                         {/* Add some extra space at the bottom for better scrolling experience */}
                         <div className="h-16"></div>

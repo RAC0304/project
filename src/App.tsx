@@ -96,12 +96,22 @@ function App() {
   );
 }
 
-export default function AppWrapper() {
+// Create router with future flags to address React Router warnings
+const createRouterWithFutureFlags = () => {
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <AuthProvider>
         <App />
       </AuthProvider>
     </Router>
   );
+};
+
+export default function AppWrapper() {
+  return createRouterWithFutureFlags();
 }
