@@ -1,11 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Import Leaflet default styles */
 @import 'leaflet/dist/leaflet.css';
 /* Import custom Leaflet styles */
 @import './styles/leaflet-custom.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Custom animations for Toast */
 @keyframes slide-in-right {
