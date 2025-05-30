@@ -14,6 +14,7 @@ import { culturalInsights } from "../data/culturalInsights";
 import DestinationCard from "../components/destinations/DestinationCard";
 import ItineraryCard from "../components/itineraries/ItineraryCard";
 import CulturalInsightCard from "../components/culture/CulturalInsightCard";
+import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 import SearchForm from "../components/common/SearchForm";
 
 const HomePage: React.FC = () => {
@@ -47,11 +48,10 @@ const HomePage: React.FC = () => {
 
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
           <div
-            className={`max-w-3xl transition-all duration-1000 transform ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
+            className={`max-w-3xl transition-all duration-1000 transform ${isVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-10 opacity-0"
+              }`}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Discover the Magic of{" "}
@@ -115,9 +115,7 @@ const HomePage: React.FC = () => {
             <DestinationCard key={destination.id} destination={destination} />
           ))}
         </div>
-      </section>
-
-      {/* Explore Categories */}
+      </section>      {/* Explore Categories */}
       <section className="py-16 bg-teal-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
@@ -127,6 +125,11 @@ const HomePage: React.FC = () => {
             <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
               Discover destinations across the Indonesian archipelago
             </p>
+          </div>
+
+          {/* Indonesia Map */}
+          <div className="mb-12">
+            <IndonesiaMap className="mb-8" />
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center">

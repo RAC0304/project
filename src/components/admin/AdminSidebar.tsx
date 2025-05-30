@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import RoleBadge from '../common/RoleBadge';
+import { LOGO_IMAGE } from '../../constants/images';
 
 interface AdminSidebarProps {
     activePage: string;
@@ -72,16 +73,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
                     onClick={() => setMobileMenuOpen(false)}
                 ></div>
-            )}            {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}            <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-                } w-72 bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out flex flex-col`}>
+            )}            {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
+            <div className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+                } w-72 bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out flex flex-col overflow-hidden`}>
                 {/* Logo/Brand */}
                 <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center px-6 flex-shrink-0">
                     <div className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md">
-                            <img
-                                src={"/src/asset/image/logologin.png"}
+                        <div className="w-10 h-10 rounded-md flex items-center justify-center shadow-md">
+                            <img src={LOGO_IMAGE}
                                 alt="WanderWise Logo"
-                                className="w-8 h-8 object-contain"
+                                className="w-20 h-20 object-contain"
                             />
                         </div>
                         <h1 className="text-xl font-bold text-white tracking-wide">WanderWise</h1>
@@ -92,8 +93,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div className="p-5 border-b border-gray-100 bg-white shadow-sm flex-shrink-0">
                     <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
-                            <img
-                                src={"/src/asset/image/logologin.png"}
+                            <img src={LOGO_IMAGE}
                                 alt="Profile Logo"
                                 className="w-full h-full object-cover"
                             />
@@ -106,10 +106,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                                 <RoleBadge role={user?.role || "admin"} />
                             </div>
                         </div>
-                    </div>
-                </div>                {/* Navigation with scrollable content */}
-                <nav className="flex-1 px-4 py-4 flex flex-col">
-                    <div className="overflow-y-auto flex-1">
+                    </div>                </div>
+
+                {/* Navigation with scrollable content */}
+                <nav className="flex-1 flex flex-col overflow-hidden">
+                    <div className="px-4 pt-4 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 pr-2">
                         {menuItems.map((menuGroup, groupIdx) => (
                             <div key={groupIdx} className="mb-5">
                                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">
@@ -136,12 +137,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
-                        ))}
+                            </div>))}                    {/* Add some bottom padding for better scroll experience */}
+                        <div className="h-4"></div>
                     </div>
 
                     {/* Logout button positioned directly after navigation items */}
-                    <div className=" pt-4 border-t border-gray-100">
+                    <div className="px-4 py-4 border-t border-gray-100 mt-auto">
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center justify-center space-x-2 p-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"

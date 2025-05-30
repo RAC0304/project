@@ -1,3 +1,6 @@
+// Export all types from tourguide.ts
+export * from './tourguide';
+
 export interface Destination {
   id: string;
   name: string;

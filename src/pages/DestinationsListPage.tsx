@@ -4,6 +4,7 @@ import { Filter, X, Search } from "lucide-react";
 import { destinations } from "../data/destinations";
 import { Destination, DestinationCategory } from "../types";
 import DestinationCard from "../components/destinations/DestinationCard";
+import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 
 const DestinationsListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,8 +34,8 @@ const DestinationsListPage: React.FC = () => {
     const filtered = destinations.filter((destination) => {
       const matchesSearch = currentSearchTerm
         ? destination.name.toLowerCase().includes(currentSearchTerm) ||
-          destination.location.toLowerCase().includes(currentSearchTerm) ||
-          destination.description.toLowerCase().includes(currentSearchTerm)
+        destination.location.toLowerCase().includes(currentSearchTerm) ||
+        destination.description.toLowerCase().includes(currentSearchTerm)
         : true;
 
       const matchesCategories =
@@ -75,43 +76,47 @@ const DestinationsListPage: React.FC = () => {
 
   return (
     <div className="pt-24 pb-16">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Explore Indonesia
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover the diverse destinations across the Indonesian archipelago,
-            from pristine beaches to ancient temples
-          </p>
+      <div className="container mx-auto px-4">        <div className="text-center mb-10">
+        <h1 className="text-4xl font-bold text-gray-800 mb-4">
+          Explore Indonesia
+        </h1>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          Discover the diverse destinations across the Indonesian archipelago,
+          from pristine beaches to ancient temples
+        </p>
 
-          {/* Search input */}
-          <div className="max-w-lg mx-auto mt-8">
-            <form
-              onSubmit={handleSearchSubmit}
-              className="flex items-center gap-2"
-            >
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search destinations..."
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-teal-600 hover:bg-teal-700 text-white py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors font-medium"
-              >
-                Search
-              </button>
-            </form>
-          </div>
+        {/* Interactive Indonesia Map */}
+        <div className="mt-8 mb-10">
+          <IndonesiaMap className="mb-4" />
         </div>
+
+        {/* Search input */}
+        <div className="max-w-lg mx-auto mt-8">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex items-center gap-2"
+          >
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search destinations..."
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-teal-600 hover:bg-teal-700 text-white py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors font-medium"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
 
         {/* Filters section */}
         <div className="mb-8">
@@ -150,11 +155,10 @@ const DestinationsListPage: React.FC = () => {
                     <button
                       key={category.value}
                       onClick={() => toggleCategory(category.value)}
-                      className={`px-3 py-1.5 rounded-full text-sm ${
-                        selectedCategories.includes(category.value)
-                          ? "bg-teal-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } transition-colors`}
+                      className={`px-3 py-1.5 rounded-full text-sm ${selectedCategories.includes(category.value)
+                        ? "bg-teal-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        } transition-colors`}
                     >
                       {category.label}
                     </button>

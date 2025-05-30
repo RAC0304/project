@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { LOGO_IMAGE } from "../constants/images";
 import { User, Shield, MapPin } from "lucide-react";
 
 const LoginPage: React.FC = () => {
@@ -44,7 +45,7 @@ const LoginPage: React.FC = () => {
     setError("");
     setIsLoading(true);
 
-    const result = await login(email, password);    if (result.success) {
+    const result = await login(email, password); if (result.success) {
       // Check user role from local storage since the context might not be updated yet
       const userData = localStorage.getItem("user");
       if (userData) {
@@ -113,7 +114,7 @@ const LoginPage: React.FC = () => {
             className="w-32 h-32 mb-6 relative group"
           >
             <img
-              src="/src/asset/image/logologin.png"
+              src={LOGO_IMAGE}
               alt="Wanderwise Logo"
               className="w-full h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
             />

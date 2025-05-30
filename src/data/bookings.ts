@@ -1,4 +1,4 @@
-import { Booking } from "../types";
+import { Booking } from "../types/tourguide";
 
 export const bookings: Booking[] = [
     {

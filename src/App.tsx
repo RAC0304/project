@@ -22,6 +22,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import TourGuideDashboard from "./pages/TourGuideDashboard";
+import MapDemoPage from "./pages/MapDemoPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
@@ -46,8 +47,7 @@ function App() {
       {!hideHeaderFooter && <Header />}
       <main className={`flex-grow ${!hideHeaderFooter ? "pt-14" : ""}`}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/destinations" element={<DestinationsListPage />} />
+          <Route path="/" element={<HomePage />} />          <Route path="/destinations" element={<DestinationsListPage />} />
           <Route path="/destinations/:id" element={<DestinationPage />} />
           <Route path="/itineraries" element={<ItinerariesPage />} />
           <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
@@ -55,6 +55,7 @@ function App() {
           {/* <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} /> */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/map" element={<MapDemoPage />} />
 
           {/* Protected Routes */}
           <Route

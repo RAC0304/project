@@ -52,7 +52,6 @@ const Header: React.FC = () => {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
-
   const navLinks = [
     {
       name: "Destinations",
@@ -65,6 +64,11 @@ const Header: React.FC = () => {
       icon: <User className="w-5 h-5" />,
     },
     { name: "Explore", path: "/#explore", icon: <Globe className="w-5 h-5" /> },
+    {
+      name: "Interactive Map",
+      path: "/map",
+      icon: <Globe className="w-5 h-5" />,
+    },
     {
       name: "Itineraries",
       path: "/itineraries",

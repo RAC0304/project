@@ -18,7 +18,7 @@ const AdminContent: React.FC<AdminContentProps> = ({
     user
 }) => {
     return (
-        <div className="lg:ml-64 flex-1 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 transition-all duration-300">
+        <div className="lg:ml-80 flex-1 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 transition-all duration-300">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 gap-4">
                 <div>                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
