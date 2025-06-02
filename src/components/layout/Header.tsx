@@ -11,7 +11,7 @@ import {
   Info,
   Star as StarIcon,
   LogOut,
-  Settings,
+  // Settings,
 } from "lucide-react";
 import Logo from "../common/Logo";
 import { useAuth } from "../../contexts/AuthContext";
@@ -64,11 +64,7 @@ const Header: React.FC = () => {
       icon: <User className="w-5 h-5" />,
     },
     { name: "Explore", path: "/#explore", icon: <Globe className="w-5 h-5" /> },
-    {
-      name: "Interactive Map",
-      path: "/map",
-      icon: <Globe className="w-5 h-5" />,
-    },
+
     {
       name: "Itineraries",
       path: "/itineraries",
@@ -81,27 +77,6 @@ const Header: React.FC = () => {
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
   ];
-  // Add role-specific navigation links
-  const getRoleSpecificLinks = () => {
-    if (!user) return [];
-
-    const roleLinks = [];
-
-    // Admin dashboard is now accessed directly after login, not from header
-    // No admin link is added to navigation
-
-    if (user.role === "tour_guide") {
-      roleLinks.push({
-        name: "Guide Dashboard",
-        path: "/guide/dashboard",
-        icon: <Settings className="w-5 h-5" />,
-      });
-    }
-
-    return roleLinks;
-  };
-
-  const allNavLinks = [...navLinks, ...getRoleSpecificLinks()];
 
   const headerClass = isScrolled
     ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
@@ -119,39 +94,44 @@ const Header: React.FC = () => {
             height={60}
           />
           <span
-            className={`font-bold text-xl ml-2 ${isScrolled ? "text-teal-600" : "text-teal-600"
-              }`}
+            className={`font-bold text-xl ml-2 ${
+              isScrolled ? "text-teal-600" : "text-teal-600"
+            }`}
           >
             WanderWise
           </span>
         </Link>
         <div className="hidden md:flex items-center space-x-6">
-          {allNavLinks.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
               className={`flex items-center space-x-1 px-2 py-0.5 rounded-full transition hover:bg-teal-500/10
-                ${location.pathname === link.path
-                  ? "font-medium"
-                  : "font-normal"
+                ${
+                  location.pathname === link.path
+                    ? "font-medium"
+                    : "font-normal"
                 }
-                ${isScrolled
-                  ? "text-gray-700 hover:text-teal-600"
-                  : "text-teal-600 hover:text-teal-600"
+                ${
+                  isScrolled
+                    ? "text-gray-700 hover:text-teal-600"
+                    : "text-teal-600 hover:text-teal-600"
                 }`}
             >
               {React.cloneElement(link.icon, {
-                className: `w-4 h-4 ${isScrolled ? "text-teal-600" : "text-teal-600"
-                  }`,
+                className: `w-4 h-4 ${
+                  isScrolled ? "text-teal-600" : "text-teal-600"
+                }`,
               })}
               <span>{link.name}</span>
             </Link>
           ))}
           <button
             className={`flex items-center space-x-1 px-3 py-1.5 border border-teal-500 rounded-full transition
-              ${isScrolled
-                ? "text-teal-600 hover:bg-teal-50"
-                : "text-teal-600 border-white/70 hover:bg-white/10"
+              ${
+                isScrolled
+                  ? "text-teal-600 hover:bg-teal-50"
+                  : "text-teal-600 border-white/70 hover:bg-white/10"
               }`}
           >
             <Search className="w-4 h-4" />
@@ -180,9 +160,10 @@ const Header: React.FC = () => {
             <Link
               to="/login"
               className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
-                ${isScrolled
-                  ? "bg-teal-500 text-white hover:bg-teal-600"
-                  : "bg-white/20 text-teal-500 hover:bg-white/30"
+                ${
+                  isScrolled
+                    ? "bg-teal-500 text-white hover:bg-teal-600"
+                    : "bg-white/20 text-teal-500 hover:bg-white/30"
                 } transition-colors duration-300`}
             >
               <User className="w-4 h-4" />
@@ -220,7 +201,7 @@ const Header: React.FC = () => {
               </div>
               <nav className="flex-1">
                 <ul className="space-y-4">
-                  {allNavLinks.map((link) => (
+                  {navLinks.map((link) => (
                     <li key={link.path}>
                       <Link
                         to={link.path}

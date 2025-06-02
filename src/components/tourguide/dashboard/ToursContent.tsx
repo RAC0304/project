@@ -3,156 +3,204 @@ import { getStatusColor } from "../../../utils/statusHelpers";
 import { TourData } from "../../../types/tourguide";
 import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 
-interface Tour extends Omit<TourData, 'id'> {
-    id: number; // Make id required and explicitly number
+interface Tour extends Omit<TourData, "id"> {
+  id: number; // Make id required and explicitly number
 }
 
 interface ToursContentProps {
-    tours: Tour[];
-    onEditTour: (tour: Tour) => void;
-    onDeleteTour?: (tourId: number) => Promise<void>;
-    onCreateTour?: () => void;
-    isLoading?: boolean;
+  tours: Tour[];
+  onEditTour: (tour: Tour) => void;
+  onDeleteTour?: (tourId: number) => Promise<void>;
+  onCreateTour?: () => void;
+  isLoading?: boolean;
 }
 
 const ToursContent: React.FC<ToursContentProps> = ({
-    tours,
-    onEditTour,
-    onDeleteTour,
-    onCreateTour,
-    isLoading = false
+  tours,
+  onEditTour,
+  onDeleteTour,
+  onCreateTour,
+  isLoading = false,
 }) => {
-    const [deletingTourId, setDeletingTourId] = useState<number | null>(null); const handleDelete = async (tourId: number) => {
-        if (deletingTourId === tourId) {
-            try {
-                await onDeleteTour?.(tourId);
-            } catch (error) {
-                console.error("Failed to delete tour:", error);
-            } finally {
-                setDeletingTourId(null);
-            }
-        } else {
-            // First click - show confirmation state
-            setDeletingTourId(tourId);
-            // Auto-reset after 3 seconds if not confirmed
-            setTimeout(() => {
-                setDeletingTourId(null);
-            }, 3000);
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-                </div>
-            </div>
-        );
+  const [deletingTourId, setDeletingTourId] = useState<number | null>(null);
+  const handleDelete = async (tourId: number) => {
+    if (deletingTourId === tourId) {
+      try {
+        await onDeleteTour?.(tourId);
+      } catch (error) {
+        console.error("Failed to delete tour:", error);
+      } finally {
+        setDeletingTourId(null);
+      }
+    } else {
+      // First click - show confirmation state
+      setDeletingTourId(tourId);
+      // Auto-reset after 3 seconds if not confirmed
+      setTimeout(() => {
+        setDeletingTourId(null);
+      }, 3000);
     }
+  };
 
+  if (isLoading) {
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">My Tours</h2>
-                <button
-                    onClick={onCreateTour}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 inline-flex items-center"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Tour
-                </button>
-            </div>
-
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tour Name
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Location
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Duration
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Price
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {tours.map((tour) => (
-                            <tr key={tour.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{tour.title}</div>
-                                    <div className="text-xs text-gray-500">{tour.date} at {tour.time}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {tour.location}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {tour.duration}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ${tour.price}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(tour.status || "active")}`}>
-                                        {tour.status || "Active"}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button
-                                        onClick={() => onEditTour(tour)}
-                                        className="text-teal-600 hover:text-teal-900 p-1 rounded-full hover:bg-teal-50 transition-colors inline-flex items-center"
-                                        title="Edit tour"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    {onDeleteTour && (
-                                        <button
-                                            onClick={() => handleDelete(tour.id)}
-                                            className={`ml-2 p-1 rounded-full transition-colors inline-flex items-center ${deletingTourId === tour.id
-                                                ? "text-red-100 bg-red-600 hover:bg-red-700"
-                                                : "text-red-600 hover:text-red-900 hover:bg-red-50"
-                                                }`}
-                                            title={deletingTourId === tour.id ? "Click again to confirm" : "Delete tour"}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {tours.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                    <div className="flex flex-col items-center justify-center">
-                                        <p className="mb-4">No tours found. Create your first tour to get started!</p>
-                                        <button
-                                            onClick={onCreateTour}
-                                            className="inline-flex items-center text-teal-600 hover:text-teal-700"
-                                        >
-                                            <Plus className="w-5 h-5 mr-1" />
-                                            Create Tour
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
         </div>
+      </div>
     );
+  }
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">My Tours</h1>
+            <p className="text-gray-600">
+              Create and manage your tour offerings for clients
+            </p>
+          </div>
+          <button
+            onClick={onCreateTour}
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 inline-flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Tour
+          </button>
+        </div>
+      </div>
+
+      {/* Tours Table */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        {" "}
+        <div className="overflow-hidden rounded-lg border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Tour Name
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Location
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Duration
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Price
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Status
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {tours.map((tour) => (
+                <tr key={tour.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {tour.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {tour.date} at {tour.time}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {tour.location}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {tour.duration}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${tour.price}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                        tour.status || "active"
+                      )}`}
+                    >
+                      {tour.status || "Active"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => onEditTour(tour)}
+                      className="text-teal-600 hover:text-teal-900 p-1 rounded-full hover:bg-teal-50 transition-colors inline-flex items-center"
+                      title="Edit tour"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    {onDeleteTour && (
+                      <button
+                        onClick={() => handleDelete(tour.id)}
+                        className={`ml-2 p-1 rounded-full transition-colors inline-flex items-center ${
+                          deletingTourId === tour.id
+                            ? "text-red-100 bg-red-600 hover:bg-red-700"
+                            : "text-red-600 hover:text-red-900 hover:bg-red-50"
+                        }`}
+                        title={
+                          deletingTourId === tour.id
+                            ? "Click again to confirm"
+                            : "Delete tour"
+                        }
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {tours.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    <div className="flex flex-col items-center justify-center">
+                      <p className="mb-4">
+                        No tours found. Create your first tour to get started!
+                      </p>
+                      <button
+                        onClick={onCreateTour}
+                        className="inline-flex items-center text-teal-600 hover:text-teal-700"
+                      >
+                        <Plus className="w-5 h-5 mr-1" />
+                        Create Tour
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default ToursContent;

@@ -11,11 +11,8 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-import {
-  indonesiaGeoData,
-  majorCities,
-  popularDestinations,
-} from "../../data/indonesiaGeoData";
+import { indonesiaGeoData } from "../../data/indonesiaGeoData";
+import { Destination } from "../../types";
 
 // Fix for Leaflet marker icons not displaying properly in production builds
 // This needs to be done once before using any markers
@@ -43,42 +40,70 @@ const destinationIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Custom icon for capital city
-const capitalIcon = new L.Icon({
+// Custom icon for highlighted destinations
+const highlightedDestinationIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
+  iconSize: [30, 45], // Slightly larger to stand out
+  iconAnchor: [15, 45],
+  popupAnchor: [1, -40],
   shadowSize: [41, 41],
-});
-
-// Custom icon for regular cities
-const cityIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-  iconSize: [20, 36], // Slightly smaller than the capital icon
-  iconAnchor: [10, 36],
-  popupAnchor: [1, -34],
-  shadowSize: [36, 36],
 });
 
 // Component props interface
 interface IndonesiaMapLeafletProps {
   className?: string;
-  showCities?: boolean;
-  showDestinations?: boolean;
   height?: string;
+  destinations?: Destination[];
+  filteredDestinations?: Destination[];
 }
+
+// Function to get approximate coordinates based on location name
+// In a real app, you would use a geocoding service
+const getDestinationCoordinates = (location: string): [number, number] => {
+  // This is a very basic mapping for demo purposes
+  // In production, you should use a geocoding service
+  const locationMap: Record<string, [number, number]> = {
+    "Bali, Indonesia": [-8.3405, 115.092],
+    "Jakarta, Indonesia": [-6.2088, 106.8456],
+    "Lombok, Indonesia": [-8.65, 116.3252],
+    "Yogyakarta, Indonesia": [-7.7956, 110.3695],
+    "Bandung, Indonesia": [-6.9175, 107.6191],
+    "Raja Ampat, Indonesia": [-0.5, 130.5],
+    "Komodo, Indonesia": [-8.55, 119.4547],
+    "Tana Toraja, Indonesia": [-3.0026, 119.8526],
+    "Borobudur, Indonesia": [-7.6079, 110.2038],
+    "Bromo, Indonesia": [-7.9425, 112.953],
+    "Sumatra, Indonesia": [0.0, 101.0],
+    "Sulawesi, Indonesia": [0.0, 121.0],
+    "Papua, Indonesia": [-4.0, 138.0],
+    "Kalimantan, Indonesia": [0.0, 115.0],
+    "Flores, Indonesia": [-8.6573, 121.0794],
+  };
+
+  // Try to find exact match first
+  if (locationMap[location]) {
+    return locationMap[location];
+  }
+
+  // Try to match by beginning of string
+  for (const [key, value] of Object.entries(locationMap)) {
+    if (location.includes(key.split(",")[0])) {
+      return value;
+    }
+  }
+
+  // Default to center of Indonesia if no match found
+  return [-2.5489, 118.0149];
+};
 
 // Main component
 const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
   className = "",
-  showCities = true,
-  showDestinations = true,
   height = "550px",
+  destinations = [],
+  filteredDestinations = [],
 }) => {
   const navigate = useNavigate();
   const mapRef = useRef<L.Map | null>(null);
@@ -137,7 +162,9 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
         duration: 1.5,
       });
     }
-  }; // Handle feature interactions for GeoJSON
+  };
+
+  // Handle feature interactions for GeoJSON
   const onEachFeature = (feature: GeoJSON.Feature, layer: L.Layer) => {
     if (feature.properties) {
       const regionName = feature.properties.name as string;
@@ -164,7 +191,7 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
               : ""
           }
           <button class="mt-2 bg-teal-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-teal-700">
-            Explore Destinations
+            Jelajahi Destinasi
           </button>
         </div>
       `);
@@ -211,8 +238,10 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
           {/* Custom zoom control position */}
           <ZoomControl position="bottomright" />
+
           {/* Indonesia GeoJSON data */}
           <GeoJSON
             ref={indonesiaGeoJsonRef}
@@ -220,70 +249,68 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
             style={getGeoJSONStyle}
             onEachFeature={onEachFeature}
           />
-          {/* Show major cities */}
-          {showCities &&
-            majorCities.map((city) => (
-              <Marker
-                key={`city-${city.name}`}
-                position={[city.coordinates[1], city.coordinates[0]]}
-                icon={city.isCapital ? capitalIcon : cityIcon}
-              >
-                <Popup>
-                  <div>
-                    <h3 className="font-bold">{city.name}</h3>
-                    <p className="text-sm">
-                      {city.isCapital ? "Capital City" : "Major City"}
-                    </p>
-                    <p className="text-sm text-gray-600">{city.island}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}{" "}
-          {/* Show popular destinations */}
-          {showDestinations &&
-            popularDestinations.map((dest) => (
-              <Marker
-                key={`dest-${dest.name}`}
-                position={[dest.coordinates[1], dest.coordinates[0]]}
-                icon={destinationIcon}
-              >
-                <Popup>
-                  <div>
-                    <h3 className="font-bold">{dest.name}</h3>
-                    <p className="text-sm">{dest.type}</p>
-                    <p className="text-sm text-gray-600">{dest.island}</p>
-                    <button
-                      className="mt-2 bg-teal-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-teal-700"
-                      onClick={() =>
-                        navigate(`/destinations?search=${dest.name}`)
-                      }
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+
+          {/* Show destinations from the data */}
+          {destinations.map((dest) => (
+            <Marker
+              key={`dest-${dest.id}`}
+              position={getDestinationCoordinates(dest.location)}
+              icon={destinationIcon}
+            >
+              <Popup>
+                <div>
+                  <h3 className="font-bold">{dest.name}</h3>
+                  <p className="text-sm">{dest.shortDescription}</p>
+                  <p className="text-sm text-gray-600">{dest.location}</p>
+                  <button
+                    className="mt-2 bg-teal-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-teal-700"
+                    onClick={() =>
+                      navigate(`/destinations?search=${dest.name}`)
+                    }
+                  >
+                    Lihat Detail
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {/* Show filtered destinations with a different icon */}
+          {filteredDestinations.map((dest) => (
+            <Marker
+              key={`filtered-dest-${dest.id}`}
+              position={getDestinationCoordinates(dest.location)}
+              icon={highlightedDestinationIcon}
+            >
+              <Popup>
+                <div>
+                  <h3 className="font-bold">{dest.name}</h3>
+                  <p className="text-sm">{dest.shortDescription}</p>
+                  <p className="text-sm text-gray-600">{dest.location}</p>
+                  <button
+                    className="mt-2 bg-teal-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-teal-700"
+                    onClick={() =>
+                      navigate(`/destinations?search=${dest.name}`)
+                    }
+                  >
+                    Lihat Detail
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </div>
       <div className="mt-4 text-center">
         <div className="flex justify-center space-x-2 mb-3">
           <span className="text-xs flex items-center">
-            <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-1"></span>
-            Capital City
-          </span>
-          <span className="text-xs flex items-center">
-            <span className="inline-block w-3 h-3 bg-blue-500 rounded-full mr-1"></span>
-            Major City
-          </span>
-          <span className="text-xs flex items-center">
             <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-1"></span>
-            Popular Destination
+            Destinasi Wisata
           </span>
         </div>
         <p className="mb-1 font-medium">Jelajahi Indonesia dari peta</p>
         <p className="text-sm text-gray-600">
-          Klik pada pulau atau marker untuk melihat informasi lebih lanjut
+          Klik pada marker atau wilayah untuk informasi lebih lanjut
         </p>
       </div>
     </div>
