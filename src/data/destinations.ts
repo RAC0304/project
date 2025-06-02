@@ -70,6 +70,7 @@ export const destinations: Destination[] = [
       "Try the local coffee, particularly the famous Luwak coffee",
     ],
     category: ["beach", "cultural", "nature"],
+    googleMapsUrl: "https://www.google.com/maps?q=Bali,+Indonesia",
   },
   {
     id: "raja-ampat",
@@ -132,6 +133,7 @@ export const destinations: Destination[] = [
       "Prepare for limited internet connectivity",
     ],
     category: ["beach", "nature", "adventure"],
+    googleMapsUrl: "https://www.google.com/maps?q=Raja+Ampat,+Indonesia",
   },
   {
     id: "borobudur",
@@ -193,6 +195,8 @@ export const destinations: Destination[] = [
       "Consider hiring a guide to understand the symbolism and history",
     ],
     category: ["cultural", "historical"],
+    googleMapsUrl:
+      "https://www.google.com/maps?q=Borobudur+Temple,+Central+Java,+Indonesia",
   },
   {
     id: "komodo",
@@ -261,6 +265,8 @@ export const destinations: Destination[] = [
       "Consider multi-day boat tours to fully experience the area",
     ],
     category: ["nature", "adventure", "beach"],
+    googleMapsUrl:
+      "https://www.google.com/maps?q=Komodo+National+Park,+East+Nusa+Tenggara,+Indonesia",
   },
   {
     id: "yogyakarta",
@@ -323,6 +329,8 @@ export const destinations: Destination[] = [
       "Consider hiring a local guide for temple visits",
     ],
     category: ["cultural", "historical", "city"],
+    googleMapsUrl:
+      "https://www.google.com/maps?q=Yogyakarta,+Central+Java,+Indonesia",
   },
 ];
 

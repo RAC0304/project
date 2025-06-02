@@ -14,6 +14,7 @@ export interface Destination {
   bestTimeToVisit: string;
   travelTips: string[];
   category: DestinationCategory[];
+  googleMapsUrl: string;
 }
 
 export interface Attraction {
