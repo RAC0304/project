@@ -251,10 +251,13 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
             Popular Destination
           </span>
         </div>
+<<<<<<< Updated upstream
         <p className="mb-1 font-medium">Jelajahi Indonesia dari peta</p>
         <p className="text-sm text-gray-600">
           Klik pada pulau atau marker untuk melihat informasi lebih lanjut
         </p>{" "}
+=======
+>>>>>>> Stashed changes
       </div>
     </div>
   );
