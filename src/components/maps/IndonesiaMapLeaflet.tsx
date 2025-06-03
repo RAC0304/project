@@ -216,12 +216,11 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
                 );
                 return null;
               }
-              return (
-                <Marker
+              return (                <Marker
                   key={`city-${city.name}-${index}`}
                   position={[lat, lng]}
                   icon={city.isCapital ? capitalIcon : cityIcon}
-                  zIndexOffset={1000}
+                  zIndexOffset={2000}
                 >
                   <Popup>
                     <div>
@@ -258,12 +257,11 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
                 );
                 return null;
               }
-              return (
-                <Marker
+              return (                <Marker
                   key={`dest-${dest.name}-${index}`}
                   position={[lat, lng]}
                   icon={destinationIcon}
-                  zIndexOffset={500}
+                  zIndexOffset={1500}
                 >
                   <Popup>
                     <div>
