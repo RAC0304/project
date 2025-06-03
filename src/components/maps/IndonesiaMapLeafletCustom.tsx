@@ -219,13 +219,18 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
     [-11, 94], // Southwest corner
     [6, 142], // Northeast corner
   ];
-
   return (
-    <div className={`indonesia-map-container ${className}`}>
-      <div className="indonesia-map-leaflet w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+    <div className={`indonesia-map-container relative z-10 ${className}`}>
+      <div className="indonesia-map-leaflet w-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow relative z-10">
         <MapContainer
           ref={mapRef}
-          style={{ height, width: "100%", borderRadius: "0.75rem" }}
+          style={{
+            height,
+            width: "100%",
+            borderRadius: "0.75rem",
+            position: "relative",
+            zIndex: 10,
+          }}
           zoom={5}
           minZoom={4}
           maxZoom={10}

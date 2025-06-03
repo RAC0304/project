@@ -17,7 +17,8 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PROFILE_IMAGE, LOGO_IMAGE } from "../../../constants/images";
+import { PROFILE_IMAGE } from "../../../constants/images";
+import Logo from "../../common/Logo";
 
 interface TourGuideSidebarProps {
   activePage: string;
@@ -137,12 +138,9 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
         {/* Logo/Brand */}
         <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 sticky top-0 z-30">
           <div className="flex items-center">
+            {" "}
             <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden ">
-              <img
-                src={LOGO_IMAGE}
-                alt="WanderWise Logo"
-                className="w-20 h-20 object-contain"
-              />
+              <Logo width={48} height={48} className="object-contain" />
             </div>
             {!isMinimized && (
               <h1 className="ml-3 text-xl font-bold text-white tracking-wide">
