@@ -57,49 +57,49 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HomePage />} /><Route path="/destinations" element={<DestinationsListPage />} />
-          <Route path="/destinations/:id" element={<DestinationPage />} />
-          <Route path="/itineraries" element={<ItinerariesPage />} />
-          <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
-          <Route path="/tour-guides" element={<TourGuidesPage />} />
-          {/* <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} /> */}
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/reviews" element={<ReviewsPage />} />
-          <Route path="/map" element={<MapDemoPage />} />
+            <Route path="/destinations/:id" element={<DestinationPage />} />
+            <Route path="/itineraries" element={<ItinerariesPage />} />
+            <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
+            <Route path="/tour-guides" element={<TourGuidesPage />} />
+            {/* <Route path="/tour-guides/:id" element={<TourGuideProfilePage />} /> */}
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/map" element={<MapDemoPage />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Admin Only Routes */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Admin Only Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Tour Guide Only Routes */}
-          <Route
-            path="/guide/dashboard"
-            element={
-              <ProtectedRoute requiredRole="tour_guide">
-                <TourGuideDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Tour Guide Only Routes */}
+            <Route
+              path="/guide/dashboard"
+              element={
+                <ProtectedRoute requiredRole="tour_guide">
+                  <TourGuideDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Auth Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />          <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            {/* Auth Routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </Suspense>
       </main>
       {!hideHeaderFooter && <Footer />}
