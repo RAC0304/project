@@ -56,7 +56,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
           onClick={handleGoogleMapsClick}
           className="mt-3 inline-block px-4 py-2 bg-teal-600 text-white text-center rounded-full text-sm font-semibold shadow-md hover:bg-teal-700 transition-all"
         >
-          View Detail
+          View Rute
         </button>
       </div>
     </div>

@@ -29,6 +29,15 @@
   color: #065f46;
 }
 
+/* Ensure markers are displayed on top of other map elements */
+.leaflet-marker-pane {
+  z-index: 1000 !important;
+}
+
+.leaflet-marker-icon {
+  z-index: 1001 !important;
+}
+
 .leaflet-control-zoom a:hover {
   background-color: #ecfdf5;
 }
@@ -109,4 +118,77 @@
 
 .marker-blue {
   filter: hue-rotate(240deg);
+}
+
+/* Ensure markers appear on top of all map elements */
+.high-z-index {
+  z-index: 9999 !important;
+}
+
+/* Force marker pane to highest z-index */
+.leaflet-pane.leaflet-marker-pane {
+  z-index: 1000 !important;
+}
+
+/* Make sure popups remain above markers */
+.leaflet-popup-pane {
+  z-index: 1100 !important;
+}
+
+/* Ensure tooltip remains at highest level */
+.leaflet-tooltip-pane {
+  z-index: 1200 !important;
+}
+
+/* Ensure GeoJSON paths are below markers */
+.leaflet-pane.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+/* Adjust other panes to maintain proper stacking */
+.leaflet-pane.leaflet-shadow-pane {
+  z-index: 500 !important;
+}
+
+.leaflet-pane.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+/* Enhance standard map markers visibility */
+.high-z-index {
+  z-index: 1000 !important;
+}
+
+.leaflet-marker-icon {
+  filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.3));
+}
+
+/* Ensure markers appear on top of the map */
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650 !important;
+}
+
+/* Map Legend Styles */
+.leaflet-control.bg-white {
+  opacity: 0.9;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: opacity 0.3s;
+}
+
+.leaflet-control.bg-white:hover {
+  opacity: 1;
+}
+
+/* Make sure legend appears on top of everything */
+.leaflet-top.leaflet-left {
+  z-index: 1500 !important;
 }

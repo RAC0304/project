@@ -33,9 +33,7 @@ const SearchForm: React.FC = () => {
             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
           />
         </div>
-      </div>
-
-      <div className="flex-1">
+      </div>      <div className="flex-1">
         <label htmlFor="dates" className="block text-sm font-medium text-gray-700 mb-1">
           Dates
         </label>
@@ -44,11 +42,11 @@ const SearchForm: React.FC = () => {
             <Calendar className="h-5 w-5 text-gray-400" />
           </div>
           <input
-            type="date"
+            type="text"
             id="dates"
             value={dates}
             onChange={(e) => setDates(e.target.value)}
-            placeholder="When are you traveling?"
+            placeholder="dd/mm/yyyy"
             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
           />
         </div>

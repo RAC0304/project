@@ -48,11 +48,10 @@ const HomePage: React.FC = () => {
 
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
           <div
-            className={`max-w-3xl transition-all duration-1000 transform ${
-              isVisible
+            className={`max-w-3xl transition-all duration-1000 transform ${isVisible
                 ? "translate-y-0 opacity-100"
                 : "translate-y-10 opacity-0"
-            }`}
+              }`}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Discover the Magic of{" "}
