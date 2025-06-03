@@ -9,7 +9,7 @@ import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import HistoryPage from './pages/HistoryPage';
+import HistoryPage from "./pages/HistoryPage";
 
 // Lazy load all page components
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -68,40 +68,40 @@ function App() {
           <Route path="/map" element={<MapDemoPage />} />
           <Route path="/history" element={<HistoryPage />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <UserProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Admin Only Routes */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Admin Only Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Tour Guide Only Routes */}
-          <Route
-            path="/guide/dashboard"
-            element={
-              <ProtectedRoute requiredRole="tour_guide">
-                <TourGuideDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Tour Guide Only Routes */}
+            <Route
+              path="/guide/dashboard"
+              element={
+                <ProtectedRoute requiredRole="tour_guide">
+                  <TourGuideDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Auth Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />          <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            {/* Auth Routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </Suspense>
       </main>
       {!hideHeaderFooter && <Footer />}

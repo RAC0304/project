@@ -15,7 +15,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import RoleBadge from "../common/RoleBadge";
-import { LOGO_IMAGE } from "../../constants/images";
+import Logo from "../common/Logo";
 
 interface AdminSidebarProps {
   activePage: string;
@@ -129,13 +129,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       >
         {/* Logo/Brand - Improved styling */}
         <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 flex-shrink-0 relative">
+          {" "}
           <div className="flex items-center">
             <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden">
-              <img
-                src={LOGO_IMAGE}
-                alt="WanderWise Logo"
-                className="w-20 h-20 object-contain"
-              />
+              <Logo width={48} height={48} className="object-contain" />
             </div>
             {!isMinimized && (
               <h1 className="ml-3 text-xl font-bold text-white tracking-wide">
@@ -164,10 +161,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               isMinimized ? "justify-center" : "items-center space-x-4"
             }`}
           >
+            {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
-              <img
-                src={LOGO_IMAGE}
-                alt="Profile Logo"
+              <Logo
+                width={48}
+                height={48}
                 className="w-full h-full object-cover"
               />
             </div>
