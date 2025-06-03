@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 import { Filter, X, Star, Search } from "lucide-react";
 import { reviews } from "../data/reviews";
 import { destinations } from "../data/destinations";
 import { Review } from "../types";
 import ReviewCard from "../components/reviews/ReviewCard";
+import { useAuth } from "../contexts/AuthContext";
 
 const ReviewsPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const [filteredReviews, setFilteredReviews] = useState<Review[]>(reviews);
   const [selectedDestination, setSelectedDestination] = useState<string>("");
@@ -14,6 +16,14 @@ const ReviewsPage: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewType, setViewType] = useState<"destination" | "guide">(
+    "destination"
+  );
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   // Extract unique tags from all reviews
   const allTags = Array.from(new Set(reviews.flatMap((review) => review.tags)));
@@ -104,12 +114,38 @@ const ReviewsPage: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Traveler Reviews
+            {viewType === "destination"
+              ? "Destination Reviews"
+              : "Tour Guide Reviews"}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Authentic experiences shared by our community of travelers across
             Indonesia
           </p>
+        </div>
+
+        {/* View type selector */}
+        <div className="flex justify-center mb-8 gap-4">
+          <button
+            onClick={() => setViewType("destination")}
+            className={`px-6 py-2 rounded-full ${
+              viewType === "destination"
+                ? "bg-teal-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Destination Reviews
+          </button>
+          <button
+            onClick={() => setViewType("guide")}
+            className={`px-6 py-2 rounded-full ${
+              viewType === "guide"
+                ? "bg-teal-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Tour Guide Reviews
+          </button>
         </div>
 
         {/* Search and filter bar */}

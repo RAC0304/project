@@ -272,11 +272,11 @@ export const destinations: Destination[] = [
     shortDescription:
       "Home to the legendary Komodo dragons, pristine beaches, and world-class diving spots",
     imageUrl:
-      "https://images.pexels.com/photos/4350792/pexels-photo-4350792.jpeg",
+      "https://images.pexels.com/photos/7715004/pexels-photo-7715004.jpeg",
     images: [
-      "https://images.pexels.com/photos/4350792/pexels-photo-4350792.jpeg",
-      "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg",
-      "https://images.pexels.com/photos/4601285/pexels-photo-4601285.jpeg",
+      "https://images.pexels.com/photos/7715004/pexels-photo-7715004.jpeg",
+      "https://images.pexels.com/photos/7715003/pexels-photo-7715003.jpeg",
+      "https://images.pexels.com/photos/3119775/pexels-photo-3119775.jpeg",
     ],
     attractions: [
       {
@@ -284,14 +284,14 @@ export const destinations: Destination[] = [
         name: "Komodo Dragons",
         description: "The world's largest lizards in their natural habitat",
         imageUrl:
-          "https://images.pexels.com/photos/4350792/pexels-photo-4350792.jpeg",
+          "https://images.pexels.com/photos/7715004/pexels-photo-7715004.jpeg",
       },
       {
         id: "komodo-2",
         name: "Pink Beach",
         description: "Rare pink-hued beach created by red coral fragments",
         imageUrl:
-          "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg",
+          "https://images.pexels.com/photos/7715003/pexels-photo-7715003.jpeg",
       },
       {
         id: "komodo-3",
@@ -299,7 +299,7 @@ export const destinations: Destination[] = [
         description:
           "Iconic viewpoint overlooking three differently colored beaches",
         imageUrl:
-          "https://images.pexels.com/photos/4601285/pexels-photo-4601285.jpeg",
+          "https://images.pexels.com/photos/3119775/pexels-photo-3119775.jpeg",
       },
     ],
     activities: [
@@ -310,7 +310,7 @@ export const destinations: Destination[] = [
         duration: "2-3 hours",
         price: "$30",
         imageUrl:
-          "https://images.pexels.com/photos/4350792/pexels-photo-4350792.jpeg",
+          "https://images.pexels.com/photos/7715004/pexels-photo-7715004.jpeg",
       },
       {
         id: "komodo-act-2",
@@ -319,7 +319,7 @@ export const destinations: Destination[] = [
         duration: "Half day",
         price: "$80",
         imageUrl:
-          "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg",
+          "https://images.pexels.com/photos/7715003/pexels-photo-7715003.jpeg",
       },
     ],
     bestTimeToVisit: "April to December",
