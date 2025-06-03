@@ -17,6 +17,7 @@ export interface Destination {
   category: DestinationCategory[];
   googleMapsUrl: string;
   reviews: Review[];
+  tourGuideReviews?: Review[]; // Added tour guide reviews property
 }
 
 export interface Attraction {
@@ -137,6 +138,11 @@ export interface Review {
   images: string[];
   helpfulCount: number;
   tags: string[];
+  tourGuide?: {
+    name: string;
+    avatar: string;
+    specialty: string;
+  };
 }
 
 // User Authentication Types

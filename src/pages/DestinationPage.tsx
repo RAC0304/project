@@ -36,6 +36,7 @@ const DestinationPage: React.FC = () => {
     { id: "attractions", label: "Attractions" },
     { id: "activities", label: "Activities" },
     { id: "tips", label: "Travel Tips" },
+    { id: "reviews", label: "Reviews" }, // Add Reviews tab
   ];
 
   const nextImage = () => {
@@ -270,6 +271,93 @@ const DestinationPage: React.FC = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div
+            id="reviews"
+            className={activeSection === "reviews" ? "block" : "hidden"}
+          >
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Reviews</h2>
+            <div className="space-y-6">
+              {destination.reviews && destination.reviews.length > 0 ? (
+                destination.reviews.map((review, index) => (
+                  <div
+                    key={index}
+                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <img
+                          src={review.userAvatar || '/default-avatar.png'}
+                          alt={review.userName}
+                          className="w-10 h-10 rounded-full mr-3"
+                        />
+                        <div>
+                          <div className="font-semibold text-gray-800">{review.userName}</div>
+                          <span className="text-sm text-gray-500">{review.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-yellow-500 font-bold mr-2">
+                          {"★".repeat(Math.floor(review.rating))}
+                        </span>
+                        <span className="text-gray-500">({review.rating})</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 mb-4">{review.content}</p>
+                    {review.images && review.images.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {review.images.map((image, idx) => (
+                          <img
+                            key={idx}
+                            src={image}
+                            alt={`Review image ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {review.tourGuide && (
+                      <div className="mt-4 p-4 bg-teal-50 rounded-lg">
+                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Tour Guide Details</h4>
+                        <div className="flex items-center">
+                          <img
+                            src={review.tourGuide.avatar || '/default-avatar.png'}
+                            alt={review.tourGuide.name}
+                            className="w-12 h-12 rounded-full mr-3"
+                          />
+                          <div>
+                            <div className="font-semibold text-gray-800">{review.tourGuide.name}</div>
+                            <span className="text-sm text-gray-500">{review.tourGuide.specialty}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-4 flex items-center justify-between">
+                      <button className="text-teal-600 hover:text-teal-800 text-sm font-medium">
+                        Helpful ({review.helpfulCount})
+                      </button>
+                      <button className="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                        Report
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-semibold text-gray-800">Bryan</div>
+                    <span className="text-sm text-gray-500">2025-06-01</span>
+                  </div>
+                  <div className="flex items-center mb-2">
+                    <span className="text-yellow-500 font-bold mr-2">★★★★★</span>
+                    <span className="text-gray-500">(5)</span>
+                  </div>
+                  <p className="text-gray-700">The destination was amazing, and the experience was unforgettable!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
