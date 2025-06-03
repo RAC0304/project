@@ -240,8 +240,11 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
         </div>
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     );
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
       </div>
