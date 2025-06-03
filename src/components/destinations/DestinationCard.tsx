@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { Destination } from "../../types";
 
@@ -8,12 +8,20 @@ interface DestinationCardProps {
 }
 
 const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/destinations/${destination.id}`);
+  };
+
+  const handleGoogleMapsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(destination.googleMapsUrl, "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <Link
-      to={`/destinations/${destination.id}`}
-      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-    >
-      <div className="relative h-56 overflow-hidden">
+    <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+      <div className="relative h-56 overflow-hidden" onClick={handleCardClick}>
         <img
           src={destination.imageUrl}
           alt={destination.name}
@@ -29,30 +37,29 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
         </div>
       </div>
       <div className="p-4">
-        <p className="text-gray-600 text-sm line-clamp-2">
-          {destination.shortDescription}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {destination.category.slice(0, 3).map((category) => (
-            <span
-              key={category}
-              className="px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded-full"
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </span>
-          ))}
-        </div>{" "}
-        <a
-          href={destination.googleMapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+        <div onClick={handleCardClick}>
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {destination.shortDescription}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {destination.category.slice(0, 3).map((category) => (
+              <span
+                key={category}
+                className="px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded-full"
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </span>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleGoogleMapsClick}
           className="mt-3 inline-block px-4 py-2 bg-teal-600 text-white text-center rounded-full text-sm font-semibold shadow-md hover:bg-teal-700 transition-all"
         >
           View Detail
-        </a>
+        </button>
       </div>
-    </Link>
+    </div>
   );
 };
 
