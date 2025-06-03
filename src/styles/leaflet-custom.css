@@ -40,10 +40,30 @@
 /* Adding transition to the marker hover/active state */
 .leaflet-marker-icon {
   transition: transform 0.2s ease;
+  z-index: 1000 !important;
 }
 
 .leaflet-marker-icon:hover {
   transform: scale(1.1);
+}
+
+/* Custom div icon styles */
+.custom-div-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-div-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Ensure markers are visible */
+.leaflet-marker-pane {
+  z-index: 1000 !important;
+}
+
+.leaflet-marker-pane .leaflet-marker-icon {
+  z-index: 1001 !important;
 }
 
 /* Ensure map components stay below header (z-50) */
@@ -76,4 +96,17 @@
 .indonesia-map-leaflet {
   position: relative;
   z-index: 8;
+}
+
+/* Colored marker styles */
+.marker-green {
+  filter: hue-rotate(120deg);
+}
+
+.marker-red {
+  filter: hue-rotate(0deg);
+}
+
+.marker-blue {
+  filter: hue-rotate(240deg);
 }
