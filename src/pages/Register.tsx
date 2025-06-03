@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/common/Logo";
 import { ArrowRight } from "lucide-react";
+import Toast from "../components/common/Toast";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -12,10 +13,16 @@ const Register = () => {
     role: "Traveler",
   });
 
+  const [toastVisible, setToastVisible] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle registration logic here
     console.log("Form submitted:", formData);
+
+    // Show success notification
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 5000); // Hide after 5 seconds
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -186,6 +193,23 @@ const Register = () => {
               Sign in
             </Link>
           </p>
+        </div>
+      </div>
+
+      <div
+        className={`fixed inset-0 flex items-center justify-center z-50 ${toastVisible ? "" : "hidden"}`}
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      >
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <p className="text-lg font-semibold text-gray-800 mb-4">
+            Account created successfully!
+          </p>
+          <button
+            onClick={() => setToastVisible(false)}
+            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

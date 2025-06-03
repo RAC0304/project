@@ -39,6 +39,22 @@ export const destinations: Destination[] = [
         imageUrl:
           "https://images.pexels.com/photos/5766288/pexels-photo-5766288.jpeg",
       },
+      {
+        id: "new-attraction-1",
+        name: "Gunung Sibayak",
+        description:
+          "A majestic volcano in North Sumatra, perfect for sunrise hikes.",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/3/3e/Gunung_Sibayak.jpg",
+      },
+      {
+        id: "new-attraction-2",
+        name: "Kelimutu National Park",
+        description:
+          "Famous for its three color-changing crater lakes in Flores.",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/5/5e/Kelimutu.jpg",
+      },
     ],
     activities: [
       {
@@ -60,6 +76,25 @@ export const destinations: Destination[] = [
         price: "$35",
         imageUrl:
           "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg",
+      },
+      {
+        id: "new-activity-1",
+        name: "Surfing in Bali",
+        description: "Catch the waves at Bali's world-famous beaches.",
+        duration: "3 hours",
+        price: "$50",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/6/6e/Surfing_in_Bali.jpg",
+      },
+      {
+        id: "new-activity-2",
+        name: "Cultural Tour in Toraja",
+        description:
+          "Explore the unique culture and traditional houses of Toraja in Sulawesi.",
+        duration: "4 hours",
+        price: "$40",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/8/8e/Toraja_House.jpg",
       },
     ],
     bestTimeToVisit: "April to October (dry season)",
@@ -166,6 +201,18 @@ export const destinations: Destination[] = [
         imageUrl:
           "https://images.pexels.com/photos/2765878/pexels-photo-2765878.jpeg",
       },
+      {
+        id: "new-attraction-1",
+        name: "New Attraction 1",
+        description: "Description for new attraction 1.",
+        imageUrl: "https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg", // Using existing image
+      },
+      {
+        id: "new-attraction-2",
+        name: "New Attraction 2",
+        description: "Description for new attraction 2.",
+        imageUrl: "https://images.pexels.com/photos/2474690/pexels-photo-2474690.jpeg", // Using existing image
+      },
     ],
     activities: [
       {
@@ -185,6 +232,24 @@ export const destinations: Destination[] = [
         price: "$25",
         imageUrl:
           "https://images.pexels.com/photos/3522276/pexels-photo-3522276.jpeg",
+      },
+      {
+        id: "new-activity-1",
+        name: "New Activity 1",
+        description: "Description for new activity 1.",
+        duration: "2 hours",
+        price: "$20",
+        imageUrl: "https://images.pexels.com/photos/2474689/pexels-photo-2474689.jpeg", // Using existing image
+        style: { width: "100%", height: "200px", objectFit: "cover" },
+      },
+      {
+        id: "new-activity-2",
+        name: "New Activity 2",
+        description: "Description for new activity 2.",
+        duration: "3 hours",
+        price: "$30",
+        imageUrl: "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg", // Using existing image
+        style: { width: "100%", height: "200px", objectFit: "cover" },
       },
     ],
     bestTimeToVisit: "May to September",

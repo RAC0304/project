@@ -31,6 +31,8 @@ export interface Activity {
   duration: string;
   price: string;
   imageUrl: string;
+  border?: string;
+  style?: { width: string; height: string; objectFit: string };
 }
 
 export type DestinationCategory =
