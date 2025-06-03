@@ -17,13 +17,13 @@ const SearchForm: React.FC = () => {
       if (calendarIcon) {
         (calendarIcon as HTMLElement).style.display = 'block';
       }
-      
+
       // Make the entire input clickable to show the calendar
       dateInput.onclick = () => {
         // This ensures the calendar dropdown appears when clicking anywhere in the input
         dateInput.showPicker?.();
       };
-      
+
       // Also make the container handle the click event
       const container = document.querySelector('.date-input-container');
       if (container) {
