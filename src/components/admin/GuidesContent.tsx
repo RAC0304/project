@@ -386,98 +386,206 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
             <PlusCircle size={16} className="mr-2" />
             Add New Guide
           </button>
-        </div>
-
+        </div>{" "}
         {/* Search and Filters */}
-        <div className="mb-6 space-y-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search guides, specialties, locations..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search
-              className="absolute left-3 top-2.5 text-gray-400"
-              size={18}
-            />
-            {searchQuery && (
-              <button
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                onClick={() => setSearchQuery("")}
-              >
-                <X size={18} />
-              </button>
-            )}
+        <div className="mb-8 bg-gradient-to-r from-gray-50 to-teal-50 p-6 rounded-xl border border-gray-200">
+          {/* Search Bar Section */}
+          <div className="mb-6">
+            <div className="relative max-w-2xl">
+              <input
+                type="text"
+                placeholder="Search guides by name, specialties, locations, or languages..."
+                className="w-full pl-12 pr-12 py-3.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-700 placeholder-gray-400 transition-all duration-200"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search
+                className="absolute left-4 top-4 text-gray-400"
+                size={20}
+              />
+              {searchQuery && (
+                <button
+                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 items-center">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specialty
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {specialtyOptions.map((specialty) => (
-                  <button
-                    key={specialty}
-                    onClick={() => toggleSpecialty(specialty)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      selectedSpecialties.includes(specialty)
-                        ? "bg-teal-100 text-teal-800 border-teal-200"
-                        : "bg-gray-100 text-gray-800 border-gray-200"
-                    }`}
-                  >
-                    {specialty}
-                  </button>
-                ))}
+          {/* Filters Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-700 flex items-center">
+                <Globe className="mr-2 text-teal-600" size={20} />
+                Filter Guides
+              </h3>
+              {(searchQuery ||
+                selectedSpecialties.length > 0 ||
+                selectedLocation ||
+                showUnverifiedOnly) && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium bg-white px-3 py-1.5 rounded-full border border-teal-200 hover:bg-teal-50 transition-all duration-200"
+                >
+                  <X size={16} className="mr-1" />
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {" "}
+              {/* Specialty Filter */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
+                  Specialties ({selectedSpecialties.length} selected)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {specialtyOptions.map((specialty) => (
+                    <button
+                      key={specialty}
+                      onClick={() => toggleSpecialty(specialty)}
+                      className={`px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 border ${
+                        selectedSpecialties.includes(specialty)
+                          ? "bg-teal-500 text-white border-teal-500 shadow-md transform scale-105"
+                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                      }`}
+                    >
+                      {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>{" "}
+              {/* Location Filter */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                  <MapPin className="mr-2 text-teal-600" size={16} />
+                  Location
+                </label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white transition-all duration-200"
+                >
+                  <option value="">All locations ({locations.length})</option>
+                  {locations.map((location) => (
+                    <option key={location} value={location}>
+                      📍 {location}
+                    </option>
+                  ))}
+                </select>
+              </div>{" "}
+              {/* Verification Filter */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                  <Check className="mr-2 text-teal-600" size={16} />
+                  Verification Status
+                </label>
+                <label className="flex items-center cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                  <input
+                    type="checkbox"
+                    checked={showUnverifiedOnly}
+                    onChange={(e) => setShowUnverifiedOnly(e.target.checked)}
+                    className="mr-3 h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Show only unverified guides
+                  </span>
+                </label>
               </div>
             </div>
 
-            <div className="ml-auto">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              >
-                <option value="">All locations</option>
-                {locations.map((location) => (
-                  <option key={location} value={location}>
-                    {location}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                <input
-                  type="checkbox"
-                  checked={showUnverifiedOnly}
-                  onChange={(e) => setShowUnverifiedOnly(e.target.checked)}
-                  className="mr-2 h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-                />
-                Show unverified guides only
-              </label>
-            </div>
-
+            {/* Active Filters Display */}
             {(searchQuery ||
               selectedSpecialties.length > 0 ||
               selectedLocation ||
               showUnverifiedOnly) && (
-              <button
-                onClick={clearFilters}
-                className="ml-2 text-teal-600 hover:text-teal-800 text-sm font-medium"
-              >
-                Clear filters
-              </button>
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="flex items-center flex-wrap gap-2">
+                  <span className="text-sm font-medium text-gray-700 mr-2">
+                    Active filters:
+                  </span>
+
+                  {searchQuery && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Search: "{searchQuery}"
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  )}
+
+                  {selectedSpecialties.map((specialty) => (
+                    <span
+                      key={specialty}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
+                    >
+                      {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                      <button
+                        onClick={() => toggleSpecialty(specialty)}
+                        className="ml-2 text-teal-600 hover:text-teal-800"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+
+                  {selectedLocation && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      📍 {selectedLocation}
+                      <button
+                        onClick={() => setSelectedLocation("")}
+                        className="ml-2 text-green-600 hover:text-green-800"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  )}
+
+                  {showUnverifiedOnly && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Unverified only
+                      <button
+                        onClick={() => setShowUnverifiedOnly(false)}
+                        className="ml-2 text-yellow-600 hover:text-yellow-800"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
+
+            {/* Results Summary */}
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {filteredGuides.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-900">
+                    {guides.length}
+                  </span>{" "}
+                  guides
+                </span>
+                <span className="text-gray-500">
+                  {filteredGuides.filter((g) => g.isVerified).length} verified •{" "}
+                  {filteredGuides.filter((g) => !g.isVerified).length}{" "}
+                  unverified
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-
         {/* Tour Guides List */}
         <div className="overflow-hidden rounded-lg border border-gray-200">
           {filteredGuides.length > 0 ? (
