@@ -14,10 +14,10 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
     navigate(`/destinations/${destination.id}`);
   };
 
-  const handleGoogleMapsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.open(destination.googleMapsUrl, "_blank", "noopener,noreferrer");
-  };
+  // const handleGoogleMapsClick = (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   window.open(destination.googleMapsUrl, "_blank", "noopener,noreferrer");
+  // };
 
   return (
     <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer">
@@ -53,10 +53,10 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
           </div>
         </div>
         <button
-          onClick={handleGoogleMapsClick}
+          onClick={handleCardClick}
           className="mt-3 inline-block px-4 py-2 bg-teal-600 text-white text-center rounded-full text-sm font-semibold shadow-md hover:bg-teal-700 transition-all"
         >
-          View Rute
+          View Detail
         </button>
       </div>
     </div>

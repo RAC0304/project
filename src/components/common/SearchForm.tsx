@@ -1,12 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Users } from 'lucide-react';
+import './SearchForm.css';
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState('');
   const [dates, setDates] = useState('');
   const [travelers, setTravelers] = useState('');
+  // Set default date input properties for cross-browser compatibility
+  React.useEffect(() => {
+    const dateInput = document.getElementById('dates') as HTMLInputElement;
+    if (dateInput) {
+      // Handle calendar icon visibility
+      const calendarIcon = document.querySelector('.date-input-container .lucide-calendar');
+      if (calendarIcon) {
+        (calendarIcon as HTMLElement).style.display = 'block';
+      }
+      
+      // Make the entire input clickable to show the calendar
+      dateInput.onclick = () => {
+        // This ensures the calendar dropdown appears when clicking anywhere in the input
+        dateInput.showPicker?.();
+      };
+      
+      // Also make the container handle the click event
+      const container = document.querySelector('.date-input-container');
+      if (container) {
+        container.addEventListener('click', () => {
+          dateInput.showPicker?.();
+        });
+      }
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,18 +62,15 @@ const SearchForm: React.FC = () => {
       </div>      <div className="flex-1">
         <label htmlFor="dates" className="block text-sm font-medium text-gray-700 mb-1">
           Dates
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Calendar className="h-5 w-5 text-gray-400" />
-          </div>
+        </label>        <div className="relative date-input-container">
+          <Calendar className="h-5 w-5 text-gray-400" />
           <input
-            type="text"
+            type="date"
             id="dates"
             value={dates}
             onChange={(e) => setDates(e.target.value)}
             placeholder="dd/mm/yyyy"
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
+            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 date-input"
           />
         </div>
       </div>

@@ -119,8 +119,8 @@ const DestinationPage: React.FC = () => {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${activeSection === section.id
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-gray-700 hover:bg-gray-50"
+                ? "bg-teal-50 text-teal-700"
+                : "text-gray-700 hover:bg-gray-50"
                 }`}
             >
               {section.label}
@@ -404,20 +404,7 @@ const DestinationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* New Map Link Button */}
-            <div className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-start">
-              <div className="bg-teal-100 rounded-full p-3 mr-4">
-                <Map className="w-6 h-6 text-teal-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  View on Map
-                </h3>
-                <p className="text-gray-600">
-                  See the location of {destination.name} on Google Maps.
-                </p>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
