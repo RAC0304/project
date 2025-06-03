@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SecurityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,13 +65,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/clients', 'TourGuideController@clients');
         Route::get('/reviews', 'TourGuideController@reviews');
         Route::post('/reviews/{id}/response', 'TourGuideController@respondToReview');
-    });
-
-    // Admin routes
+    });    // Admin routes
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
         Route::get('/dashboard', 'AdminController@dashboard');
         Route::get('/users', 'AdminController@users');
         Route::get('/analytics', 'AdminController@analytics');
         Route::get('/reports', 'AdminController@reports');
+        
+        // Security management routes
+        Route::prefix('security')->group(function () {
+            Route::get('/dashboard', [SecurityController::class, 'getDashboardMetrics']);
+            Route::get('/sessions', [SecurityController::class, 'getActiveSessions']);
+            Route::delete('/sessions/{sessionId}', [SecurityController::class, 'terminateSession']);
+            Route::get('/logs', [SecurityController::class, 'getAuditLogs']);
+            Route::get('/logs/export', [SecurityController::class, 'exportAuditLogs']);
+            Route::get('/settings', [SecurityController::class, 'getSecuritySettings']);
+            Route::put('/settings', [SecurityController::class, 'updateSecuritySettings']);
+        });
     });
 });

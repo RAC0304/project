@@ -5,6 +5,7 @@ import GuidesContent from "./GuidesContent";
 import DestinationsContent from "./DestinationsContent";
 import BookingsContent from "./BookingsContent";
 import AnalyticsContent from "./AnalyticsContent";
+import SecurityContent from "./SecurityContent";
 
 interface AdminContentProps {
   activePage: string;
@@ -35,27 +36,30 @@ const AdminContent: React.FC<AdminContentProps> = ({
         <div>
           {" "}
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {" "}
             {activePage === "dashboard" && "Admin Dashboard"}
             {activePage === "users" && "User Management"}
             {activePage === "guides" && "Tour Guide Management"}
             {activePage === "destinations" && "Destinations"}
             {activePage === "bookings" && "Bookings"}
             {activePage === "analytics" && "Analytics"}
+            {activePage === "security" && "Security Management"}
           </h1>
           <p className="text-gray-600 mt-1">
             Welcome back, {user?.profile.firstName} {user?.profile.lastName}
           </p>
         </div>
       </div>
-      {/* Content based on active page */}
+      {/* Content based on active page */}{" "}
       {activePage === "dashboard" && (
-        <DashboardContent setActivePage={setActivePage} user={user} />
+        <DashboardContent setActivePage={setActivePage} />
       )}{" "}
-      {activePage === "users" && <UsersContent user={user} />}
+      {activePage === "users" && <UsersContent />}
       {activePage === "guides" && <GuidesContent user={user} />}
       {activePage === "destinations" && <DestinationsContent user={user} />}
-      {activePage === "bookings" && <BookingsContent user={user} />}{" "}
+      {activePage === "bookings" && <BookingsContent />}{" "}
       {activePage === "analytics" && <AnalyticsContent user={user} />}
+      {activePage === "security" && <SecurityContent />}
     </div>
   );
 };

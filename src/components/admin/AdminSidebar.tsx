@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +73,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           id: "guides",
           label: "Tour Guides",
           icon: <UserCheck className="w-[18px] h-[18px]" />,
+        },
+        {
+          id: "security",
+          label: "Security",
+          icon: <Shield className="w-[18px] h-[18px]" />,
         },
       ],
     },

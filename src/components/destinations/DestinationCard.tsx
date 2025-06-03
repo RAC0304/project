@@ -41,11 +41,12 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination }) => {
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </span>
           ))}
-        </div>
+        </div>{" "}
         <a
           href={destination.googleMapsUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="mt-3 inline-block px-4 py-2 bg-teal-600 text-white text-center rounded-full text-sm font-semibold shadow-md hover:bg-teal-700 transition-all"
         >
           View Detail
