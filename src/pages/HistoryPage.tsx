@@ -31,9 +31,10 @@ const trips: TourGuide[] = [
 
 const HistoryPage: React.FC = () => {
   const [selectedGuide, setSelectedGuide] = useState<TourGuide | null>(null);
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState('');
   const [notification, setNotification] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
 
   const satisfactionIcons = [
     { label: "Sad", emoji: "😞" },
@@ -44,16 +45,33 @@ const HistoryPage: React.FC = () => {
   const handleSelectGuide = (guide: TourGuide) => {
     setSelectedGuide(guide);
     setReviewText('');
+    setRating(null);
+    setSelectedIcon(null);
     setNotification('');
   };
 
   const handleSubmitReview = () => {
     if (reviewText.trim()) {
       setNotification('Review submitted!');
-      setReviewText('');
-      setSelectedGuide(null);
+      setTimeout(() => {
+        setNotification('');
+        setSelectedGuide(null);
+      }, 3000);
     } else {
       setNotification('Please enter a review before submitting.');
+      setTimeout(() => setNotification(''), 3000);
+    }
+  };
+
+  const handleRatingClick = (num: number) => {
+    if (reviewText.trim()) {
+      setRating(num);
+    }
+  };
+
+  const handleSatisfactionClick = (emoji: string) => {
+    if (reviewText.trim()) {
+      setSelectedIcon(emoji);
     }
   };
 
@@ -116,8 +134,14 @@ const HistoryPage: React.FC = () => {
                   <Star
                     key={num}
                     size={24}
-                    className={`cursor-pointer ${num <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                    onClick={() => setRating(num)}
+                    className={`cursor-pointer transition-colors ${
+                      reviewText.trim()
+                        ? num <= (rating ?? 0)
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                        : 'text-gray-200 cursor-not-allowed'
+                    }`}
+                    onClick={() => handleRatingClick(num)}
                   />
                 ))}
               </div>
@@ -126,7 +150,19 @@ const HistoryPage: React.FC = () => {
               <p className="mb-1 font-medium">Satisfaction:</p>
               <div className="flex space-x-4 text-2xl">
                 {satisfactionIcons.map((icon, idx) => (
-                  <span key={idx} className="cursor-pointer">{icon.emoji}</span>
+                  <span
+                    key={idx}
+                    className={`cursor-pointer p-2 rounded-full transition ${
+                      reviewText.trim()
+                        ? selectedIcon === icon.emoji
+                          ? 'bg-gray-300'
+                          : 'hover:bg-gray-100'
+                        : 'opacity-30 cursor-not-allowed'
+                    }`}
+                    onClick={() => handleSatisfactionClick(icon.emoji)}
+                  >
+                    {icon.emoji}
+                  </span>
                 ))}
               </div>
             </div>
@@ -149,8 +185,10 @@ const HistoryPage: React.FC = () => {
       )}
 
       {notification && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
-          {notification}
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white px-8 py-5 rounded-lg shadow-md text-center max-w-xs">
+            <p className="text-lg font-semibold text-green-600">{notification}</p>
+          </div>
         </div>
       )}
     </div>
