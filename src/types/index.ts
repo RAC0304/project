@@ -105,6 +105,7 @@ export interface TourGuide {
   availability: string;
   tours: GuidedTour[];
   isVerified: boolean; // indicates if tour guide is verified
+  reviews: Review[]; // Array of user reviews for the tour guide
 }
 
 export type TourGuideSpecialty =
@@ -143,6 +144,7 @@ export interface Review {
     avatar: string;
     specialty: string;
   };
+  comment: string; // User's comment for the review
 }
 
 // User Authentication Types

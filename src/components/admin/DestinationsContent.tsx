@@ -3,11 +3,7 @@ import { Destination, Attraction, Activity } from '../../types';
 import type { DestinationCategory } from '../../types';
 import { destinations } from '../../data/destinations';
 
-interface DestinationsContentProps {
-    user: any;
-}
-
-const DestinationsContent: React.FC<DestinationsContentProps> = ({ user }) => {
+const DestinationsContent: React.FC = () => {
     const [allDestinations, setAllDestinations] = useState<Destination[]>(destinations);
     const [currentDestination, setCurrentDestination] = useState<Destination | null>(null);
     const [isEditing, setIsEditing] = useState(false);

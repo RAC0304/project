@@ -37,9 +37,11 @@ interface UserFormData {
   isActive?: boolean;
 }
 
-// Enhanced user interface with status
+// Updated the EnhancedUser type to include 'specialties' and 'languages' properties.
 interface EnhancedUser extends Omit<User, "isActive"> {
   isActive: boolean;
+  specialties: string[]; // Added specialties property
+  languages: string[];   // Added languages property
 }
 
 const initialFormData: UserFormData = {
@@ -95,7 +97,9 @@ const UsersContent: React.FC = () => {
     // Simulate API fetch and convert User[] to EnhancedUser[]
     const enhancedUsers: EnhancedUser[] = DEMO_USERS.map((user) => ({
       ...user,
-      isActive: user.isActive ?? true, // Use nullish coalescing to default to true
+      isActive: user.isActive ?? true, // Default to true if undefined
+      specialties: [], // Initialize specialties as an empty array
+      languages: [],   // Initialize languages as an empty array
     }));
     setUsers(enhancedUsers);
     setFilteredUsers(enhancedUsers);
@@ -345,6 +349,8 @@ const UsersContent: React.FC = () => {
         },
         createdAt: new Date().toISOString(),
         isActive: true,
+        specialties: [], // Initialize specialties
+        languages: [],   // Initialize languages
       };
 
       setUsers((prevUsers) => [...prevUsers, newUser]);
@@ -1178,6 +1184,45 @@ const UsersContent: React.FC = () => {
                     </h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-sm">{selectedUser.profile.bio}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Specialties and Languages - Only for Tour Guides */}
+                {selectedUser.role === "tour_guide" && (
+                  <div className="space-y-4">
+                    {/* Specialties */}
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                      <p className="text-sm font-medium text-gray-700">
+                        Specialties
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedUser.specialties.map((specialty: string) => (
+                          <span
+                            key={specialty}
+                            className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
+                          >
+                            {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Languages */}
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                      <p className="text-sm font-medium text-gray-700">
+                        Languages
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedUser.languages.map((language: string) => (
+                          <span
+                            key={language}
+                            className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
+                          >
+                            {language.charAt(0).toUpperCase() + language.slice(1)}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

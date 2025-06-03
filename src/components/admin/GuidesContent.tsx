@@ -4,7 +4,6 @@ import { tourGuides as initialTourGuides } from "../../data/tourGuides";
 import {
   PlusCircle,
   Search,
-  Edit,
   Trash2,
   X,
   Check,
@@ -12,13 +11,10 @@ import {
   ChevronUp,
   MapPin,
   Globe,
+  Eye,
 } from "lucide-react";
 
-interface GuidesContentProps {
-  user: any;
-}
-
-const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
+const GuidesContent: React.FC = () => {
   const [guides, setGuides] = useState<TourGuide[]>([]);
   const [filteredGuides, setFilteredGuides] = useState<TourGuide[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,8 +54,11 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
     null
   );
   const [isAddingTour, setIsAddingTour] = useState(false);
-  const [newSpecialty, setNewSpecialty] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
+
+  const [selectedGuide, setSelectedGuide] = useState<TourGuide | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isVerifyChecked, setIsVerifyChecked] = useState(false);
 
   const specialtyOptions: TourGuideSpecialty[] = [
     "adventure",
@@ -198,17 +197,6 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
     setIsModalOpen(true);
   };
 
-  const handleEditGuide = (guide: TourGuide) => {
-    setCurrentGuide(guide);
-    setIsAddingTour(false);
-    setCurrentTour(null);
-    setFormData({
-      ...guide,
-      contactInfo: { ...guide.contactInfo },
-    });
-    setIsModalOpen(true);
-  };
-
   const handleDeleteGuide = (guideId: string) => {
     setShowConfirmDelete(guideId);
   };
@@ -312,11 +300,6 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
     });
   };
 
-  const handleEditTour = (tour: GuidedTour) => {
-    setIsAddingTour(true);
-    setCurrentTour({ ...tour });
-  };
-
   const handleDeleteTour = (tourId: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -363,13 +346,27 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
     }
   };
 
-  const handleVerifyGuide = (guideId: string) => {
-    // Update the verification status of the guide
-    setGuides((prev) =>
-      prev.map((guide) =>
-        guide.id === guideId ? { ...guide, isVerified: true } : guide
-      )
-    );
+  const handleReviewClick = (guide: TourGuide) => {
+    setSelectedGuide(guide);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleVerify = () => {
+    if (selectedGuide) {
+      setGuides((prev) =>
+        prev.map((guide) =>
+          guide.id === selectedGuide.id
+            ? { ...guide, isVerified: true }
+            : guide
+        )
+      );
+      setIsReviewModalOpen(false);
+      setSelectedGuide(null);
+    }
+  };
+
+  const handleReject = () => {
+    setIsReviewModalOpen(false);
   };
 
   return (
@@ -747,14 +744,6 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
                             >
                               {guide.isVerified ? "Verified" : "Unverified"}
                             </span>
-                            {!guide.isVerified && (
-                              <button
-                                onClick={() => handleVerifyGuide(guide.id)}
-                                className="ml-2 bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded"
-                              >
-                                Verify
-                              </button>
-                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -776,10 +765,11 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
                           ) : (
                             <div className="flex items-center justify-end space-x-3">
                               <button
-                                onClick={() => handleEditGuide(guide)}
+                                onClick={() => handleReviewClick(guide)}
                                 className="text-blue-600 hover:text-blue-900"
+                                title="Review Guide"
                               >
-                                <Edit size={16} />
+                                <Eye className="h-5 w-5" />
                               </button>
                               <button
                                 onClick={() => handleDeleteGuide(guide.id)}
@@ -1084,7 +1074,7 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Specialties
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mb-2">
                         {specialtyOptions.map((specialty) => (
                           <button
                             type="button"
@@ -1229,13 +1219,6 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
                                 <div className="flex space-x-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleEditTour(tour)}
-                                    className="text-blue-600 hover:text-blue-800"
-                                  >
-                                    <Edit size={14} />
-                                  </button>
-                                  <button
-                                    type="button"
                                     onClick={() => handleDeleteTour(tour.id)}
                                     className="text-red-600 hover:text-red-800"
                                   >
@@ -1301,6 +1284,128 @@ const GuidesContent: React.FC<GuidesContentProps> = ({ user }) => {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Review Guide Modal */}
+      {isReviewModalOpen && selectedGuide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-4">
+                Review Guide: {selectedGuide.name}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">Name</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.name}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">Email</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.contactInfo.email}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">Phone</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.contactInfo.phone || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">Location</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.location}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">
+                    Years Experience
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.experience}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">
+                    Specialties
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedGuide.specialties.map((specialty) => (
+                      <span
+                        key={specialty}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
+                      >
+                        {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">
+                    Languages
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedGuide.languages.map((language) => (
+                      <span
+                        key={language}
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
+                      >
+                        {language.charAt(0).toUpperCase() + language.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">
+                    Availability
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.availability}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
+                  <p className="text-sm font-semibold text-teal-700">
+                    Description
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedGuide.description}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="verifyCheck"
+                  className="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  onChange={(e) => setIsVerifyChecked(e.target.checked)}
+                />
+                <label
+                  htmlFor="verifyCheck"
+                  className="ml-2 text-sm text-gray-700"
+                >
+                  I confirm that I have reviewed all the details and approve this guide for verification.
+                </label>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleReject}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={isVerifyChecked ? handleVerify : undefined}
+                  className={`px-4 py-2 bg-green-600 text-white rounded-lg ${!isVerifyChecked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'}`}
+                  disabled={!isVerifyChecked}
+                >
+                  Verify
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
