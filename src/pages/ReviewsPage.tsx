@@ -8,7 +8,7 @@ import ReviewCard from "../components/reviews/ReviewCard";
 import { useAuth } from "../contexts/AuthContext";
 
 const ReviewsPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isLoggedIn } = useAuth();
   const [searchParams] = useSearchParams();
   const [filteredReviews, setFilteredReviews] = useState<Review[]>(reviews);
   const [selectedDestination, setSelectedDestination] = useState<string>("");
@@ -21,7 +21,7 @@ const ReviewsPage: React.FC = () => {
   );
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
+  if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
 

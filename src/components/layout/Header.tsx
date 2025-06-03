@@ -9,10 +9,12 @@ import {
   Info,
   Star as StarIcon,
   LogOut,
+  Book,
   // Settings,
 } from "lucide-react";
 import Logo from "../common/Logo";
 import { useAuth } from "../../contexts/AuthContext";
+import { Layer } from "recharts";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -73,6 +75,11 @@ const Header: React.FC = () => {
       icon: <StarIcon className="w-5 h-5" />,
     },
     { name: "About", path: "/about", icon: <Info className="w-5 h-5" /> },
+    {
+      name: "History",
+      path: "/history",
+      icon: <Book className="w-5 h-5" />,
+    },
   ];
 
   const headerClass = isScrolled

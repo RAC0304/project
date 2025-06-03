@@ -9,6 +9,7 @@ import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import HistoryPage from './pages/HistoryPage';
 
 // Lazy load all page components
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -65,6 +66,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/map" element={<MapDemoPage />} />
+          <Route path="/history" element={<HistoryPage />} />
 
           {/* Protected Routes */}
           <Route
