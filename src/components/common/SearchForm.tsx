@@ -7,13 +7,13 @@ const SearchForm: React.FC = () => {
   const [destination, setDestination] = useState('');
   const [dates, setDates] = useState('');
   const [travelers, setTravelers] = useState('');
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would filter results based on the search criteria
     navigate(`/destinations?search=${destination}`);
   };
-  
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-4">
       <div className="flex-1">
@@ -34,7 +34,7 @@ const SearchForm: React.FC = () => {
           />
         </div>
       </div>
-      
+
       <div className="flex-1">
         <label htmlFor="dates" className="block text-sm font-medium text-gray-700 mb-1">
           Dates
@@ -44,7 +44,7 @@ const SearchForm: React.FC = () => {
             <Calendar className="h-5 w-5 text-gray-400" />
           </div>
           <input
-            type="text"
+            type="date"
             id="dates"
             value={dates}
             onChange={(e) => setDates(e.target.value)}
@@ -53,7 +53,7 @@ const SearchForm: React.FC = () => {
           />
         </div>
       </div>
-      
+
       <div className="flex-1">
         <label htmlFor="travelers" className="block text-sm font-medium text-gray-700 mb-1">
           Travelers
@@ -76,7 +76,7 @@ const SearchForm: React.FC = () => {
           </select>
         </div>
       </div>
-      
+
       <div className="flex items-end">
         <button
           type="submit"

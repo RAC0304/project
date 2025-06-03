@@ -82,9 +82,8 @@ const DestinationPage: React.FC = () => {
           {destination.images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${
-                index === activeImageIndex ? "bg-white" : "bg-white/50"
-              }`}
+              className={`w-2 h-2 rounded-full ${index === activeImageIndex ? "bg-white" : "bg-white/50"
+                }`}
               onClick={() => setActiveImageIndex(index)}
             ></button>
           ))}
@@ -118,11 +117,10 @@ const DestinationPage: React.FC = () => {
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${
-                activeSection === section.id
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${activeSection === section.id
                   ? "bg-teal-50 text-teal-700"
                   : "text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {section.label}
             </button>
@@ -314,17 +312,7 @@ const DestinationPage: React.FC = () => {
                   Get practical information on how to reach {destination.name}{" "}
                   and where to stay.
                 </p>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    destination.location
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center bg-teal-50 hover:bg-teal-100 text-teal-700 py-2 px-4 rounded-lg transition-colors"
-                >
-                  <Map className="w-4 h-4 mr-2" />
-                  Open Location in Maps
-                </a>
+
               </div>
             </div>
 
