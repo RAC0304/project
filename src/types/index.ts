@@ -16,6 +16,7 @@ export interface Destination {
   travelTips: string[];
   category: DestinationCategory[];
   googleMapsUrl: string;
+  reviews: Review[];
 }
 
 export interface Attraction {

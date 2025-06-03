@@ -156,6 +156,17 @@ const DestinationPage: React.FC = () => {
                 </h3>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-700">{destination.location}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      destination.location
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-teal-600 hover:text-teal-800 transition-colors"
+                  >
+                    <Map className="w-4 h-4 mr-1" />
+                    <span>View on Map</span>
+                  </a>
                 </div>
               </div>
             </div>
