@@ -1,4 +1,3 @@
-// filepath: d:\rendy\project-bolt-sb1-wuclfvmk\project\src\data\tourGuides.ts
 import { TourGuide } from "../types";
 
 export const tourGuides: TourGuide[] = [
@@ -21,6 +20,7 @@ export const tourGuides: TourGuide[] = [
       email: "adi.putra@wanderwise.example",
       phone: "+62812345678",
     },
+    isVerified: true,
     availability: "Available year-round",
     tours: [
       {
@@ -61,6 +61,7 @@ export const tourGuides: TourGuide[] = [
     contactInfo: {
       email: "maya.dewi@wanderwise.example",
     },
+    isVerified: true,
     availability: "Available Monday-Saturday",
     tours: [
       {
@@ -93,6 +94,7 @@ export const tourGuides: TourGuide[] = [
       email: "rizal.hakim@wanderwise.example",
       phone: "+62823456789",
     },
+    isVerified: true,
     availability: "Seasonal (April-October)",
     tours: [
       {
@@ -134,6 +136,7 @@ export const tourGuides: TourGuide[] = [
       email: "siti.nuraini@wanderwise.example",
       phone: "+62834567890",
     },
+    isVerified: true,
     availability: "Available year-round",
     tours: [
       {
@@ -165,6 +168,7 @@ export const tourGuides: TourGuide[] = [
     contactInfo: {
       email: "wayan.dharma@wanderwise.example",
     },
+    isVerified: true,
     availability: "Available March-September",
     tours: [
       {
@@ -216,6 +220,115 @@ export const tourGuides: TourGuide[] = [
         duration: "4 days",
         price: "IDR 9,500,000",
         maxGroupSize: 6,
+      },
+    ],
+    isVerified: true,
+  },
+  // Unverified Tour Guides
+  {
+    id: "guide-111",
+    name: "Dewi Saraswati",
+    specialties: ["cultural", "culinary"],
+    location: "Yogyakarta",
+    description:
+      "Dewi offers immersive cultural tours focusing on Javanese traditions, art, and local cuisine. She specializes in connecting travelers with local families for authentic experiences.",
+    shortBio:
+      "Cultural and culinary expert with passion for authentic local experiences",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80",
+    languages: ["English", "Indonesian", "Javanese"],
+    experience: 3,
+    rating: 4.7,
+    reviewCount: 28,
+    contactInfo: {
+      email: "dewi.saraswati@wanderwise.example",
+      phone: "+62876543210",
+    },
+    isVerified: false,
+    availability: "Available weekdays",
+    tours: [
+      {
+        id: "tour-501",
+        title: "Javanese Cuisine Discovery",
+        description:
+          "Experience authentic Javanese cooking with local families and learn traditional recipes passed down through generations.",
+        duration: "6 hours",
+        price: "IDR 550,000",
+        maxGroupSize: 6,
+      },
+      {
+        id: "tour-502",
+        title: "Borobudur Sunrise Tour",
+        description:
+          "Witness the magical sunrise at the UNESCO world heritage site Borobudur Temple followed by a local breakfast.",
+        duration: "8 hours",
+        price: "IDR 800,000",
+        maxGroupSize: 8,
+      },
+    ],
+  },
+  {
+    id: "guide-222",
+    name: "Rama Wijaya",
+    specialties: ["adventure", "nature"],
+    location: "Lombok",
+    description:
+      "Passionate about showcasing the natural wonders of Lombok, Rama leads hiking, waterfall, and beach exploration tours with an emphasis on sustainability.",
+    shortBio:
+      "Adventure enthusiast focusing on sustainable nature exploration in Lombok",
+    imageUrl:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80",
+    languages: ["English", "Indonesian"],
+    experience: 4,
+    rating: 4.5,
+    reviewCount: 32,
+    contactInfo: {
+      email: "rama.wijaya@wanderwise.example",
+      phone: "+6287777123456",
+    },
+    isVerified: false,
+    availability: "Available year-round",
+    tours: [
+      {
+        id: "tour-601",
+        title: "Rinjani Volcano Trekking",
+        description:
+          "Challenge yourself with a guided 3-day trek up Mount Rinjani, experiencing breathtaking views and camping under the stars.",
+        duration: "3 days",
+        price: "IDR 3,500,000",
+        maxGroupSize: 10,
+      },
+    ],
+  },
+  {
+    id: "guide-333",
+    name: "Nina Hartono",
+    specialties: ["photography", "cultural"],
+    location: "Jakarta",
+    description:
+      "Nina combines her passion for photography with deep knowledge of Jakarta's hidden gems. Her tours focus on capturing the contrast between old and new Jakarta.",
+    shortBio: "Photography expert showcasing Jakarta's diverse urban landscape",
+    imageUrl:
+      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80",
+    languages: ["English", "Indonesian", "Mandarin"],
+    experience: 2,
+    rating: 4.3,
+    reviewCount: 17,
+    contactInfo: {
+      email: "nina.hartono@wanderwise.example",
+      phone: "+62812987654",
+    },
+    isVerified: false,
+    availability: "Weekends only",
+    tours: [
+      {
+        id: "tour-701",
+        title: "Jakarta Photo Walk",
+        description:
+          "Explore Jakarta's most photogenic spots from Kota Tua to modern skyscrapers while improving your photography skills.",
+        duration: "5 hours",
+        price: "IDR 450,000",
+        maxGroupSize: 8,
       },
     ],
   },

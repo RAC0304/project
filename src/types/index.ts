@@ -1,5 +1,6 @@
-// Export all types from tourguide.ts
-export * from './tourguide';
+// Export all types from tourguide.ts and user.ts
+export * from "./tourguide";
+export * from "./user";
 
 export interface Destination {
   id: string;
@@ -101,6 +102,7 @@ export interface TourGuide {
   };
   availability: string;
   tours: GuidedTour[];
+  isVerified: boolean; // indicates if tour guide is verified
 }
 
 export type TourGuideSpecialty =
@@ -145,6 +147,7 @@ export interface User {
   profile: UserProfile;
   createdAt: string;
   lastLogin?: string;
+  isActive?: boolean;
 }
 
 export interface UserProfile {
@@ -197,10 +200,20 @@ export interface Booking {
 }
 
 // Analytics Types
-export type AnalyticsMetric = 'bookings' | 'revenue' | 'users';
-export type AnalyticsReportType = 'revenue' | 'users' | 'destinations' | 'guides' | 'bookings';
-export type AnalyticsReportPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-export type AnalyticsReportStatus = 'available' | 'processing' | 'error';
+export type AnalyticsMetric = "bookings" | "revenue" | "users";
+export type AnalyticsReportType =
+  | "revenue"
+  | "users"
+  | "destinations"
+  | "guides"
+  | "bookings";
+export type AnalyticsReportPeriod =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "quarterly"
+  | "yearly";
+export type AnalyticsReportStatus = "available" | "processing" | "error";
 
 export interface AnalyticsItem {
   date: string;

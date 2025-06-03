@@ -238,7 +238,13 @@ const IndonesiaMapLeaflet: React.FC<IndonesiaMapLeafletProps> = ({
                 <p className="text-sm text-gray-600">Klik pada pulau atau marker untuk melihat informasi lebih lanjut</p>
             </div>
         </div>
+<<<<<<< Updated upstream
     );
+=======
+      </div>
+    </div>
+  );
+>>>>>>> Stashed changes
 };
 
 // Memoize the component to prevent unnecessary re-renders

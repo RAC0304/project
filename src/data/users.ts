@@ -22,6 +22,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-15T10:00:00Z",
+    isActive: true,
   },
   {
     id: "2",
@@ -43,6 +44,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-10T08:00:00Z",
+    isActive: true,
   },
   {
     id: "3",
@@ -64,6 +66,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-01T00:00:00Z",
+    isActive: true,
   },
   {
     id: "4",
@@ -85,6 +88,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-20T14:30:00Z",
+    isActive: false, // Inactive user
   },
   {
     id: "5",
@@ -106,6 +110,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-05T09:15:00Z",
+    isActive: true,
   },
   {
     id: "6",
@@ -127,6 +132,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-25T16:45:00Z",
+    isActive: true,
   },
   {
     id: "7",
@@ -148,6 +154,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2023-12-12T11:20:00Z",
+    isActive: false, // Inactive user
   },
   {
     id: "8",
@@ -169,6 +176,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-02-05T08:10:00Z",
+    isActive: true,
   },
   {
     id: "9",
@@ -190,6 +198,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2023-11-15T10:30:00Z",
+    isActive: true,
   },
   {
     id: "10",
@@ -211,6 +220,7 @@ export const DEMO_USERS: User[] = [
       },
     },
     createdAt: "2024-01-08T13:50:00Z",
+    isActive: false, // Inactive user
   },
 ];
 

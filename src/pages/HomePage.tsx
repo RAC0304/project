@@ -48,10 +48,11 @@ const HomePage: React.FC = () => {
 
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
           <div
-            className={`max-w-3xl transition-all duration-1000 transform ${isVisible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-10 opacity-0"
-              }`}
+            className={`max-w-3xl transition-all duration-1000 transform ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-10 opacity-0"
+            }`}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Discover the Magic of{" "}
@@ -82,14 +83,12 @@ const HomePage: React.FC = () => {
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white to-transparent h-20" />
       </section>
-
       {/* Search Section */}
       <section className="container mx-auto px-4 -mt-20 relative z-10 mb-16">
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
           <SearchForm />
         </div>
       </section>
-
       {/* Featured Destinations */}
       <section className="container mx-auto px-4 py-12" id="explore">
         <div className="flex justify-between items-center mb-8">
@@ -115,7 +114,8 @@ const HomePage: React.FC = () => {
             <DestinationCard key={destination.id} destination={destination} />
           ))}
         </div>
-      </section>      {/* Explore Categories */}
+      </section>{" "}
+      {/* Explore Categories */}
       <section className="py-16 bg-teal-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
             <IndonesiaMap className="mb-8" />
           </div>
 
-          <div className="flex flex-wrap gap-4 justify-center">
+          {/* <div className="flex flex-wrap gap-4 justify-center">
             {Array.from(new Set(destinations.flatMap((d) => d.category))).map(
               (category) => (
                 <Link
@@ -144,10 +144,9 @@ const HomePage: React.FC = () => {
                 </Link>
               )
             )}
-          </div>
+          </div> */}
         </div>
       </section>
-
       {/* Featured Itineraries */}
       <section className="container mx-auto px-4 py-16">
         <div className="flex justify-between items-center mb-8">
@@ -174,7 +173,6 @@ const HomePage: React.FC = () => {
           ))}
         </div>
       </section>
-
       {/* Why Choose Us */}
       <section className="bg-teal-900 text-white py-16">
         <div className="container mx-auto px-4">
@@ -236,7 +234,6 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-
       {/* Cultural Insights */}
       <section className="container mx-auto px-4 py-16" id="culture">
         <div className="flex justify-between items-center mb-8">
@@ -263,7 +260,6 @@ const HomePage: React.FC = () => {
           ))}
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="relative py-20 mb-20">
         <div className="absolute inset-0 overflow-hidden">

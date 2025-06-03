@@ -7,7 +7,6 @@ import {
   User,
   Calendar,
   Globe,
-  Search,
   Info,
   Star as StarIcon,
   LogOut,
@@ -125,18 +124,7 @@ const Header: React.FC = () => {
               })}
               <span>{link.name}</span>
             </Link>
-          ))}
-          <button
-            className={`flex items-center space-x-1 px-3 py-1.5 border border-teal-500 rounded-full transition
-              ${
-                isScrolled
-                  ? "text-teal-600 hover:bg-teal-50"
-                  : "text-teal-600 border-white/70 hover:bg-white/10"
-              }`}
-          >
-            <Search className="w-4 h-4" />
-            <span>Search</span>
-          </button>{" "}
+          ))}{" "}
           {user ? (
             <div className="flex items-center space-x-4">
               <Link
