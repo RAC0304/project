@@ -9,7 +9,7 @@ import ClientsContent from "../components/tourguide/dashboard/ClientsContent";
 import ReviewsContent from "../components/tourguide/dashboard/ReviewsContent";
 import EditTourModal from "../components/tourguide/modals/EditTourModal";
 import Toast, { ToastType } from "../components/common/Toast";
-import { User } from "../types/user";
+import { useAuth } from "../contexts/AuthContext";
 import { TourData } from "../types/tourguide";
 import {
   calculateGuideStats,
@@ -19,6 +19,7 @@ import {
 } from "../data/tourGuideDashboardData";
 
 const TourGuideDashboard: React.FC = () => {
+  const { user } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [tourToEdit, setTourToEdit] = useState<TourData | null>(null);
@@ -34,20 +35,19 @@ const TourGuideDashboard: React.FC = () => {
     message: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [user] = useState<User>({
-    id: "guide-001",
-    email: "example@email.com",
-    username: "johndoe",
-    role: "tour_guide",
-    profile: {
-      firstName: "John",
-      lastName: "Doe",
-      phone: "+1234567890",
-      location: "Jakarta, Indonesia",
-      bio: "Experienced tour guide with passion for history and culture",
-    },
-    createdAt: new Date().toISOString(),
-  });
+
+  // Redirect if no user is authenticated
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-600">
+            Please log in to access the dashboard
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   const showToast = (type: ToastType, message: string) => {
     setToast({

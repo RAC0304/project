@@ -11,7 +11,7 @@ export const DEMO_USERS: User[] = [
       firstName: "John",
       lastName: "Doe",
       location: "Jakarta, Indonesia",
-      avatar: "/src/asset/image/avatar-user.png",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=JohnT",
       bio: "Travel enthusiast who loves exploring new destinations and cultures.",
       phone: "+62 812 3456 7890",
       preferences: {
@@ -33,7 +33,7 @@ export const DEMO_USERS: User[] = [
       firstName: "Sarah",
       lastName: "Johnson",
       location: "Bali, Indonesia",
-      avatar: "/src/asset/image/avatar-guide.png",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SarahG",
       bio: "Professional tour guide with 8+ years experience in Bali and surrounding islands.",
       phone: "+62 821 9876 5432",
       preferences: {
@@ -55,7 +55,7 @@ export const DEMO_USERS: User[] = [
       firstName: "Michael",
       lastName: "Administrator",
       location: "Jakarta, Indonesia",
-      avatar: "/src/asset/image/avatar-admin.png",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AdminSys",
       bio: "System administrator managing WanderWise platform and operations.",
       phone: "+62 811 1234 5678",
       preferences: {
