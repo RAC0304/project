@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Star } from 'lucide-react';
+import { useState } from "react";
+import { Star } from "lucide-react";
+import femalePhoto from "../asset/image/female.jpg";
+import { DEFAULT_AVATAR } from "../asset/image/defaultAvatar";
 
 interface TourGuide {
   id: number;
@@ -17,7 +19,7 @@ const trips: TourGuide[] = [
     location: "Bali, Indonesia",
     date: "April 2025",
     duration: "April 1, 2025 - April 7, 2025",
-    photo: "/src/asset/image/female.jpg",
+    photo: femalePhoto,
   },
   {
     id: 2,
@@ -25,41 +27,41 @@ const trips: TourGuide[] = [
     location: "Yogyakarta, Indonesia",
     date: "February 2025",
     duration: "February 10, 2025 - February 15, 2025",
-    photo: "/src/asset/image/female.jpg",
-  }
+    photo: femalePhoto,
+  },
 ];
 
 const HistoryPage: React.FC = () => {
   const [selectedGuide, setSelectedGuide] = useState<TourGuide | null>(null);
   const [rating, setRating] = useState<number | null>(null);
-  const [reviewText, setReviewText] = useState('');
-  const [notification, setNotification] = useState('');
+  const [reviewText, setReviewText] = useState("");
+  const [notification, setNotification] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
 
   const satisfactionIcons = [
     { label: "Sad", emoji: "😞" },
     { label: "Neutral", emoji: "😐" },
-    { label: "Happy", emoji: "😊" }
+    { label: "Happy", emoji: "😊" },
   ];
 
   const handleSelectGuide = (guide: TourGuide) => {
     setSelectedGuide(guide);
-    setReviewText('');
+    setReviewText("");
     setRating(null);
     setSelectedIcon(null);
-    setNotification('');
+    setNotification("");
   };
 
   const handleSubmitReview = () => {
     if (reviewText.trim()) {
-      setNotification('Review submitted!');
+      setNotification("Review submitted!");
       setTimeout(() => {
-        setNotification('');
+        setNotification("");
         setSelectedGuide(null);
       }, 3000);
     } else {
-      setNotification('Please enter a review before submitting.');
-      setTimeout(() => setNotification(''), 3000);
+      setNotification("Please enter a review before submitting.");
+      setTimeout(() => setNotification(""), 3000);
     }
   };
 
@@ -78,24 +80,33 @@ const HistoryPage: React.FC = () => {
   return (
     <div className="w-full px-6 md:px-12 lg:px-20 xl:px-32">
       <div className="text-center mt-12 mb-16">
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">Travel History</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-6">
+          Travel History
+        </h1>
         <p className="text-lg text-gray-600 max-w-md mx-auto">
-          Relive your past adventures and explore the details of your travel history with ease.
+          Relive your past adventures and explore the details of your travel
+          history with ease.
         </p>
       </div>
-
       <div className="space-y-4 mb-16">
         {trips.map((trip) => (
           <div
             key={trip.id}
             className="p-4 border rounded-lg shadow-sm bg-white flex items-center justify-between w-full"
           >
+            {" "}
             <div className="flex items-center space-x-4">
-              <img
-                src={trip.photo}
-                alt={trip.name}
-                className="w-16 h-16 rounded-full object-cover"
-              />
+              <div className="w-16 h-16 relative group">
+                <img
+                  src={trip.photo}
+                  alt={trip.name}
+                  className="w-full h-full rounded-full object-cover drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_AVATAR;
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-teal-500/10 pointer-events-none"></div>
+              </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
                   {trip.name}
@@ -112,14 +123,31 @@ const HistoryPage: React.FC = () => {
             </button>
           </div>
         ))}
-      </div>
-
+      </div>{" "}
       {selectedGuide && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-full max-w-xl mx-4 shadow-lg">
-            <h2 className="text-xl font-semibold mb-2">
-              Review for {selectedGuide.name}
-            </h2>
+            <div className="flex items-center mb-4">
+              <div className="w-16 h-16 relative group mr-4">
+                <img
+                  src={selectedGuide.photo}
+                  alt={selectedGuide.name}
+                  className="w-full h-full rounded-full object-cover drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_AVATAR;
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-teal-500/10 pointer-events-none"></div>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Review for {selectedGuide.name}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {selectedGuide.location}
+                </p>
+              </div>
+            </div>
             <textarea
               className="w-full p-2 border rounded-md mb-3"
               placeholder="Share your experience..."
@@ -137,9 +165,9 @@ const HistoryPage: React.FC = () => {
                     className={`cursor-pointer transition-colors ${
                       reviewText.trim()
                         ? num <= (rating ?? 0)
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                        : 'text-gray-200 cursor-not-allowed'
+                          ? "text-yellow-400"
+                          : "text-gray-300"
+                        : "text-gray-200 cursor-not-allowed"
                     }`}
                     onClick={() => handleRatingClick(num)}
                   />
@@ -155,9 +183,9 @@ const HistoryPage: React.FC = () => {
                     className={`cursor-pointer p-2 rounded-full transition ${
                       reviewText.trim()
                         ? selectedIcon === icon.emoji
-                          ? 'bg-gray-300'
-                          : 'hover:bg-gray-100'
-                        : 'opacity-30 cursor-not-allowed'
+                          ? "bg-gray-300"
+                          : "hover:bg-gray-100"
+                        : "opacity-30 cursor-not-allowed"
                     }`}
                     onClick={() => handleSatisfactionClick(icon.emoji)}
                   >
@@ -183,11 +211,12 @@ const HistoryPage: React.FC = () => {
           </div>
         </div>
       )}
-
       {notification && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white px-8 py-5 rounded-lg shadow-md text-center max-w-xs">
-            <p className="text-lg font-semibold text-green-600">{notification}</p>
+            <p className="text-lg font-semibold text-green-600">
+              {notification}
+            </p>
           </div>
         </div>
       )}
