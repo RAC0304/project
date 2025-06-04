@@ -13,8 +13,7 @@ import {
   Menu,
   X,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../common/Logo";
@@ -25,6 +24,7 @@ interface TourGuideSidebarProps {
   onPageChange: (page: string) => void;
   onLogout?: () => void;
   onMinimizeChange?: (isMinimized: boolean) => void;
+  isMinimized?: boolean;
 }
 
 const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
@@ -32,17 +32,23 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   onPageChange,
   onLogout,
   onMinimizeChange,
+  isMinimized: externalIsMinimized = false,
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [internalIsMinimized, setInternalIsMinimized] = useState(false);
 
-  const handleMinimizeToggle = (minimized: boolean) => {
-    setIsMinimized(minimized);
-    // Notify parent component if callback is provided
+  // Use external minimize state if provided, otherwise use internal state
+  const isMinimized = externalIsMinimized || internalIsMinimized;
+
+  const handleToggleMinimize = () => {
     if (onMinimizeChange) {
-      onMinimizeChange(minimized);
+      // If external handler is provided, use it
+      onMinimizeChange(!isMinimized);
+    } else {
+      // Otherwise use internal state
+      setInternalIsMinimized(!internalIsMinimized);
     }
   };
 
@@ -135,11 +141,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
           isMinimized ? "w-20" : "w-72"
         } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
       >
+        {" "}
         {/* Logo/Brand */}
-        <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 sticky top-0 z-30">
+        <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-between px-4 sticky top-0 z-30">
           <div className="flex items-center">
-            {" "}
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden ">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden">
               <Logo width={48} height={48} className="object-contain" />
             </div>
             {!isMinimized && (
@@ -148,18 +154,7 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               </h1>
             )}
           </div>
-          {/* Minimize sidebar button */}
-          <button
-            onClick={() => handleMinimizeToggle(!isMinimized)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-all"
-            title={isMinimized ? "Expand Sidebar" : "Minimize Sidebar"}
-          >
-            {isMinimized ? (
-              <ChevronsRight size={16} className="text-white" />
-            ) : (
-              <ChevronsLeft size={16} className="text-white" />
-            )}
-          </button>
+          {/* Desktop minimize toggle button */}
         </div>{" "}
         {/* Profile Summary */}
         <div className="p-5 border-b border-gray-100 bg-white shadow-sm sticky top-20 z-20">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Users,
   BarChart3,
@@ -8,8 +8,6 @@ import {
   LogOut,
   Layout,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Shield,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,7 +20,7 @@ interface AdminSidebarProps {
   setActivePage: (page: string) => void;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (isOpen: boolean) => void;
-  onMinimizeChange?: (isMinimized: boolean) => void;
+  isMinimized?: boolean;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -30,19 +28,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   setActivePage,
   mobileMenuOpen,
   setMobileMenuOpen,
-  onMinimizeChange,
+  isMinimized = false,
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [isMinimized, setIsMinimized] = useState(false); // State to manage sidebar minimized state
-
-  const handleMinimizeToggle = (minimized: boolean) => {
-    setIsMinimized(minimized);
-    // Notify parent component if callback is provided
-    if (onMinimizeChange) {
-      onMinimizeChange(minimized);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -117,7 +106,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}{" "}
-      {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
+      {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}{" "}
       <div
         className={`${
           mobileMenuOpen
@@ -127,9 +116,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           isMinimized ? "w-20" : "w-72"
         } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col overflow-hidden`}
       >
-        {/* Logo/Brand - Improved styling */}
-        <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 flex-shrink-0 relative">
-          {" "}
+        {" "}
+        {/* Logo/Brand - Improved styling */}{" "}
+        <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 flex-shrink-0">
           <div className="flex items-center">
             <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden">
               <Logo width={48} height={48} className="object-contain" />
@@ -140,28 +129,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               </h1>
             )}
           </div>
-          {/* Minimize sidebar button */}
-          <button
-            onClick={() => handleMinimizeToggle(!isMinimized)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-all"
-            title={isMinimized ? "Expand Sidebar" : "Minimize Sidebar"}
-          >
-            {isMinimized ? (
-              <ChevronsRight size={16} className="text-white" />
-            ) : (
-              <ChevronsLeft size={16} className="text-white" />
-            )}
-          </button>
-        </div>
-
-        {/* Profile Summary - Improved with better spacing and shadow */}
+        </div>{" "}
+        {/* Profile Summary - Improved with better spacing and shadow */}{" "}
         <div className="p-5 border-b border-gray-100 bg-white shadow-sm flex-shrink-0">
           <div
             className={`flex ${
               isMinimized ? "justify-center" : "items-center space-x-4"
             }`}
           >
-            {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <Logo
                 width={48}
@@ -181,10 +156,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             )}
           </div>
         </div>
-
         {/* Navigation with scrollable content */}
         <nav className="flex-1 flex flex-col overflow-hidden">
           <div className="px-4 pt-4 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 pr-2">
+            {" "}
             {menuItems.map((menuGroup, groupIdx) => (
               <div key={groupIdx} className="mb-5">
                 {!isMinimized && (
@@ -231,10 +206,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             ))}{" "}
             {/* Add some bottom padding for better scroll experience */}
             <div className="h-4"></div>
-          </div>
-
+          </div>{" "}
           {/* Logout button positioned directly after navigation items */}
           <div className="px-4 py-4 border-t border-gray-100 mt-auto">
+            {" "}
             <button
               onClick={handleLogout}
               title="Sign Out"

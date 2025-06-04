@@ -16,21 +16,15 @@ interface AdminContentProps {
       lastName: string;
     };
   } | null;
-  sidebarMinimized?: boolean;
 }
 
 const AdminContent: React.FC<AdminContentProps> = ({
   activePage,
   setActivePage,
   user,
-  sidebarMinimized = false,
 }) => {
   return (
-    <div
-      className={`${
-        sidebarMinimized ? "lg:ml-28" : "lg:ml-80"
-      } flex-1 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 transition-all duration-300`}
-    >
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 gap-4">
         <div>
@@ -54,9 +48,9 @@ const AdminContent: React.FC<AdminContentProps> = ({
       {activePage === "dashboard" && (
         <DashboardContent setActivePage={setActivePage} />
       )}{" "}
-      {activePage === "users" && <UsersContent />}
-      {activePage === "guides" && <GuidesContent user={user} />}
-      {activePage === "destinations" && <DestinationsContent user={user} />}
+      {activePage === "users" && <UsersContent />}{" "}
+      {activePage === "guides" && <GuidesContent />}
+      {activePage === "destinations" && <DestinationsContent />}
       {activePage === "bookings" && <BookingsContent />}{" "}
       {activePage === "analytics" && <AnalyticsContent user={user} />}
       {activePage === "security" && <SecurityContent />}

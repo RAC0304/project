@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import TourGuideSidebar from "../components/tourguide/layout/TourGuideSidebar";
+import MinimizeButton from "../components/tourguide/layout/MinimizeButton";
 import MessagesContent from "../components/tourguide/dashboard/MessagesContent";
 import DashboardContent from "../components/tourguide/dashboard/DashboardContent";
 import ProfileContent from "../components/tourguide/dashboard/ProfileContent";
@@ -115,46 +116,63 @@ const TourGuideDashboard: React.FC = () => {
       throw error;
     }
   };
-
   const handleSidebarMinimize = (isMinimized: boolean) => {
     setSidebarMinimized(isMinimized);
   };
 
+  const toggleSidebar = () => {
+    setSidebarMinimized(!sidebarMinimized);
+  };
   return (
     <div className="flex h-screen bg-gray-50">
-      {" "}
       <TourGuideSidebar
         activePage={activePage}
         onPageChange={setActivePage}
         onMinimizeChange={handleSidebarMinimize}
-      />{" "}
+        isMinimized={sidebarMinimized}
+      />
       <main
         className={`flex-1 overflow-auto ${
           sidebarMinimized ? "lg:pl-28" : "lg:pl-80"
-        } pt-4 px-4 transition-all duration-300`}
+        } transition-all duration-300`}
       >
-        {activePage === "dashboard" && (
-          <DashboardContent
-            guideStats={calculateGuideStats(user.id)}
-            upcomingTours={getUpcomingTours(user.id)}
-            recentReviews={recentReviews}
-            setActivePage={setActivePage}
-          />
-        )}
-        {activePage === "profile" && <ProfileContent user={user} />}{" "}
-        {activePage === "tours" && (
-          <ToursContent
-            tours={tours}
-            onEditTour={handleEditTour}
-            onCreateTour={handleCreateTour}
-            onDeleteTour={handleDeleteTour}
-            isLoading={isLoading}
-          />
-        )}{" "}
-        {activePage === "bookings" && <BookingsContent tourGuideId={user.id} />}
-        {activePage === "clients" && <ClientsContent tourGuideId={user.id} />}
-        {activePage === "reviews" && <ReviewsContent tourGuideId={user.id} />}
-        {activePage === "messages" && <MessagesContent />}
+        {" "}
+        {/* Header with Minimize Button */}
+        <div className="sticky top-0 z-10  px-4 py-3 flex items-center justify-between">
+          <div className="hidden lg:block">
+            <MinimizeButton
+              isMinimized={sidebarMinimized}
+              onToggle={toggleSidebar}
+            />
+          </div>
+        </div>
+        {/* Content Area */}
+        <div className="px-4 pt-4">
+          {activePage === "dashboard" && (
+            <DashboardContent
+              guideStats={calculateGuideStats(user.id)}
+              upcomingTours={getUpcomingTours(user.id)}
+              recentReviews={recentReviews}
+              setActivePage={setActivePage}
+            />
+          )}
+          {activePage === "profile" && <ProfileContent user={user} />}{" "}
+          {activePage === "tours" && (
+            <ToursContent
+              tours={tours}
+              onEditTour={handleEditTour}
+              onCreateTour={handleCreateTour}
+              onDeleteTour={handleDeleteTour}
+              isLoading={isLoading}
+            />
+          )}{" "}
+          {activePage === "bookings" && (
+            <BookingsContent tourGuideId={user.id} />
+          )}{" "}
+          {activePage === "clients" && <ClientsContent tourGuideId={user.id} />}
+          {activePage === "reviews" && <ReviewsContent tourGuideId={user.id} />}
+          {activePage === "messages" && <MessagesContent />}
+        </div>
       </main>{" "}
       <EditTourModal
         isOpen={isEditModalOpen}
