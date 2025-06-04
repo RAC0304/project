@@ -168,7 +168,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               isMinimized ? "justify-center" : "items-center space-x-4"
             }`}
           >
-            {" "}            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
+            {" "}
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <img
                 src={PROFILE_IMAGE}
                 alt="Profile"

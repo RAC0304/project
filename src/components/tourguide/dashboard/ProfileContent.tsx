@@ -108,7 +108,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         <div className="px-6 py-6 md:px-8 md:py-8 -mt-20">
           <div className="flex flex-col md:flex-row">
             {" "}
-            {/* Profile Image */}{" "}            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 bg-white">
+            {/* Profile Image */}{" "}
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 bg-white">
               <img
                 src={PROFILE_IMAGE}
                 alt="Profile"

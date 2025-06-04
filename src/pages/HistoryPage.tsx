@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
-import femalePhoto from "../asset/image/female.jpg";
 import { DEFAULT_AVATAR } from "../asset/image/defaultAvatar";
+import { tourGuides } from "../data/tourGuides";
 
-interface TourGuide {
-  id: number;
+interface TripHistory {
+  id: string;
   name: string;
   location: string;
   date: string;
@@ -12,27 +12,18 @@ interface TourGuide {
   photo: string;
 }
 
-const trips: TourGuide[] = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    location: "Bali, Indonesia",
-    date: "April 2025",
-    duration: "April 1, 2025 - April 7, 2025",
-    photo: femalePhoto,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    location: "Yogyakarta, Indonesia",
-    date: "February 2025",
-    duration: "February 10, 2025 - February 15, 2025",
-    photo: femalePhoto,
-  },
-];
+// Create trip history from tour guides data
+const trips: TripHistory[] = tourGuides.slice(0, 6).map((guide, index) => ({
+  id: guide.id,
+  name: guide.name,
+  location: guide.location,
+  date: index % 2 === 0 ? "April 2025" : "February 2025",
+  duration: index % 2 === 0 ? "April 1, 2025 - April 7, 2025" : "February 10, 2025 - February 15, 2025",
+  photo: guide.imageUrl,
+}));
 
 const HistoryPage: React.FC = () => {
-  const [selectedGuide, setSelectedGuide] = useState<TourGuide | null>(null);
+  const [selectedGuide, setSelectedGuide] = useState<TripHistory | null>(null);
   const [rating, setRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [notification, setNotification] = useState("");
@@ -43,8 +34,7 @@ const HistoryPage: React.FC = () => {
     { label: "Neutral", emoji: "😐" },
     { label: "Happy", emoji: "😊" },
   ];
-
-  const handleSelectGuide = (guide: TourGuide) => {
+  const handleSelectGuide = (guide: TripHistory) => {
     setSelectedGuide(guide);
     setReviewText("");
     setRating(null);
