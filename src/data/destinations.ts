@@ -40,20 +40,18 @@ export const destinations: Destination[] = [
           "https://images.pexels.com/photos/5766288/pexels-photo-5766288.jpeg",
       },
       {
-        id: "new-attraction-1",
-        name: "Gunung Sibayak",
-        description:
-          "A majestic volcano in North Sumatra, perfect for sunrise hikes.",
+        id: "bali-4",
+        name: "Uluwatu Temple",
+        description: "Dramatic clifftop temple with stunning ocean views",
         imageUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/3/3e/Gunung_Sibayak.jpg",
+          "https://images.pexels.com/photos/2474690/pexels-photo-2474690.jpeg",
       },
       {
-        id: "new-attraction-2",
-        name: "Kelimutu National Park",
-        description:
-          "Famous for its three color-changing crater lakes in Flores.",
+        id: "bali-5",
+        name: "Mount Agung",
+        description: "Sacred active volcano and highest peak in Bali",
         imageUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/5/5e/Kelimutu.jpg",
+          "https://images.pexels.com/photos/5766288/pexels-photo-5766288.jpeg",
       },
     ],
     activities: [
@@ -78,23 +76,24 @@ export const destinations: Destination[] = [
           "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg",
       },
       {
-        id: "new-activity-1",
-        name: "Surfing in Bali",
-        description: "Catch the waves at Bali's world-famous beaches.",
-        duration: "3 hours",
-        price: "$50",
+        id: "bali-act-3",
+        name: "Waterfall Tour",
+        description:
+          "Discover Bali's beautiful waterfalls like Sekumpul and Tegenungan",
+        duration: "6 hours",
+        price: "$35",
         imageUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/6/6e/Surfing_in_Bali.jpg",
+          "https://images.pexels.com/photos/2474689/pexels-photo-2474689.jpeg",
       },
       {
-        id: "new-activity-2",
-        name: "Cultural Tour in Toraja",
+        id: "bali-act-4",
+        name: "Temple Hopping Tour",
         description:
-          "Explore the unique culture and traditional houses of Toraja in Sulawesi.",
-        duration: "4 hours",
-        price: "$40",
+          "Visit multiple ancient temples including Uluwatu and Tanah Lot",
+        duration: "8 hours",
+        price: "$55",
         imageUrl:
-          "https://upload.wikimedia.org/wikipedia/commons/8/8e/Toraja_House.jpg",
+          "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg",
       },
     ],
     bestTimeToVisit: "April to October (dry season)",
@@ -106,6 +105,7 @@ export const destinations: Destination[] = [
     ],
     category: ["beach", "cultural", "nature"],
     googleMapsUrl: "https://www.google.com/maps?q=Bali,+Indonesia",
+    reviews: [],
   },
   {
     id: "raja-ampat",
@@ -169,6 +169,7 @@ export const destinations: Destination[] = [
     ],
     category: ["beach", "nature", "adventure"],
     googleMapsUrl: "https://www.google.com/maps?q=Raja+Ampat,+Indonesia",
+    reviews: [],
   },
   {
     id: "borobudur",
@@ -202,16 +203,18 @@ export const destinations: Destination[] = [
           "https://images.pexels.com/photos/2765878/pexels-photo-2765878.jpeg",
       },
       {
-        id: "new-attraction-1",
-        name: "New Attraction 1",
-        description: "Description for new attraction 1.",
-        imageUrl: "https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg", // Using existing image
+        id: "borobudur-3",
+        name: "Mendut Temple",
+        description: "Buddhist temple with beautiful carved reliefs",
+        imageUrl:
+          "https://images.pexels.com/photos/2765878/pexels-photo-2765878.jpeg",
       },
       {
-        id: "new-attraction-2",
-        name: "New Attraction 2",
-        description: "Description for new attraction 2.",
-        imageUrl: "https://images.pexels.com/photos/2474690/pexels-photo-2474690.jpeg", // Using existing image
+        id: "borobudur-4",
+        name: "Pawon Temple",
+        description: "Small Buddhist temple near Borobudur",
+        imageUrl:
+          "https://images.pexels.com/photos/4611670/pexels-photo-4611670.jpeg",
       },
     ],
     activities: [
@@ -234,22 +237,23 @@ export const destinations: Destination[] = [
           "https://images.pexels.com/photos/3522276/pexels-photo-3522276.jpeg",
       },
       {
-        id: "new-activity-1",
-        name: "New Activity 1",
-        description: "Description for new activity 1.",
-        duration: "2 hours",
-        price: "$20",
-        imageUrl: "https://images.pexels.com/photos/2474689/pexels-photo-2474689.jpeg", // Using existing image
-        style: { width: "100%", height: "200px", objectFit: "cover" },
+        id: "borobudur-act-3",
+        name: "Photography Workshop",
+        description:
+          "Learn to capture the temple's beauty at different times of day",
+        duration: "4 hours",
+        price: "$35",
+        imageUrl:
+          "https://images.pexels.com/photos/2474689/pexels-photo-2474689.jpeg",
       },
       {
-        id: "new-activity-2",
-        name: "New Activity 2",
-        description: "Description for new activity 2.",
-        duration: "3 hours",
-        price: "$30",
-        imageUrl: "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg", // Using existing image
-        style: { width: "100%", height: "200px", objectFit: "cover" },
+        id: "borobudur-act-4",
+        name: "Meditation Session",
+        description: "Experience spiritual meditation in the temple grounds",
+        duration: "2 hours",
+        price: "$20",
+        imageUrl:
+          "https://images.pexels.com/photos/5490956/pexels-photo-5490956.jpeg",
       },
     ],
     bestTimeToVisit: "May to September",
@@ -262,6 +266,7 @@ export const destinations: Destination[] = [
     category: ["cultural", "historical"],
     googleMapsUrl:
       "https://www.google.com/maps?q=Borobudur+Temple,+Central+Java,+Indonesia",
+    reviews: [],
   },
   {
     id: "komodo",
@@ -332,6 +337,7 @@ export const destinations: Destination[] = [
     category: ["nature", "adventure", "beach"],
     googleMapsUrl:
       "https://www.google.com/maps?q=Komodo+National+Park,+East+Nusa+Tenggara,+Indonesia",
+    reviews: [],
   },
   {
     id: "yogyakarta",
@@ -396,6 +402,7 @@ export const destinations: Destination[] = [
     category: ["cultural", "historical", "city"],
     googleMapsUrl:
       "https://www.google.com/maps?q=Yogyakarta,+Central+Java,+Indonesia",
+    reviews: [],
   },
 ];
 

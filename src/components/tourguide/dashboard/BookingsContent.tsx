@@ -106,10 +106,18 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
-
   const handleSendMessage = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowMessageModal(true);
+  };
+
+  const handleMessageSent = (message: string) => {
+    // Show success notification outside modal
+    setToast({
+      isVisible: true,
+      type: "success",
+      message: `Pesan berhasil dikirim kepada ${selectedBooking?.userName}!`,
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -191,7 +199,6 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         message={toast.message}
         onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
       />
-
       <div className="space-y-6">
         {/* Header and Search/Filter Section */}
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -474,19 +481,18 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
           )}
         </div>
       </div>
-
       {/* Modals */}
       <BookingDetailsModal
         booking={selectedBooking}
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
         onStatusUpdate={handleStatusUpdate}
-      />
-
+      />{" "}
       <MessageModal
         booking={selectedBooking}
         isOpen={showMessageModal}
         onClose={() => setShowMessageModal(false)}
+        onMessageSent={handleMessageSent}
       />
     </>
   );

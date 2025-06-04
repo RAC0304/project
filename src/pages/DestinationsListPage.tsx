@@ -79,12 +79,12 @@ const DestinationsListPage: React.FC = () => {
         {" "}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Mau kemana hari ini?
+            Where do you want to go today?
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Jelajahi keindahan Nusantara yang memukau, dari pantai eksotis nan
-            menawan hingga candi bersejarah yang menyimpan sejuta cerita
-          </p>{" "}
+            Explore the breathtaking beauty of the archipelago, from exotic
+            enchanting beaches to ancient temples full of stories.
+          </p>
           {/* Interactive Indonesia Map with all destinations
           <div className="mt-8 mb-10">
             <IndonesiaMap

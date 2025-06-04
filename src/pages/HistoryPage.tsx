@@ -18,7 +18,10 @@ const trips: TripHistory[] = tourGuides.slice(0, 6).map((guide, index) => ({
   name: guide.name,
   location: guide.location,
   date: index % 2 === 0 ? "April 2025" : "February 2025",
-  duration: index % 2 === 0 ? "April 1, 2025 - April 7, 2025" : "February 10, 2025 - February 15, 2025",
+  duration:
+    index % 2 === 0
+      ? "April 1, 2025 - April 7, 2025"
+      : "February 10, 2025 - February 15, 2025",
   photo: guide.imageUrl,
 }));
 
