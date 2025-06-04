@@ -173,14 +173,14 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
                 src="/src/asset/image/female.jpg"
                 alt="Profile"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to generated avatar if image fails to load
-                  (
-                    e.target as HTMLImageElement
-                  ).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-                    user?.username || "default"
-                  }`;
-                }}
+                // onError={(e) => {
+                //   // Fallback to generated avatar if image fails to load
+                //   (
+                //     e.target as HTMLImageElement
+                //   ).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${
+                //     user?.username || "default"
+                //   }`;
+                // }}
               />
             </div>
             {!isMinimized && (
