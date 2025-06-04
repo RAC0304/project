@@ -31,7 +31,7 @@ const TourGuideDashboard = lazy(() => import("./pages/TourGuideDashboard"));
 const MapDemoPage = lazy(() => import("./pages/MapDemoPage"));
 
 function App() {
-  const location = useLocation();  // Check if the current path is the login, register, unauthorized page
+  const location = useLocation(); // Check if the current path is the login, register, unauthorized page
   const isAuthPage =
     location.pathname === "/" ||
     location.pathname === "/login" ||

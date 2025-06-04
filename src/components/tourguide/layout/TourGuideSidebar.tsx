@@ -169,29 +169,19 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
           >
             {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
-              {user?.profile.avatar && user?.profile.avatar !== "" ? (
-                <img
-                  src={user.profile.avatar}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to generated avatar if image fails to load
-                    (
-                      e.target as HTMLImageElement
-                    ).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-                      user?.username || "default"
-                    }`;
-                  }}
-                />
-              ) : (
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${
+              <img
+                src="/src/asset/image/female.jpg"
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to generated avatar if image fails to load
+                  (
+                    e.target as HTMLImageElement
+                  ).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${
                     user?.username || "default"
-                  }`}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              )}
+                  }`;
+                }}
+              />
             </div>
             {!isMinimized && (
               <div className="flex-1 min-w-0">

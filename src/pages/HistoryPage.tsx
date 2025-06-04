@@ -15,7 +15,7 @@ interface TourGuide {
 const trips: TourGuide[] = [
   {
     id: 1,
-    name: "John Doe",
+    name: "Sarah Johnson",
     location: "Bali, Indonesia",
     date: "April 2025",
     duration: "April 1, 2025 - April 7, 2025",
