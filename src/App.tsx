@@ -58,7 +58,6 @@ function App() {
         {" "}
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/destinations" element={<DestinationsListPage />} />
             <Route path="/destinations/:id" element={<DestinationPage />} />
@@ -98,6 +97,7 @@ function App() {
               }
             />{" "}
             {/* Auth Routes */}
+            <Route path="/" element={<LoginPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />{" "}
             <Route path="/unauthorized" element={<UnauthorizedPage />} />

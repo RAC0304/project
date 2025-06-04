@@ -7,14 +7,11 @@ import {
   User,
   Calendar,
   Info,
-  Star as StarIcon,
   LogOut,
   Book,
-  // Settings,
 } from "lucide-react";
 import Logo from "../common/Logo";
 import { useAuth } from "../../contexts/AuthContext";
-import { Layer } from "recharts";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
