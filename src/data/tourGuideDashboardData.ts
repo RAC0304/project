@@ -5,6 +5,7 @@ import { getBookingsByTourGuideId } from "./bookings";
 // This maps the logged-in user ID to the corresponding tour guide ID
 const USER_TO_GUIDE_MAPPING: Record<string, string> = {
   "2": "guide-001", // Sarah Johnson -> Adi Putra (for demo purposes)
+  "5": "guide-005", // Roberto Hernandez -> guide-005
   "7": "guide-002", // David Thompson -> Maya Dewi
   // Add more mappings as needed
 };
