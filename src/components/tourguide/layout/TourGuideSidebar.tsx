@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../common/Logo";
+import { PROFILE_IMAGE } from "../../../constants/images";
 
 interface TourGuideSidebarProps {
   activePage: string;
@@ -167,20 +168,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               isMinimized ? "justify-center" : "items-center space-x-4"
             }`}
           >
-            {" "}
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
+            {" "}            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <img
-                src="/src/asset/image/female.jpg"
+                src={PROFILE_IMAGE}
                 alt="Profile"
                 className="w-full h-full object-cover"
-                // onError={(e) => {
-                //   // Fallback to generated avatar if image fails to load
-                //   (
-                //     e.target as HTMLImageElement
-                //   ).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-                //     user?.username || "default"
-                //   }`;
-                // }}
               />
             </div>
             {!isMinimized && (
