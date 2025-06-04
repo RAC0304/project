@@ -44,7 +44,6 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     const result = await login(email, password);
     if (result.success) {
       // Check user role from local storage since the context might not be updated yet
@@ -56,10 +55,10 @@ const LoginPage: React.FC = () => {
         } else if (user.role === "admin") {
           navigate("/admin/dashboard");
         } else {
-          navigate("/");
+          navigate("/home");
         }
       } else {
-        navigate("/");
+        navigate("/home");
       }
     } else {
       setError(result.error || "Login failed");
@@ -77,11 +76,12 @@ const LoginPage: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="bg-white/85 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10"
       >
+        {" "}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           type="button"
           className="absolute left-4 top-4 p-2 rounded-xl text-teal-600 hover:bg-teal-50/50 
             transform hover:scale-[1.05] transition-all duration-300
@@ -132,7 +132,6 @@ const LoginPage: React.FC = () => {
           </motion.h1>
           <div className="h-1 w-20 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full mt-4"></div>
         </motion.div>
-
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -142,7 +141,6 @@ const LoginPage: React.FC = () => {
             {error}
           </motion.div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <motion.div
             initial={{ x: -20, opacity: 0 }}

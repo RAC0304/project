@@ -4,7 +4,7 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -32,10 +32,9 @@ const MapDemoPage = lazy(() => import("./pages/MapDemoPage"));
 
 function App() {
   const location = useLocation();
-
   // Check if the current path is the login, register, unauthorized page
   const isAuthPage =
-    location.pathname === "/login" ||
+    location.pathname === "/" ||
     location.pathname === "/register" ||
     location.pathname === "/unauthorized";
 
@@ -56,19 +55,21 @@ function App() {
     <div className="flex flex-col min-h-screen bg-white">
       {!hideHeaderFooter && <Header />}
       <main className={`flex-grow ${!hideHeaderFooter ? "pt-14" : ""}`}>
+        {" "}
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/" element={<HomePage />} /><Route path="/destinations" element={<DestinationsListPage />} />
-          <Route path="/destinations/:id" element={<DestinationPage />} />
-          <Route path="/itineraries" element={<ItinerariesPage />} />
-          <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
-          <Route path="/tour-guides" element={<TourGuidesPage />} />
-          <Route path="/tour-guides/:id" element={<TourGuideProfile />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/reviews" element={<ReviewsPage />} />
-          <Route path="/map" element={<MapDemoPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/destinations" element={<DestinationsListPage />} />
+            <Route path="/destinations/:id" element={<DestinationPage />} />
+            <Route path="/itineraries" element={<ItinerariesPage />} />
+            <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
+            <Route path="/tour-guides" element={<TourGuidesPage />} />
+            <Route path="/tour-guides/:id" element={<TourGuideProfile />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/map" element={<MapDemoPage />} />
+            <Route path="/history" element={<HistoryPage />} />
             {/* Protected Routes */}
             <Route
               path="/profile"
@@ -87,7 +88,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             {/* Tour Guide Only Routes */}
             <Route
               path="/guide/dashboard"
@@ -96,11 +96,11 @@ function App() {
                   <TourGuideDashboard />
                 </ProtectedRoute>
               }
-            />
-
+            />{" "}
             {/* Auth Routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/register" element={<RegisterPage />} />{" "}
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
@@ -116,7 +116,7 @@ const createRouterWithFutureFlags = () => {
     <Router
       future={{
         v7_startTransition: true,
-        v7_relativeSplatPath: true
+        v7_relativeSplatPath: true,
       }}
     >
       <AuthProvider>
