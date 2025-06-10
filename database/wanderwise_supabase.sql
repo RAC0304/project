@@ -1,6 +1,6 @@
--- WanderWise Database Schema
--- Created on: June 3, 2025
--- Database: PostgreSQL
+-- WanderWise Database Schema for PostgreSQL (Supabase)
+-- Created on: June 10, 2025
+-- Optimized for Supabase PostgreSQL
 
 -- Drop tables if they exist (in reverse order of dependencies)
 DROP TABLE IF EXISTS itinerary_activities CASCADE;
@@ -49,7 +49,7 @@ BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
 -- Create Users Table
 CREATE TABLE users (
@@ -81,8 +81,10 @@ CREATE INDEX idx_users_role_active ON users (role, is_active);
 CREATE INDEX idx_users_locked_until ON users (locked_until);
 
 -- Create trigger for users updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at 
+    BEFORE UPDATE ON users
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Security Logs Table
 CREATE TABLE security_logs (
@@ -105,8 +107,10 @@ CREATE INDEX idx_security_logs_status_created ON security_logs (status, created_
 CREATE INDEX idx_security_logs_action_created ON security_logs (action, created_at);
 
 -- Create trigger for security_logs updated_at
-CREATE TRIGGER update_security_logs_updated_at BEFORE UPDATE ON security_logs
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_security_logs_updated_at 
+    BEFORE UPDATE ON security_logs
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Tour Guides Table
 CREATE TABLE tour_guides (
@@ -133,8 +137,10 @@ CREATE INDEX idx_tour_guides_rating ON tour_guides (rating);
 CREATE INDEX idx_tour_guides_verified ON tour_guides (is_verified);
 
 -- Create trigger for tour_guides updated_at
-CREATE TRIGGER update_tour_guides_updated_at BEFORE UPDATE ON tour_guides
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tour_guides_updated_at 
+    BEFORE UPDATE ON tour_guides
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Tour Guide Languages Table
 CREATE TABLE tour_guide_languages (
@@ -149,8 +155,10 @@ CREATE TABLE tour_guide_languages (
 );
 
 -- Create trigger for tour_guide_languages updated_at
-CREATE TRIGGER update_tour_guide_languages_updated_at BEFORE UPDATE ON tour_guide_languages
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tour_guide_languages_updated_at 
+    BEFORE UPDATE ON tour_guide_languages
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Destinations Table
 CREATE TABLE destinations (
@@ -172,8 +180,10 @@ CREATE INDEX idx_destinations_name ON destinations (name);
 CREATE INDEX idx_destinations_location ON destinations (location);
 
 -- Create trigger for destinations updated_at
-CREATE TRIGGER update_destinations_updated_at BEFORE UPDATE ON destinations
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_destinations_updated_at 
+    BEFORE UPDATE ON destinations
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Destination Images Table
 CREATE TABLE destination_images (
@@ -187,8 +197,10 @@ CREATE TABLE destination_images (
 );
 
 -- Create trigger for destination_images updated_at
-CREATE TRIGGER update_destination_images_updated_at BEFORE UPDATE ON destination_images
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_destination_images_updated_at 
+    BEFORE UPDATE ON destination_images
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Destination Categories Table
 CREATE TABLE destination_categories (
@@ -217,8 +229,10 @@ CREATE TABLE attractions (
 CREATE INDEX idx_attractions_name ON attractions (name);
 
 -- Create trigger for attractions updated_at
-CREATE TRIGGER update_attractions_updated_at BEFORE UPDATE ON attractions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_attractions_updated_at 
+    BEFORE UPDATE ON attractions
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Activities Table
 CREATE TABLE activities (
@@ -239,8 +253,10 @@ CREATE TABLE activities (
 CREATE INDEX idx_activities_name ON activities (name);
 
 -- Create trigger for activities updated_at
-CREATE TRIGGER update_activities_updated_at BEFORE UPDATE ON activities
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_activities_updated_at 
+    BEFORE UPDATE ON activities
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Travel Tips Table
 CREATE TABLE travel_tips (
@@ -275,8 +291,10 @@ CREATE INDEX idx_tours_price ON tours (price);
 CREATE INDEX idx_tours_active ON tours (is_active);
 
 -- Create trigger for tours updated_at
-CREATE TRIGGER update_tours_updated_at BEFORE UPDATE ON tours
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tours_updated_at 
+    BEFORE UPDATE ON tours
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Itineraries Table
 CREATE TABLE itineraries (
@@ -298,8 +316,10 @@ CREATE INDEX idx_itineraries_title ON itineraries (title);
 CREATE INDEX idx_itineraries_difficulty ON itineraries (difficulty);
 
 -- Create trigger for itineraries updated_at
-CREATE TRIGGER update_itineraries_updated_at BEFORE UPDATE ON itineraries
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_itineraries_updated_at 
+    BEFORE UPDATE ON itineraries
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Bookings Table
 CREATE TABLE bookings (
@@ -325,8 +345,10 @@ CREATE INDEX idx_bookings_status ON bookings (status);
 CREATE INDEX idx_bookings_payment ON bookings (payment_status);
 
 -- Create trigger for bookings updated_at
-CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_bookings_updated_at 
+    BEFORE UPDATE ON bookings
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Reviews Table
 CREATE TABLE reviews (
@@ -354,8 +376,10 @@ CREATE INDEX idx_reviews_rating ON reviews (rating);
 CREATE INDEX idx_reviews_helpful ON reviews (helpful_count);
 
 -- Create trigger for reviews updated_at
-CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_reviews_updated_at 
+    BEFORE UPDATE ON reviews
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Review Images Table
 CREATE TABLE review_images (
@@ -390,8 +414,10 @@ CREATE TABLE review_responses (
 );
 
 -- Create trigger for review_responses updated_at
-CREATE TRIGGER update_review_responses_updated_at BEFORE UPDATE ON review_responses
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_review_responses_updated_at 
+    BEFORE UPDATE ON review_responses
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Itinerary Destinations Table
 CREATE TABLE itinerary_destinations (
@@ -457,8 +483,10 @@ CREATE TABLE itinerary_requests (
 CREATE INDEX idx_itinerary_requests_status ON itinerary_requests (status);
 
 -- Create trigger for itinerary_requests updated_at
-CREATE TRIGGER update_itinerary_requests_updated_at BEFORE UPDATE ON itinerary_requests
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_itinerary_requests_updated_at 
+    BEFORE UPDATE ON itinerary_requests
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create Cultural Insights Table
 CREATE TABLE cultural_insights (
@@ -477,28 +505,14 @@ CREATE TABLE cultural_insights (
 CREATE INDEX idx_cultural_insights_title ON cultural_insights (title);
 
 -- Create trigger for cultural_insights updated_at
-CREATE TRIGGER update_cultural_insights_updated_at BEFORE UPDATE ON cultural_insights    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_cultural_insights_updated_at 
+    BEFORE UPDATE ON cultural_insights
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Sample Data: Insert admin user
 INSERT INTO users (username, first_name, last_name, email, password, role) 
 VALUES ('admin', 'Admin', 'User', 'admin@wanderwise.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 
--- Add comments explaining schema relationships
-/*
-Database Relationships:
-
-1. One user can be associated with one tour_guide profile (1:1)
-2. One tour_guide can offer many tours (1:N)
-3. One tour_guide can speak multiple languages (1:N)
-4. One destination can have many attractions, activities, and travel tips (1:N)
-5. One destination can have multiple images and categories (1:N)
-6. One tour can have multiple bookings (1:N)
-7. One user can make multiple bookings (1:N)
-8. One user can write multiple reviews (1:N)
-9. One review can have many images and tags (1:N)
-10. One review can have multiple responses (1:N)
-11. One itinerary can include multiple destinations (N:M)
-12. One itinerary can have multiple day plans (1:N)
-13. One itinerary day can have multiple activities (1:N)
-14. One itinerary can receive multiple booking requests (1:N)
-*/
+-- Database setup completed successfully!
+-- WanderWise PostgreSQL schema is ready for use with Supabase.

@@ -1,242 +1,171 @@
-import { User, UserRole } from "../types";
+import { User, UserRole } from "../types/user";
+import { supabase } from "../utils/supabaseClient";
 
-export interface LoginResult {
-  success: boolean;
-  user?: User;
-  error?: string;
-}
-
-export interface RegisterResult {
+interface AuthResponse {
   success: boolean;
   user?: User;
   error?: string;
 }
 
 class AuthService {
-  private apiUrl: string;
-
-  constructor() {
-    this.apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-  }
-
-  /**
-   * Authenticate user with email and password
-   */
-  async login(email: string, password: string): Promise<LoginResult> {
+  async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${this.apiUrl}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || "Login failed",
-        };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      if (data.success && data.user) {
-        // Transform backend user format to frontend format
-        const user: User = {
-          id: data.user.id.toString(),
-          email: data.user.email,
-          username: data.user.email, // Use email as username
-          role: this.mapDatabaseRoleToAppRole(data.user.role),
-          profile: {
-            firstName: data.user.name ? data.user.name.split(" ")[0] || "" : "",
-            lastName: data.user.name
-              ? data.user.name.split(" ").slice(1).join(" ") || ""
-              : "",
-            phone: data.user.phone || "",
-            location: "",
-            avatar: data.user.profile_picture || "",
-            bio: "",
-          },
-          createdAt: data.user.created_at,
-          isActive: true,
-        };
-
-        return {
-          success: true,
-          user,
-        };
+      if (!data.user) {
+        return { success: false, error: "No user data returned" };
       }
 
-      return {
-        success: false,
-        error: data.error || "Login failed",
+      // Fetch user profile from your users table
+      const { data: userProfile, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (profileError) {
+        return { success: false, error: "Failed to fetch user profile" };
+      }
+
+      const user: User = {
+        id: data.user.id,
+        email: data.user.email!,
+        username: userProfile.username || data.user.email!.split("@")[0],
+        role: userProfile.role || "user",
+        profile: {
+          firstName: userProfile.first_name || "",
+          lastName: userProfile.last_name || "",
+          phone: userProfile.phone || "",
+          location: userProfile.location || "",
+          bio: userProfile.bio || "",
+          languages: userProfile.languages || [],
+          experience: userProfile.experience || "",
+        },
+        createdAt: userProfile.created_at || new Date().toISOString(),
+        isActive: userProfile.is_active ?? true,
       };
+
+      return { success: true, user };
     } catch (error) {
-      console.error("Login error:", error);
-      return {
-        success: false,
-        error: "Network error. Please check your connection.",
-      };
+      console.error("Auth service login error:", error);
+      return { success: false, error: "Login failed" };
     }
   }
 
-  /**
-   * Register a new user
-   */
   async register(
     email: string,
     password: string,
     username: string,
     firstName: string,
     lastName: string,
-    role: string = "user"
-  ): Promise<RegisterResult> {
+    role: string
+  ): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${this.apiUrl}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          username,
+      // Sign up with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (!data.user) {
+        return { success: false, error: "Registration failed" };
+      }
+
+      // Map role to UserRole type
+      const userRole: UserRole = role === "tour_guide" ? "tour_guide" : "user";
+
+      // Insert user profile
+      const { data: userProfile, error: profileError } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: data.user.id,
+            email,
+            username,
+            role: userRole,
+            first_name: firstName,
+            last_name: lastName,
+            is_active: true,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single();
+
+      if (profileError) {
+        return { success: false, error: "Failed to create user profile" };
+      }
+
+      const user: User = {
+        id: data.user.id,
+        email,
+        username,
+        role: userRole,
+        profile: {
           firstName,
           lastName,
-          role,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || "Registration failed",
-        };
-      }
-
-      if (data.success && data.user) {
-        // Transform backend user format to frontend format
-        const user: User = {
-          id: data.user.id.toString(),
-          email: data.user.email,
-          username: data.user.email, // Use email as username
-          role: this.mapDatabaseRoleToAppRole(data.user.role),
-          profile: {
-            firstName: firstName,
-            lastName: lastName,
-            phone: "",
-            location: "",
-            avatar: "",
-            bio: "",
-          },
-          createdAt: data.user.created_at,
-          isActive: true,
-        };
-
-        return {
-          success: true,
-          user,
-        };
-      }
-
-      return {
-        success: false,
-        error: data.error || "Registration failed",
-      };
-    } catch (error) {
-      console.error("Registration error:", error);
-      return {
-        success: false,
-        error: "Network error. Please check your connection.",
-      };
-    }
-  }
-
-  /**
-   * Get user by ID
-   */
-  async getUserById(id: string): Promise<User | null> {
-    try {
-      const response = await fetch(`${this.apiUrl}/users/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
+          phone: "",
+          location: "",
+          bio: "",
+          languages: [],
+          experience: "",
         },
-      });
+        createdAt: userProfile.created_at,
+        isActive: true,
+      };
 
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.user) {
-        return {
-          id: data.user.id.toString(),
-          email: data.user.email,
-          username: data.user.email,
-          role: this.mapDatabaseRoleToAppRole(data.user.role),
-          profile: {
-            firstName: data.user.name ? data.user.name.split(" ")[0] || "" : "",
-            lastName: data.user.name
-              ? data.user.name.split(" ").slice(1).join(" ") || ""
-              : "",
-            phone: data.user.phone || "",
-            location: "",
-            avatar: data.user.profile_picture || "",
-            bio: "",
-          },
-          createdAt: data.user.created_at,
-          isActive: data.user.is_active,
-        };
-      }
-
-      return null;
+      return { success: true, user };
     } catch (error) {
-      console.error("Get user error:", error);
-      return null;
+      console.error("Auth service registration error:", error);
+      return { success: false, error: "Registration failed" };
     }
   }
-
-  /**
-   * Update user profile
-   */
   async updateProfile(
     userId: string,
     updates: Partial<User["profile"]>
   ): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/users/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updates),
-      });
+      const updateData: Record<string, unknown> = {};
 
-      const data = await response.json();
-      return data.success || false;
+      if (updates.firstName) updateData.first_name = updates.firstName;
+      if (updates.lastName) updateData.last_name = updates.lastName;
+      if (updates.phone) updateData.phone = updates.phone;
+      if (updates.location) updateData.location = updates.location;
+      if (updates.bio) updateData.bio = updates.bio;
+      if (updates.languages !== undefined)
+        updateData.languages = updates.languages;
+      if (updates.experience !== undefined)
+        updateData.experience = updates.experience;
+
+      const { error } = await supabase
+        .from("users")
+        .update(updateData)
+        .eq("id", userId);
+
+      return !error;
     } catch (error) {
-      console.error("Update profile error:", error);
+      console.error("Auth service update profile error:", error);
       return false;
     }
   }
 
-  /**
-   * Map database role names to frontend role names
-   */
-  private mapDatabaseRoleToAppRole(dbRole: string): UserRole {
-    const roleMap: { [key: string]: UserRole } = {
-      customer: "user",
-      user: "user",
-      tour_guide: "tour_guide",
-      admin: "admin",
-    };
-    return roleMap[dbRole] || "user";
+  async logout(): Promise<void> {
+    await supabase.auth.signOut();
   }
 }
 
-export default new AuthService();
+// Export a singleton instance
+const authService = new AuthService();
+export { authService };
+export default authService;

@@ -13,8 +13,10 @@ export type RequestStatus =
 
 export interface User {
   id: number;
-  name: string;
   email: string;
+  username?: string;
+  first_name: string;
+  last_name: string;
   email_verified_at?: Date;
   password: string;
   role: UserRole;

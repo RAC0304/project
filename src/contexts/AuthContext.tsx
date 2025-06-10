@@ -5,12 +5,10 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { User, UserRole } from "../types";
+import { User, UserRole } from "../types/user";
 import { hasPermission } from "../data/users";
-import authService from "../services/authService";
-import mockAuthService from "../services/mockAuthService"; // Import mockAuthService for fallback
-
-// authService is already an instance
+import authService from "../services/authService.js";
+import mockAuthService from "../services/mockAuthService.js";
 
 interface AuthContextType {
   user: User | null;
@@ -67,6 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
   }, []);
+
   const login = async (
     email: string,
     password: string
@@ -86,10 +85,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         return { success: true };
       } else {
-        return { success: false, error: result.error || "Login failed" };
+        // If real auth fails, try mock auth as fallback
+        console.log("Real auth service failed, trying mock service...");
+
+        try {
+          const mockResult = await mockAuthService.login(email, password);
+
+          if (mockResult.success && mockResult.user) {
+            setUser(mockResult.user);
+            setIsLoggedIn(true);
+            setUsesMockAuth(true);
+
+            // Save to localStorage
+            localStorage.setItem("user", JSON.stringify(mockResult.user));
+            localStorage.setItem("isLoggedIn", "true");
+
+            return { success: true };
+          } else {
+            return {
+              success: false,
+              error: mockResult.error || "Login failed",
+            };
+          }
+        } catch {
+          return { success: false, error: "Login failed. Please try again." };
+        }
       }
-    } catch {
-      console.log("Real auth service failed, trying mock service...");
+    } catch (error) {
+      console.log("Real auth service failed, trying mock service...", error);
 
       // If real auth fails, try mock auth as fallback
       try {
@@ -113,6 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
   };
+
   const register = async (userData: {
     name: string;
     email: string;
@@ -127,8 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const lastName = nameParts.slice(1).join(" ") || "";
 
       // Map role display names to database enum values
-      const mappedRole =
-        userData.role === "Tour Guide" ? "tour_guide" : "customer";
+      const mappedRole = userData.role === "Tour Guide" ? "tour_guide" : "user";
 
       try {
         // Try using the real auth service first
@@ -194,6 +217,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
     }
   };
+
   const logout = () => {
     setUser(null);
     setIsLoggedIn(false);
@@ -201,6 +225,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
   };
+
   const updateProfile = async (
     updates: Partial<User["profile"]>
   ): Promise<boolean> => {
@@ -249,6 +274,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) return false;
     return roleHierarchy[user.role] >= roleHierarchy[minRole];
   };
+
   const value: AuthContextType = {
     user,
     isLoggedIn,

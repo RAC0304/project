@@ -107,22 +107,21 @@ app.post("/api/auth/register", async (req, res) => {
         success: false,
         error: "User with this email already exists",
       });
-    } // Hash password
-    const saltRounds = 12;
+    } // Hash password    const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Create user
     const insertQuery = `
-      INSERT INTO users (email, password, name, role, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, NOW(), NOW())
-      RETURNING id, email, name, role, created_at, updated_at
+      INSERT INTO users (email, password, first_name, last_name, role, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      RETURNING id, email, first_name, last_name, role, created_at, updated_at
     `;
 
-    const fullName = `${firstName} ${lastName}`.trim();
     const result = await pool.query(insertQuery, [
       email,
       passwordHash,
-      fullName,
+      firstName,
+      lastName,
       role,
     ]);
 

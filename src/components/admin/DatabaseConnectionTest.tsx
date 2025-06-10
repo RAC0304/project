@@ -78,11 +78,12 @@ const DatabaseConnectionTest: React.FC = () => {
           <div className="flex items-center gap-3">
             <Database className="w-8 h-8 text-blue-600" />
             <div>
+              {" "}
               <h2 className="text-2xl font-bold text-gray-900">
                 Database Connection
               </h2>
               <p className="text-gray-600">
-                Test your Neon PostgreSQL connection
+                Test your Supabase PostgreSQL connection
               </p>
             </div>
           </div>
@@ -218,10 +219,10 @@ const DatabaseConnectionTest: React.FC = () => {
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">
               Setup Instructions
-            </h4>
+            </h4>{" "}
             <ol className="text-blue-800 text-sm space-y-1 list-decimal list-inside">
-              <li>Create a Neon PostgreSQL database</li>
-              <li>Copy your connection string</li>
+              <li>Create a Supabase project at https://supabase.com</li>
+              <li>Copy your PostgreSQL connection string</li>
               <li>
                 Update the{" "}
                 <code className="bg-blue-100 px-1 rounded">.env</code> file with
