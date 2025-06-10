@@ -7,12 +7,18 @@ import bcrypt from "bcryptjs";
 // Load environment variables
 dotenv.config();
 
+// Import routes
+import authRoutes from "./routes/auth.js";
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use("/api/auth", authRoutes);
 
 // Database connection
 const pool = new Pool({

@@ -38,7 +38,7 @@ export interface TourGuide {
   id: number;
   user_id: number;
   bio?: string;
-  specialties?: any; // JSONB
+  specialties?: string[] | Record<string, unknown>; // JSONB - array of specialty names or structured data
   location: string;
   short_bio?: string;
   experience: number;
@@ -173,5 +173,5 @@ export interface QueryParams {
   search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }

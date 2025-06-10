@@ -58,7 +58,6 @@ class AuthService {
       return { success: false, error: "Login failed" };
     }
   }
-
   async register(
     email: string,
     password: string,
@@ -68,10 +67,38 @@ class AuthService {
     role: string
   ): Promise<AuthResponse> {
     try {
+      // Validate input data
+      if (!email || !password || !firstName || !lastName) {
+        return { success: false, error: "All required fields must be provided" };
+      }
+
+      if (password.length < 6) {
+        return { success: false, error: "Password must be at least 6 characters long" };
+      }
+
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from("users")
+        .select("email")
+        .eq("email", email)
+        .single();
+
+      if (existingUser) {
+        return { success: false, error: "User with this email already exists" };
+      }
+
       // Sign up with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            username: username || email.split("@")[0],
+            role: role === "tour_guide" ? "tour_guide" : "customer",
+          }
+        }
       });
 
       if (error) {
@@ -85,32 +112,68 @@ class AuthService {
       // Map role to UserRole type
       const userRole: UserRole = role === "tour_guide" ? "tour_guide" : "user";
 
-      // Insert user profile
+      // Insert user profile into users table
       const { data: userProfile, error: profileError } = await supabase
         .from("users")
         .insert([
           {
-            id: data.user.id,
             email,
-            username,
-            role: userRole,
+            username: username || email.split("@")[0],
+            role: role === "tour_guide" ? "tour_guide" : "customer",
             first_name: firstName,
             last_name: lastName,
             is_active: true,
+            failed_login_attempts: 0,
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
         ])
         .select()
         .single();
 
       if (profileError) {
+        console.error("Profile creation error:", profileError);
+        // Clean up auth user if profile creation fails
+        await supabase.auth.admin.deleteUser(data.user.id);
         return { success: false, error: "Failed to create user profile" };
       }
+
+      // If registering as tour guide, create tour guide profile
+      if (role === "tour_guide") {
+        const { error: tourGuideError } = await supabase
+          .from("tour_guides")
+          .insert([
+            {
+              user_id: userProfile.id,
+              location: "",
+              experience: 0,
+              rating: 0,
+              review_count: 0,
+              is_verified: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+
+        if (tourGuideError) {
+          console.error("Tour guide profile creation error:", tourGuideError);
+          // Note: We continue even if tour guide profile creation fails
+          // The user can complete their tour guide profile later
+        }
+      }
+
+      // Log the registration event
+      await this.logSecurityEvent(
+        userProfile.id,
+        "user_registration",
+        "Registration successful",
+        "success"
+      );
 
       const user: User = {
         id: data.user.id,
         email,
-        username,
+        username: username || email.split("@")[0],
         role: userRole,
         profile: {
           firstName,
@@ -128,7 +191,7 @@ class AuthService {
       return { success: true, user };
     } catch (error) {
       console.error("Auth service registration error:", error);
-      return { success: false, error: "Registration failed" };
+      return { success: false, error: "Registration failed. Please try again." };
     }
   }
   async updateProfile(
@@ -157,6 +220,32 @@ class AuthService {
     } catch (error) {
       console.error("Auth service update profile error:", error);
       return false;
+    }
+  }
+
+  private async logSecurityEvent(
+    userId: number | null,
+    action: string,
+    details: string,
+    status: "success" | "failed" | "warning" = "success",
+    ipAddress: string = "unknown",
+    userAgent: string = "unknown"
+  ): Promise<void> {
+    try {
+      await supabase.from("security_logs").insert([
+        {
+          user_id: userId,
+          action,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          status,
+          details,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]);
+    } catch (error) {
+      console.error("Failed to log security event:", error);
     }
   }
 
