@@ -167,7 +167,8 @@ async function setupDatabase() {
     if (adminCount > 0) {
       console.log(`\n👤 Found ${adminCount} admin user(s)`);
     } else {
-      console.log("\n⚠️  No admin users found. Creating default admin...");      try {
+      console.log("\n⚠️  No admin users found. Creating default admin...");
+      try {
         await client.query(`
           INSERT INTO users (username, first_name, last_name, email, password, role) 
           VALUES ('admin', 'Admin', 'User', 'admin@wanderwise.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')

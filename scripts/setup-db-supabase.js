@@ -167,7 +167,8 @@ async function setupDatabase() {
     const adminCount = parseInt(adminCheck.rows[0].count);
 
     if (adminCount > 0) {
-      console.log(`\n👤 Found ${adminCount} admin user(s)`);      } else {
+      console.log(`\n👤 Found ${adminCount} admin user(s)`);
+    } else {
       console.log("\n⚠️  No admin users found. Creating default admin...");
 
       try {
