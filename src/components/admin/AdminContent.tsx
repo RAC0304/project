@@ -6,6 +6,7 @@ import DestinationsContent from "./DestinationsContent";
 import BookingsContent from "./BookingsContent";
 import AnalyticsContent from "./AnalyticsContent";
 import SecurityContent from "./SecurityContent";
+import DatabaseConnectionTest from "./DatabaseConnectionTest";
 
 interface AdminContentProps {
   activePage: string;
@@ -38,6 +39,7 @@ const AdminContent: React.FC<AdminContentProps> = ({
             {activePage === "bookings" && "Bookings"}
             {activePage === "analytics" && "Analytics"}
             {activePage === "security" && "Security Management"}
+            {activePage === "database" && "Database Management"}
           </h1>
           <p className="text-gray-600 mt-1">
             Welcome back, {user?.profile.firstName} {user?.profile.lastName}
@@ -54,6 +56,7 @@ const AdminContent: React.FC<AdminContentProps> = ({
       {activePage === "bookings" && <BookingsContent />}{" "}
       {activePage === "analytics" && <AnalyticsContent user={user} />}
       {activePage === "security" && <SecurityContent />}
+      {activePage === "database" && <DatabaseConnectionTest />}
     </div>
   );
 };

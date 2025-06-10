@@ -9,6 +9,7 @@ import {
   Layout,
   ChevronRight,
   Shield,
+  Database,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -67,6 +68,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           id: "security",
           label: "Security",
           icon: <Shield className="w-[18px] h-[18px]" />,
+        },
+        {
+          id: "database",
+          label: "Database",
+          icon: <Database className="w-[18px] h-[18px]" />,
         },
       ],
     },

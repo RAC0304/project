@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import Logo from "../components/common/Logo";
 import { ArrowRight } from "lucide-react";
-import Toast from "../components/common/Toast";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -14,18 +16,60 @@ const Register = () => {
   });
 
   const [toastVisible, setToastVisible] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log("Form submitted:", formData);
+    setError("");
+    setIsLoading(true);
 
-    // Show success notification
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 5000); // Hide after 5 seconds
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await register({
+        name: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
+
+      if (result.success) {
+        // Show success notification
+        setToastVisible(true);
+        setTimeout(() => {
+          setToastVisible(false);
+          // Redirect based on role
+          if (formData.role === "Tour Guide") {
+            navigate("/guide/dashboard");
+          } else {
+            navigate("/home");
+          }
+        }, 2000);
+      } else {
+        setError(result.error || "Registration failed");
+      }
+    } catch {
+      setError("Registration failed. Please try again.");
+    }
+
+    setIsLoading(false);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -56,6 +100,7 @@ const Register = () => {
       </div>
 
       <div className="max-w-md w-full space-y-8 relative z-10">
+        {" "}
         <div className="flex flex-col items-center animate-fadeIn">
           <Logo className="w-32 h-32" width={128} height={128} />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -65,7 +110,11 @@ const Register = () => {
             Start your journey with WanderWise today
           </p>
         </div>
-
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm animate-fadeIn">
+            {error}
+          </div>
+        )}
         <form
           className="mt-8 space-y-6 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl animate-fadeIn animation-delay-150"
           onSubmit={handleSubmit}
@@ -165,12 +214,14 @@ const Register = () => {
                 <option value="Tour Guide">Tour Guide</option>
               </select>
             </div>
-          </div>
-
+          </div>{" "}
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transform transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transform transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+                isLoading ? "opacity-75 cursor-not-allowed" : ""
+              }`}
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <ArrowRight
@@ -178,11 +229,10 @@ const Register = () => {
                   aria-hidden="true"
                 />
               </span>
-              Create Account
+              {isLoading ? "Creating Account..." : "Create Account"}
             </button>
           </div>
         </form>
-
         <div className="text-center animate-fadeIn animation-delay-300">
           <p className="text-sm text-gray-600">
             Already have an account?{" "}
@@ -197,7 +247,9 @@ const Register = () => {
       </div>
 
       <div
-        className={`fixed inset-0 flex items-center justify-center z-50 ${toastVisible ? "" : "hidden"}`}
+        className={`fixed inset-0 flex items-center justify-center z-50 ${
+          toastVisible ? "" : "hidden"
+        }`}
         style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
       >
         <div className="bg-white p-6 rounded-lg shadow-lg text-center">
