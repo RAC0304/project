@@ -5,12 +5,14 @@ This document provides instructions for setting up and testing the profile manag
 ## Setup
 
 1. Make sure your Supabase environment variables are correctly set in your `.env` file:
+
    ```
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
 2. Ensure the `avatars` storage bucket is created in your Supabase project.
+
    - The application will attempt to create it automatically if it doesn't exist
    - You can manually create it in the Supabase dashboard under Storage
 
@@ -43,13 +45,16 @@ npx ts-node src/scripts/test-storage.ts
 ### Common Issues
 
 1. **"Storage is not available" error**
+
    - Verify your Supabase URL and API key
    - Make sure your storage module is enabled in Supabase
 
 2. **"Bucket not found" error**
+
    - The application should automatically create the bucket, but you can create it manually in the Supabase dashboard
 
 3. **Upload permission denied**
+
    - Check your storage bucket permissions in Supabase
    - Make sure you have appropriate Row Level Security policies set up
 
@@ -63,7 +68,7 @@ npx ts-node src/scripts/test-storage.ts
 To enable detailed debugging logs, add this to your application code:
 
 ```typescript
-localStorage.setItem('DEBUG_PROFILE_SERVICE', 'true');
+localStorage.setItem("DEBUG_PROFILE_SERVICE", "true");
 ```
 
 ## Implementation Notes

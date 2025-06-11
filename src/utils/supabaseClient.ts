@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-console.log('Initializing Supabase client with URL:', supabaseUrl);
+console.log("Initializing Supabase client with URL:", supabaseUrl);
 
 // Create the Supabase client
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -20,66 +20,56 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Just a placeholder comment - we'll use the TypeScript version below
+
 // Add a helper function to check storage status and ensure avatar bucket exists
 export const checkSupabaseStorage = async () => {
   try {
     // Check if storage is configured properly
     const { data: buckets, error } = await supabase.storage.listBuckets();
-    
+
     if (error) {
-      console.error('Supabase storage error:', error);
-      return { 
-        ok: false, 
-        error: error.message
+      console.error("Supabase storage error:", error);
+      return {
+        ok: false,
+        error: error.message,
       };
     }
-    
+
     // Check if avatars bucket exists
-    const avatarBucket = buckets?.find(b => b.name === 'avatars');
+    const avatarBucket = buckets?.find((b) => b.name === "avatars");
     if (!avatarBucket) {
-      console.warn('Avatars bucket missing in Supabase storage, attempting to create it');
-      
-      try {
-        // Attempt to create the avatars bucket
-        const { data: newBucket, error: createError } = await supabase.storage.createBucket(
-          'avatars', 
-          { public: true } // Make the bucket public for easy access to profile images
-        );
-        
-        if (createError) {
-          console.error('Failed to create avatars bucket:', createError);
-          return {
-            ok: false,
-            error: `Could not create avatars bucket: ${createError.message}`,
-            buckets: buckets?.map(b => b.name) || []
-          };
-        }
-        
-        console.log('Successfully created avatars bucket:', newBucket);
-        return { 
-          ok: true,
-          buckets: [...(buckets?.map(b => b.name) || []), 'avatars'],
-          message: 'Created avatars bucket successfully'
-        };
-      } catch (createError) {
-        console.error('Exception creating avatars bucket:', createError);
+      console.warn(
+        "Avatars bucket missing in Supabase storage, attempting to create it"
+      );
+
+      // Use the ensureSupabaseBucket function to create the bucket
+      const bucketResult = await ensureSupabaseBucket("avatars", true);
+
+      if (!bucketResult.ok) {
         return {
           ok: false,
-          error: createError instanceof Error ? createError.message : 'Unknown error creating bucket',
-          buckets: buckets?.map(b => b.name) || []
+          error: bucketResult.error,
+          buckets: buckets?.map((b) => b.name) || [],
         };
       }
+
+      return {
+        ok: true,
+        buckets: [...(buckets?.map((b) => b.name) || []), "avatars"],
+        message: bucketResult.message,
+      };
     }
-    
-    return { 
+
+    return {
       ok: true,
-      buckets: buckets?.map(b => b.name) || []
+      buckets: buckets?.map((b) => b.name) || [],
     };
   } catch (e) {
-    console.error('Failed to check Supabase storage status:', e);
+    console.error("Failed to check Supabase storage status:", e);
     return {
       ok: false,
-      error: e instanceof Error ? e.message : 'Unknown error'
+      error: e instanceof Error ? e.message : "Unknown error",
     };
   }
 };
@@ -96,53 +86,54 @@ export const ensureSupabaseBucket = async (
 ): Promise<{ ok: boolean; message?: string; error?: string }> => {
   try {
     console.log(`Checking if bucket "${bucketName}" exists...`);
-    
+
     // Check if buckets can be listed
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    
+    const { data: buckets, error: listError } =
+      await supabase.storage.listBuckets();
+
     if (listError) {
-      console.error('Supabase storage error:', listError);
-      return { 
-        ok: false, 
-        error: `Storage error: ${listError.message}`
+      console.error("Supabase storage error:", listError);
+      return {
+        ok: false,
+        error: `Storage error: ${listError.message}`,
       };
     }
-    
+
     // Check if bucket exists
-    const bucketExists = buckets?.find(b => b.name === bucketName);
+    const bucketExists = buckets?.find((b) => b.name === bucketName);
     if (bucketExists) {
       console.log(`Bucket "${bucketName}" already exists`);
-      return { 
+      return {
         ok: true,
-        message: `Bucket "${bucketName}" exists` 
+        message: `Bucket "${bucketName}" exists`,
       };
     }
-    
+
     // Create the bucket if it doesn't exist
     console.log(`Creating bucket "${bucketName}"...`);
     const { data, error: createError } = await supabase.storage.createBucket(
-      bucketName, 
+      bucketName,
       { public: isPublic }
     );
-    
+
     if (createError) {
       console.error(`Failed to create bucket "${bucketName}":`, createError);
       return {
         ok: false,
-        error: `Could not create bucket: ${createError.message}`
+        error: `Could not create bucket: ${createError.message}`,
       };
     }
-    
+
     console.log(`Successfully created bucket "${bucketName}"`, data);
-    return { 
+    return {
       ok: true,
-      message: `Created bucket "${bucketName}" successfully` 
+      message: `Created bucket "${bucketName}" successfully`,
     };
   } catch (e) {
     console.error(`Error ensuring bucket "${bucketName}" exists:`, e);
     return {
       ok: false,
-      error: e instanceof Error ? e.message : 'Unknown error'
+      error: e instanceof Error ? e.message : "Unknown error",
     };
   }
 };

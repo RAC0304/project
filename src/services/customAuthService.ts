@@ -355,7 +355,8 @@ class CustomAuthService {
         error: "Registration failed. Please try again.",
       };
     }
-  }  async updateProfile(
+  }
+  async updateProfile(
     userId: string,
     updates: Partial<User["profile"]> & { avatar?: string }
   ): Promise<boolean> {
@@ -378,7 +379,7 @@ class CustomAuthService {
         .from("users")
         .update({
           ...updateData,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", userId);
 
@@ -388,16 +389,24 @@ class CustomAuthService {
       }
 
       // Store avatar separately in storage if it's a new base64 image
-      if ("avatar" in updates && updates.avatar && updates.avatar.startsWith('data:image')) {
+      if (
+        "avatar" in updates &&
+        updates.avatar &&
+        updates.avatar.startsWith("data:image")
+      ) {
         try {
-          const { data: imageData, error: storageError } = await this.uploadProfileImage(userId, updates.avatar);
-          
+          const { data: imageData, error: storageError } =
+            await this.uploadProfileImage(userId, updates.avatar);
+
           if (storageError) {
             console.error("Failed to upload profile image:", storageError);
             // Continue despite image upload failure
           } else if (imageData?.path) {
             // Update user record with the new image URL
-            const imageUrl = `${supabase.storage.getPublicUrl('avatars', imageData.path).data?.publicUrl}`;
+            const imageUrl = `${
+              supabase.storage.getPublicUrl("avatars", imageData.path).data
+                ?.publicUrl
+            }`;
             await supabase
               .from("users")
               .update({ profile_picture: imageUrl })
@@ -422,43 +431,46 @@ class CustomAuthService {
       return false;
     }
   }
-  
-  private async uploadProfileImage(userId: string, base64Image: string): Promise<{
-    data?: { path: string }, 
-    error?: Error
+
+  private async uploadProfileImage(
+    userId: string,
+    base64Image: string
+  ): Promise<{
+    data?: { path: string };
+    error?: Error;
   }> {
     try {
       // Extract MIME type and base64 data
       const matches = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      
+
       if (!matches || matches.length !== 3) {
-        throw new Error('Invalid base64 image string');
+        throw new Error("Invalid base64 image string");
       }
-      
+
       const mimeType = matches[1];
       const base64Data = matches[2];
-      const buffer = Buffer.from(base64Data, 'base64');
-      
+      const buffer = Buffer.from(base64Data, "base64");
+
       // Determine file extension based on MIME type
-      let extension = 'jpg';
-      if (mimeType === 'image/png') extension = 'png';
-      if (mimeType === 'image/gif') extension = 'gif';
-      
+      let extension = "jpg";
+      if (mimeType === "image/png") extension = "png";
+      if (mimeType === "image/gif") extension = "gif";
+
       const filename = `user_${userId}_${Date.now()}.${extension}`;
-      
+
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
-        .from('avatars')
+        .from("avatars")
         .upload(`profiles/${filename}`, buffer, {
           contentType: mimeType,
-          upsert: true
+          upsert: true,
         });
-        
+
       if (error) throw error;
-      
-      return { data: { path: data?.path || '' } };
+
+      return { data: { path: data?.path || "" } };
     } catch (error) {
-      console.error('Profile image upload error:', error);
+      console.error("Profile image upload error:", error);
       return { error: error as Error };
     }
   }
