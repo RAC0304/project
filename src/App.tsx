@@ -7,7 +7,7 @@ import {
 import { lazy, Suspense } from "react";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/CustomAuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import HistoryPage from "./pages/HistoryPage";
 import TourGuideProfile from "./pages/TourGuideProfile";

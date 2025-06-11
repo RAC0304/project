@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/CustomAuthContext";
 import Logo from "../components/common/Logo";
 import { User, Shield, MapPin } from "lucide-react";
 

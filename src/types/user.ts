@@ -8,6 +8,7 @@ export interface TourGuideProfile {
   bio: string;
   languages?: string[];
   experience?: string;
+  avatar?: string;
 }
 
 export interface User {

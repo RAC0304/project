@@ -11,7 +11,7 @@ import {
   Shield,
   Database,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/CustomAuthContext";
 import { useNavigate } from "react-router-dom";
 import RoleBadge from "../common/RoleBadge";
 import Logo from "../common/Logo";

@@ -7,8 +7,9 @@ import React, {
 } from "react";
 import { User, UserRole } from "../types/user";
 import { hasPermission } from "../data/users";
-import mockAuthService from "../services/mockAuthService.js";
 import customAuthService from "../services/customAuthService";
+import mockAuthService from "../services/mockAuthService.js";
+import profileService from "../services/profileService";
 
 interface AuthContextType {
   user: User | null;
@@ -26,6 +27,10 @@ interface AuthContextType {
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (updates: Partial<User["profile"]>) => Promise<boolean>;
+  updatePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<{ success: boolean; error?: string }>;
   hasPermission: (action: string, resource: string) => boolean;
   isRole: (role: UserRole) => boolean;
   isMinRole: (minRole: UserRole) => boolean;
@@ -65,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
   }, []);
+
   const login = async (
     email: string,
     password: string
@@ -84,7 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         return { success: true };
       } else {
-        // If custom auth fails, try mock auth as fallback      console.log("Custom auth service failed, trying mock service...");
+        // If real auth fails, try mock auth as fallback
+        console.log("Custom auth service failed, trying mock service...");
 
         try {
           const mockResult = await mockAuthService.login(email, password);
@@ -150,6 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Map role display names to database enum values
       const mappedRole = userData.role === "Tour Guide" ? "tour_guide" : "user";
+
       try {
         // Try using the custom auth service first
         const result = await customAuthService.register(
@@ -183,7 +191,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error
         );
 
-        // If custom auth fails, try mock auth as fallback
+        // If real auth fails, try mock auth as fallback
         const mockResult = await mockAuthService.register(
           userData.email,
           userData.password,
@@ -217,6 +225,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
     }
   };
+
   const logout = () => {
     if (user && !usesMockAuth) {
       customAuthService.logout(user.id).catch((err) => {
@@ -230,7 +239,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
   };
-
   const updateProfile = async (
     updates: Partial<User["profile"]>
   ): Promise<boolean> => {
@@ -238,10 +246,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       let success;
+
       if (usesMockAuth) {
         success = await mockAuthService.updateProfile(user.id, updates);
       } else {
-        success = await customAuthService.updateProfile(user.id, updates);
+        // Use the dedicated profileService for real profile updates
+        success = await profileService.updateProfile(user.id, updates);
       }
 
       if (success) {
@@ -259,9 +269,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       return success;
-    } catch {
-      console.error("Update profile error");
+    } catch (error) {
+      console.error("Update profile error:", error);
       return false;
+    }
+  };
+
+  const updatePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!user || usesMockAuth) {
+      return { success: false, error: "Operation not supported" };
+    }
+
+    try {
+      const result = await customAuthService.updatePassword(
+        user.id,
+        currentPassword,
+        newPassword
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Password update error:", error);
+      return { success: false, error: "Failed to update password" };
     }
   };
 
@@ -286,6 +318,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    updatePassword,
     hasPermission: checkPermission,
     isRole,
     isMinRole,

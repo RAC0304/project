@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
@@ -8,18 +8,33 @@ import {
   Camera,
   LogOut,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/CustomAuthContext";
 import RoleBadge from "../components/common/RoleBadge";
 
 const UserProfilePage: React.FC = () => {
   const { user, logout, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(user?.profile || null);
-  const [profileImage, setProfileImage] = useState<string>(
-    localStorage.getItem(`profile_image_${user?.id}`) ||
-      user?.profile?.avatar ||
-      ""
+  const [isLoading, setIsLoading] = useState(false);  const [profileImage, setProfileImage] = useState<string>(
+    user?.profile?.avatar || 
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'default'}`
   );
+  
+  // Ensure profile image loads properly from Supabase
+  useEffect(() => {
+    if (user?.profile?.avatar) {
+      // If avatar is a Supabase URL, update it with current timestamp to avoid caching issues
+      if (user.profile.avatar.includes('supabase')) {
+        const timestamp = new Date().getTime();
+        const updatedUrl = user.profile.avatar.includes('?') 
+          ? `${user.profile.avatar}&_t=${timestamp}` 
+          : `${user.profile.avatar}?_t=${timestamp}`;
+        setProfileImage(updatedUrl);
+      } else {
+        setProfileImage(user.profile.avatar);
+      }
+    }
+  }, [user?.profile?.avatar]);
 
   // If no user is logged in, this page should be protected by ProtectedRoute
   if (!user) {
@@ -36,24 +51,45 @@ const UserProfilePage: React.FC = () => {
         [field]: value,
       });
     }
-  };
-  const handleSaveChanges = () => {
+  };  const handleSaveChanges = async () => {
     if (editedProfile) {
-      // Update the user profile through AuthContext
-      updateProfile(editedProfile);
-      setIsEditing(false);
+      setIsLoading(true);
+      
+      try {
+        // Update the user profile through AuthContext with Supabase
+        const success = await updateProfile(editedProfile);
+        
+        if (success) {
+          setIsEditing(false);
+          // Optional: Show success message
+        } else {
+          // Handle failure
+          alert("Failed to update profile. Please try again.");
+          // Keep the editing state open
+        }
+      } catch (error) {
+        console.error("Profile update error:", error);
+        alert("An unexpected error occurred. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleCancelEdit = () => {
     setEditedProfile(user.profile);
     setIsEditing(false);
-  };
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  };  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      logout();
+      // The redirect will happen automatically after logout
+    } catch (error) {
+      console.error("Logout error:", error);
+      setIsLoading(false);
+      alert("Failed to logout. Please try again.");
+    }
+  };  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Check file size (max 5MB)
@@ -67,24 +103,131 @@ const UserProfilePage: React.FC = () => {
         alert("Please select an image file");
         return;
       }
+
+      // Store the previous image URL for recovery if needed
+      const previousImage = user?.profile?.avatar || "";
+      setIsLoading(true);
+      
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfileImage(result);
-        // Save to localStorage for persistence
-        localStorage.setItem(`profile_image_${user.id}`, result);
-        // Update user profile with new avatar
-        updateProfile({ avatar: result });
+      
+      reader.onload = async (e) => {
+        try {
+          const result = e.target?.result as string;
+          
+          console.log("Image loaded, converting to base64...");
+          
+          // Show the image immediately for responsive UX
+          setProfileImage(result);
+          
+          console.log("Updating profile with new image...");
+          // Update user profile with new avatar through Supabase
+          const success = await updateProfile({ avatar: result });
+          
+          if (success) {
+            console.log("Profile image updated successfully");
+            // No need to store in localStorage as it will be fetched from server
+          } else {
+            console.error("Failed to update profile image");
+            
+            // Show more detailed error message
+            const errorMessage = "Failed to update profile image. This might be due to storage limits or network issues. Please try again later.";
+            alert(errorMessage);
+            
+            // Restore previous image if update failed
+            setProfileImage(previousImage);
+          }
+        } catch (error) {
+          console.error("Image upload error:", error);
+          
+          // Provide more specific error feedback
+          let errorMessage = "Failed to upload image. Please try again.";
+          
+          if (error instanceof Error) {
+            if (error.message.includes("storage") || error.message.includes("bucket")) {
+              errorMessage = "Storage error: The image storage system is not available. Please try again later.";
+            } else if (error.message.includes("network") || error.message.includes("connection")) {
+              errorMessage = "Network error: Please check your internet connection and try again.";
+            }
+          }
+          
+          alert(errorMessage);
+          
+          // Restore previous image
+          setProfileImage(previousImage);
+        } finally {
+          setIsLoading(false);
+        }
       };
+      
+      reader.onerror = () => {
+        console.error("Error reading file");
+        alert("Error reading file. Please try another image.");
+        setIsLoading(false);
+        
+        // Restore previous image
+        setProfileImage(previousImage);
+      };
+      
       reader.readAsDataURL(file);
     }
-  };
-  const handleRemoveImage = () => {
+  };const handleRemoveImage = async () => {
     const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`;
-    setProfileImage(defaultImage);
-    localStorage.removeItem(`profile_image_${user.id}`);
-    // Update user profile to remove custom avatar
-    updateProfile({ avatar: defaultImage });
+    
+    setIsLoading(true);
+    
+    try {
+      console.log("Removing custom profile image...");
+      
+      // Update UI immediately for better UX
+      setProfileImage(defaultImage);
+      
+      // Update user profile to remove custom avatar through Supabase
+      const success = await updateProfile({ avatar: defaultImage });
+      
+      if (success) {
+        console.log("Custom profile image removed successfully");
+      } else {
+        console.error("Failed to remove profile image");
+        alert("Failed to remove profile image. Please try again.");
+        // Restore previous image if update failed
+        setProfileImage(user?.profile?.avatar || "");
+      }
+    } catch (error) {
+      console.error("Image removal error:", error);
+      alert("Failed to remove profile image. Please try again.");
+      // Restore previous image
+      setProfileImage(user?.profile?.avatar || "");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Test Supabase image storage functionality
+   */
+  const testImageStorage = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Import directly here to avoid circular dependencies
+      const { profileService } = await import("../services/profileService");
+      
+      console.log("Testing Supabase storage functionality...");
+      const testResult = await profileService.testImageUpload();
+      
+      if (testResult.success) {
+        console.log("✅ Image storage test passed:", testResult.message);
+        alert("Image storage is working correctly! You can upload profile pictures.");
+      } else {
+        console.error("❌ Image storage test failed:", testResult.message, testResult.details);
+        alert(`Image storage test failed: ${testResult.message}. Check console for details.`);
+      }
+    } catch (error) {
+      console.error("Error testing image storage:", error);
+      alert("Error while testing image storage. Check console for details.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const profile = user.profile;
@@ -108,27 +251,37 @@ const UserProfilePage: React.FC = () => {
           <div className="h-32 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
           <div className="px-6 py-8 md:px-8 -mt-16">
             <div className="flex flex-col items-center">
-              {" "}
-              <div className="relative">
+              {" "}              <div className="relative">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                  <img
-                    src={
-                      profileImage ||
-                      user.profile.avatar ||
-                      "https://api.dicebear.com/7.x/avataaars/svg?seed=" +
-                        user.username
-                    }
-                    alt={user.username}
-                    className="w-full h-full object-cover"
-                  />
+                  {isLoading ? (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : (                    <img
+                      src={profileImage}
+                      alt={user.username}
+                      className="w-full h-full object-cover"
+                      onError={() => {
+                        // Fallback to default avatar if image fails to load
+                        setProfileImage(`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`);
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="absolute bottom-0 right-0 flex space-x-1">
-                  <label className="p-2 bg-teal-500 rounded-full text-white hover:bg-teal-600 transition-colors shadow-md cursor-pointer">
-                    <Camera className="w-4 h-4" />
+                  <label className={`p-2 bg-teal-500 rounded-full text-white ${
+                    isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-teal-600 cursor-pointer'
+                  } transition-colors shadow-md`}>
+                    {isLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleImageUpload}
+                      disabled={isLoading}
                       className="hidden"
                     />
                   </label>
@@ -137,7 +290,10 @@ const UserProfilePage: React.FC = () => {
                       `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                       <button
                         onClick={handleRemoveImage}
-                        className="p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors shadow-md"
+                        disabled={isLoading}
+                        className={`p-2 bg-red-500 rounded-full text-white ${
+                          isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-600'
+                        } transition-colors shadow-md`}
                         title="Remove photo"
                       >
                         <span className="text-xs">×</span>
@@ -149,10 +305,21 @@ const UserProfilePage: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900">
                   {user.profile.firstName} {user.profile.lastName}
                 </h1>
-                <p className="text-gray-600 mt-1">@{user.username}</p>
-                <div className="mt-2">
+                <p className="text-gray-600 mt-1">@{user.username}</p>              <div className="mt-2">
                   <RoleBadge role={user.role} />
                 </div>
+                {/* Add the storage test button only in development */}
+                {import.meta.env.DEV && (
+                  <button
+                    onClick={testImageStorage}
+                    disabled={isLoading}
+                    className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'
+                    }`}
+                  >
+                    Test Storage
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -167,18 +334,23 @@ const UserProfilePage: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-800">
                   Personal Information
                 </h2>
-                <div className="flex space-x-4">
-                  {isEditing ? (
+                <div className="flex space-x-4">                  {isEditing ? (
                     <>
                       <button
                         onClick={handleSaveChanges}
-                        className="flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md hover:bg-teal-700"
+                        disabled={isLoading}
+                        className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${
+                          isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-teal-700'
+                        }`}
                       >
-                        Save Changes
+                        {isLoading ? 'Saving...' : 'Save Changes'}
                       </button>
                       <button
                         onClick={handleCancelEdit}
-                        className="flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md hover:bg-gray-200"
+                        disabled={isLoading}
+                        className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${
+                          isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-200'
+                        }`}
                       >
                         Cancel
                       </button>
@@ -186,7 +358,10 @@ const UserProfilePage: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center text-sm text-teal-600 hover:text-teal-700"
+                      disabled={isLoading}
+                      className={`flex items-center text-sm text-teal-600 ${
+                        isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:text-teal-700'
+                      }`}
                     >
                       <Settings className="w-4 h-4 mr-1" />
                       Edit Profile
@@ -299,17 +474,23 @@ const UserProfilePage: React.FC = () => {
                   <Camera className="w-5 h-5 text-teal-500 mr-3 mt-1" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Profile Photo</p>
-                    <div className="mt-2 space-y-2">
-                      <div className="flex items-center space-x-3">
-                        <label className="flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg cursor-pointer hover:bg-teal-100 transition-colors">
-                          <Camera className="w-4 h-4 text-teal-600" />
+                    <div className="mt-2 space-y-2">                      <div className="flex items-center space-x-3">
+                        <label className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${
+                          isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-teal-100'
+                        } transition-colors`}>
+                          {isLoading ? (
+                            <span className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></span>
+                          ) : (
+                            <Camera className="w-4 h-4 text-teal-600" />
+                          )}
                           <span className="text-sm text-teal-700">
-                            Upload New Photo
+                            {isLoading ? 'Uploading...' : 'Upload New Photo'}
                           </span>
                           <input
                             type="file"
                             accept="image/*"
                             onChange={handleImageUpload}
+                            disabled={isLoading}
                             className="hidden"
                           />
                         </label>
@@ -318,9 +499,12 @@ const UserProfilePage: React.FC = () => {
                             `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                             <button
                               onClick={handleRemoveImage}
-                              className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 hover:bg-red-100 transition-colors"
+                              disabled={isLoading}
+                              className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${
+                                isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-100'
+                              } transition-colors`}
                             >
-                              Remove Photo
+                              {isLoading ? 'Removing...' : 'Remove Photo'}
                             </button>
                           )}
                       </div>
@@ -332,11 +516,13 @@ const UserProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Logout Button */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              {/* Logout Button */}              <div className="mt-8 pt-6 border-t border-gray-200">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300"
+                  disabled={isLoading}
+                  className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${
+                    isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-600'
+                  } transition-colors duration-300`}
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>

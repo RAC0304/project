@@ -5,7 +5,7 @@ import { reviews } from "../data/reviews";
 import { destinations } from "../data/destinations";
 import { Review } from "../types";
 import ReviewCard from "../components/reviews/ReviewCard";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/CustomAuthContext";
 
 const ReviewsPage: React.FC = () => {
   const { isLoggedIn } = useAuth();

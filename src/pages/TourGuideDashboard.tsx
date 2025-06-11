@@ -10,7 +10,7 @@ import ClientsContent from "../components/tourguide/dashboard/ClientsContent";
 import ReviewsContent from "../components/tourguide/dashboard/ReviewsContent";
 import EditTourModal from "../components/tourguide/modals/EditTourModal";
 import Toast, { ToastType } from "../components/common/Toast";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/CustomAuthContext";
 import { TourData } from "../types/tourguide";
 import {
   calculateGuideStats,
