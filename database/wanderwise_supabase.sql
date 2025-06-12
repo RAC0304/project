@@ -1,518 +1,280 @@
--- WanderWise Database Schema for PostgreSQL (Supabase)
--- Created on: June 10, 2025
--- Optimized for Supabase PostgreSQL
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- Drop tables if they exist (in reverse order of dependencies)
-DROP TABLE IF EXISTS itinerary_activities CASCADE;
-DROP TABLE IF EXISTS itinerary_days CASCADE;
-DROP TABLE IF EXISTS itinerary_destinations CASCADE;
-DROP TABLE IF EXISTS itinerary_requests CASCADE;
-DROP TABLE IF EXISTS review_responses CASCADE;
-DROP TABLE IF EXISTS review_tags CASCADE;
-DROP TABLE IF EXISTS review_images CASCADE;
-DROP TABLE IF EXISTS reviews CASCADE;
-DROP TABLE IF EXISTS cultural_insights CASCADE;
-DROP TABLE IF EXISTS travel_tips CASCADE;
-DROP TABLE IF EXISTS activities CASCADE;
-DROP TABLE IF EXISTS attractions CASCADE;
-DROP TABLE IF EXISTS destination_categories CASCADE;
-DROP TABLE IF EXISTS destination_images CASCADE;
-DROP TABLE IF EXISTS bookings CASCADE;
-DROP TABLE IF EXISTS tours CASCADE;
-DROP TABLE IF EXISTS itineraries CASCADE;
-DROP TABLE IF EXISTS destinations CASCADE;
-DROP TABLE IF EXISTS tour_guide_languages CASCADE;
-DROP TABLE IF EXISTS tour_guides CASCADE;
-DROP TABLE IF EXISTS security_logs CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
--- Drop custom types if they exist
-DROP TYPE IF EXISTS user_role CASCADE;
-DROP TYPE IF EXISTS user_gender CASCADE;
-DROP TYPE IF EXISTS security_status CASCADE;
-DROP TYPE IF EXISTS booking_status CASCADE;
-DROP TYPE IF EXISTS payment_status CASCADE;
-DROP TYPE IF EXISTS request_status CASCADE;
-
--- Create custom ENUM types
-CREATE TYPE user_role AS ENUM ('admin', 'tour_guide', 'customer');
-CREATE TYPE user_gender AS ENUM ('male', 'female', 'other');
-CREATE TYPE security_status AS ENUM ('success', 'failed', 'warning');
-CREATE TYPE booking_status AS ENUM ('confirmed', 'pending', 'cancelled', 'completed');
-CREATE TYPE payment_status AS ENUM ('paid', 'pending', 'refunded');
-CREATE TYPE request_status AS ENUM ('pending', 'processing', 'confirmed', 'cancelled');
-
--- Create function to automatically update updated_at column
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
-
--- Create Users Table
-CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(255) NULL,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    role user_role DEFAULT 'customer',
-    phone VARCHAR(255) NULL,
-    date_of_birth DATE NULL,
-    gender user_gender NULL,
-    profile_picture VARCHAR(255) NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    failed_login_attempts INTEGER DEFAULT 0,
-    locked_until TIMESTAMP NULL,
-    last_login_at TIMESTAMP NULL,
-    last_login_ip VARCHAR(255) NULL,
-    remember_token VARCHAR(100) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.activities (
+  id bigint NOT NULL DEFAULT nextval('activities_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  name character varying NOT NULL,
+  description text NOT NULL,
+  duration character varying,
+  price character varying,
+  image_url character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT activities_pkey PRIMARY KEY (id),
+  CONSTRAINT activities_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create indexes for users table
-CREATE INDEX idx_users_email_active ON users (email, is_active);
-CREATE INDEX idx_users_role_active ON users (role, is_active);
-CREATE INDEX idx_users_locked_until ON users (locked_until);
-
--- Create trigger for users updated_at
-CREATE TRIGGER update_users_updated_at 
-    BEFORE UPDATE ON users
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Security Logs Table
-CREATE TABLE security_logs (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NULL,
-    action VARCHAR(255) NOT NULL,
-    ip_address VARCHAR(255) NOT NULL,
-    user_agent TEXT NOT NULL,
-    status security_status DEFAULT 'success',
-    details TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+CREATE TABLE public.attractions (
+  id bigint NOT NULL DEFAULT nextval('attractions_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  name character varying NOT NULL,
+  description text NOT NULL,
+  image_url character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT attractions_pkey PRIMARY KEY (id),
+  CONSTRAINT attractions_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create indexes for security_logs table
-CREATE INDEX idx_security_logs_user_created ON security_logs (user_id, created_at);
-CREATE INDEX idx_security_logs_status_created ON security_logs (status, created_at);
-CREATE INDEX idx_security_logs_action_created ON security_logs (action, created_at);
-
--- Create trigger for security_logs updated_at
-CREATE TRIGGER update_security_logs_updated_at 
-    BEFORE UPDATE ON security_logs
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Tour Guides Table
-CREATE TABLE tour_guides (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    bio TEXT NULL,
-    specialties JSONB NULL,
-    location VARCHAR(255) NOT NULL,
-    short_bio TEXT NULL,
-    experience INTEGER DEFAULT 0,
-    rating DECIMAL(3,1) DEFAULT 0,
-    review_count INTEGER DEFAULT 0,
-    availability VARCHAR(255) NULL,
-    is_verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE public.bookings (
+  id bigint NOT NULL DEFAULT nextval('bookings_id_seq'::regclass),
+  tour_id bigint NOT NULL,
+  user_id bigint NOT NULL,
+  date date NOT NULL,
+  participants integer NOT NULL,
+  status USER-DEFINED DEFAULT 'pending'::booking_status,
+  special_requests text,
+  total_amount numeric NOT NULL,
+  payment_status USER-DEFINED DEFAULT 'pending'::payment_status,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT bookings_pkey PRIMARY KEY (id),
+  CONSTRAINT bookings_tour_id_fkey FOREIGN KEY (tour_id) REFERENCES public.tours(id),
+  CONSTRAINT bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
--- Create indexes for tour_guides table
-CREATE INDEX idx_tour_guides_location ON tour_guides (location);
-CREATE INDEX idx_tour_guides_rating ON tour_guides (rating);
-CREATE INDEX idx_tour_guides_verified ON tour_guides (is_verified);
-
--- Create trigger for tour_guides updated_at
-CREATE TRIGGER update_tour_guides_updated_at 
-    BEFORE UPDATE ON tour_guides
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Tour Guide Languages Table
-CREATE TABLE tour_guide_languages (
-    id BIGSERIAL PRIMARY KEY,
-    tour_guide_id BIGINT NOT NULL,
-    language VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (tour_guide_id) REFERENCES tour_guides(id) ON DELETE CASCADE,
-    UNIQUE (tour_guide_id, language)
+CREATE TABLE public.cultural_insights (
+  id bigint NOT NULL DEFAULT nextval('cultural_insights_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  title character varying NOT NULL,
+  content text NOT NULL,
+  image_url character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT cultural_insights_pkey PRIMARY KEY (id),
+  CONSTRAINT cultural_insights_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create trigger for tour_guide_languages updated_at
-CREATE TRIGGER update_tour_guide_languages_updated_at 
-    BEFORE UPDATE ON tour_guide_languages
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Destinations Table
-CREATE TABLE destinations (
-    id BIGSERIAL PRIMARY KEY,
-    slug VARCHAR(100) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    short_description TEXT NULL,
-    image_url VARCHAR(255) NULL,
-    best_time_to_visit VARCHAR(255) NULL,
-    google_maps_url TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.destination_categories (
+  id bigint NOT NULL DEFAULT nextval('destination_categories_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  category character varying NOT NULL,
+  CONSTRAINT destination_categories_pkey PRIMARY KEY (id),
+  CONSTRAINT destination_categories_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create indexes for destinations table
-CREATE INDEX idx_destinations_name ON destinations (name);
-CREATE INDEX idx_destinations_location ON destinations (location);
-
--- Create trigger for destinations updated_at
-CREATE TRIGGER update_destinations_updated_at 
-    BEFORE UPDATE ON destinations
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Destination Images Table
-CREATE TABLE destination_images (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    image_url VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+CREATE TABLE public.destination_images (
+  id bigint NOT NULL DEFAULT nextval('destination_images_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  image_url character varying NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT destination_images_pkey PRIMARY KEY (id),
+  CONSTRAINT destination_images_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create trigger for destination_images updated_at
-CREATE TRIGGER update_destination_images_updated_at 
-    BEFORE UPDATE ON destination_images
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Destination Categories Table
-CREATE TABLE destination_categories (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE,
-    UNIQUE (destination_id, category)
+CREATE TABLE public.destinations (
+  id bigint NOT NULL DEFAULT nextval('destinations_id_seq'::regclass),
+  slug character varying NOT NULL UNIQUE,
+  name character varying NOT NULL,
+  location character varying NOT NULL,
+  description text NOT NULL,
+  short_description text,
+  image_url character varying,
+  best_time_to_visit character varying,
+  google_maps_url text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT destinations_pkey PRIMARY KEY (id)
 );
-
--- Create Attractions Table
-CREATE TABLE attractions (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    image_url VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+CREATE TABLE public.itineraries (
+  id bigint NOT NULL DEFAULT nextval('itineraries_id_seq'::regclass),
+  slug character varying NOT NULL UNIQUE,
+  title character varying NOT NULL,
+  duration character varying NOT NULL,
+  description text NOT NULL,
+  image_url character varying,
+  difficulty character varying,
+  best_season character varying,
+  estimated_budget character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT itineraries_pkey PRIMARY KEY (id)
 );
-
--- Create indexes for attractions table
-CREATE INDEX idx_attractions_name ON attractions (name);
-
--- Create trigger for attractions updated_at
-CREATE TRIGGER update_attractions_updated_at 
-    BEFORE UPDATE ON attractions
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Activities Table
-CREATE TABLE activities (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    duration VARCHAR(100) NULL,
-    price VARCHAR(100) NULL,
-    image_url VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+CREATE TABLE public.itinerary_activities (
+  id bigint NOT NULL DEFAULT nextval('itinerary_activities_id_seq'::regclass),
+  itinerary_day_id bigint NOT NULL,
+  time character varying NOT NULL,
+  title character varying NOT NULL,
+  description text NOT NULL,
+  location character varying NOT NULL,
+  CONSTRAINT itinerary_activities_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_activities_itinerary_day_id_fkey FOREIGN KEY (itinerary_day_id) REFERENCES public.itinerary_days(id)
 );
-
--- Create indexes for activities table
-CREATE INDEX idx_activities_name ON activities (name);
-
--- Create trigger for activities updated_at
-CREATE TRIGGER update_activities_updated_at 
-    BEFORE UPDATE ON activities
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Travel Tips Table
-CREATE TABLE travel_tips (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    tip TEXT NOT NULL,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+CREATE TABLE public.itinerary_days (
+  id bigint NOT NULL DEFAULT nextval('itinerary_days_id_seq'::regclass),
+  itinerary_id bigint NOT NULL,
+  day integer NOT NULL,
+  title character varying NOT NULL,
+  description text NOT NULL,
+  accommodation character varying,
+  meals character varying,
+  transportation character varying,
+  CONSTRAINT itinerary_days_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_days_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
 );
-
--- Create Tours Table
-CREATE TABLE tours (
-    id BIGSERIAL PRIMARY KEY,
-    tour_guide_id BIGINT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    duration VARCHAR(100) NOT NULL,
-    price DECIMAL(15, 2) NOT NULL,
-    max_group_size INTEGER NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (tour_guide_id) REFERENCES tour_guides(id) ON DELETE CASCADE
+CREATE TABLE public.itinerary_destinations (
+  id bigint NOT NULL DEFAULT nextval('itinerary_destinations_id_seq'::regclass),
+  itinerary_id bigint NOT NULL,
+  destination_id bigint NOT NULL,
+  CONSTRAINT itinerary_destinations_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_destinations_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_destinations_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create indexes for tours table
-CREATE INDEX idx_tours_title ON tours (title);
-CREATE INDEX idx_tours_location ON tours (location);
-CREATE INDEX idx_tours_price ON tours (price);
-CREATE INDEX idx_tours_active ON tours (is_active);
-
--- Create trigger for tours updated_at
-CREATE TRIGGER update_tours_updated_at 
-    BEFORE UPDATE ON tours
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Itineraries Table
-CREATE TABLE itineraries (
-    id BIGSERIAL PRIMARY KEY,
-    slug VARCHAR(100) NOT NULL UNIQUE,
-    title VARCHAR(255) NOT NULL,
-    duration VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
-    image_url VARCHAR(255) NULL,
-    difficulty VARCHAR(100) NULL,
-    best_season VARCHAR(255) NULL,
-    estimated_budget VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.itinerary_requests (
+  id bigint NOT NULL DEFAULT nextval('itinerary_requests_id_seq'::regclass),
+  user_id bigint NOT NULL,
+  itinerary_id bigint NOT NULL,
+  tour_guide_id bigint,
+  name character varying NOT NULL,
+  email character varying NOT NULL,
+  phone character varying,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  group_size character varying NOT NULL,
+  additional_requests text,
+  status USER-DEFINED DEFAULT 'pending'::request_status,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT itinerary_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT itinerary_requests_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_requests_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
-
--- Create indexes for itineraries table
-CREATE INDEX idx_itineraries_title ON itineraries (title);
-CREATE INDEX idx_itineraries_difficulty ON itineraries (difficulty);
-
--- Create trigger for itineraries updated_at
-CREATE TRIGGER update_itineraries_updated_at 
-    BEFORE UPDATE ON itineraries
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Bookings Table
-CREATE TABLE bookings (
-    id BIGSERIAL PRIMARY KEY,
-    tour_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    date DATE NOT NULL,
-    participants INTEGER NOT NULL,
-    status booking_status DEFAULT 'pending',
-    special_requests TEXT NULL,
-    total_amount DECIMAL(15, 2) NOT NULL,
-    payment_status payment_status DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (tour_id) REFERENCES tours(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE public.review_images (
+  id bigint NOT NULL DEFAULT nextval('review_images_id_seq'::regclass),
+  review_id bigint NOT NULL,
+  image_url character varying NOT NULL,
+  CONSTRAINT review_images_pkey PRIMARY KEY (id),
+  CONSTRAINT review_images_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.reviews(id)
 );
-
--- Create indexes for bookings table
-CREATE INDEX idx_bookings_date ON bookings (date);
-CREATE INDEX idx_bookings_status ON bookings (status);
-CREATE INDEX idx_bookings_payment ON bookings (payment_status);
-
--- Create trigger for bookings updated_at
-CREATE TRIGGER update_bookings_updated_at 
-    BEFORE UPDATE ON bookings
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Reviews Table
-CREATE TABLE reviews (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    booking_id BIGINT NULL,
-    destination_id BIGINT NULL,
-    tour_guide_id BIGINT NULL,
-    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    helpful_count INTEGER DEFAULT 0,
-    is_verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE SET NULL,
-    FOREIGN KEY (tour_guide_id) REFERENCES tour_guides(id) ON DELETE SET NULL
+CREATE TABLE public.review_responses (
+  id bigint NOT NULL DEFAULT nextval('review_responses_id_seq'::regclass),
+  review_id bigint NOT NULL,
+  user_id bigint NOT NULL,
+  response text NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT review_responses_pkey PRIMARY KEY (id),
+  CONSTRAINT review_responses_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.reviews(id),
+  CONSTRAINT review_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
--- Create indexes for reviews table
-CREATE INDEX idx_reviews_rating ON reviews (rating);
-CREATE INDEX idx_reviews_helpful ON reviews (helpful_count);
-
--- Create trigger for reviews updated_at
-CREATE TRIGGER update_reviews_updated_at 
-    BEFORE UPDATE ON reviews
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Review Images Table
-CREATE TABLE review_images (
-    id BIGSERIAL PRIMARY KEY,
-    review_id BIGINT NOT NULL,
-    image_url VARCHAR(255) NOT NULL,
-    
-    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
+CREATE TABLE public.review_tags (
+  id bigint NOT NULL DEFAULT nextval('review_tags_id_seq'::regclass),
+  review_id bigint NOT NULL,
+  tag character varying NOT NULL,
+  CONSTRAINT review_tags_pkey PRIMARY KEY (id),
+  CONSTRAINT review_tags_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.reviews(id)
 );
-
--- Create Review Tags Table
-CREATE TABLE review_tags (
-    id BIGSERIAL PRIMARY KEY,
-    review_id BIGINT NOT NULL,
-    tag VARCHAR(100) NOT NULL,
-    
-    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
-    UNIQUE (review_id, tag)
+CREATE TABLE public.reviews (
+  id bigint NOT NULL DEFAULT nextval('reviews_id_seq'::regclass),
+  user_id bigint NOT NULL,
+  booking_id bigint,
+  destination_id bigint,
+  tour_guide_id bigint,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  title character varying NOT NULL,
+  content text NOT NULL,
+  helpful_count integer DEFAULT 0,
+  is_verified boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
+  CONSTRAINT reviews_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id),
+  CONSTRAINT reviews_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
-
--- Create Review Responses Table
-CREATE TABLE review_responses (
-    id BIGSERIAL PRIMARY KEY,
-    review_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    response TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE public.security_logs (
+  id bigint NOT NULL DEFAULT nextval('security_logs_id_seq'::regclass),
+  user_id bigint,
+  action character varying NOT NULL,
+  ip_address character varying NOT NULL,
+  user_agent text NOT NULL,
+  status USER-DEFINED DEFAULT 'success'::security_status,
+  details text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT security_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT security_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
--- Create trigger for review_responses updated_at
-CREATE TRIGGER update_review_responses_updated_at 
-    BEFORE UPDATE ON review_responses
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Itinerary Destinations Table
-CREATE TABLE itinerary_destinations (
-    id BIGSERIAL PRIMARY KEY,
-    itinerary_id BIGINT NOT NULL,
-    destination_id BIGINT NOT NULL,
-    
-    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE,
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE,
-    UNIQUE (itinerary_id, destination_id)
+CREATE TABLE public.tour_guide_languages (
+  id bigint NOT NULL DEFAULT nextval('tour_guide_languages_id_seq'::regclass),
+  tour_guide_id bigint NOT NULL,
+  language character varying NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT tour_guide_languages_pkey PRIMARY KEY (id),
+  CONSTRAINT tour_guide_languages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
-
--- Create Itinerary Days Table
-CREATE TABLE itinerary_days (
-    id BIGSERIAL PRIMARY KEY,
-    itinerary_id BIGINT NOT NULL,
-    day INTEGER NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    accommodation VARCHAR(255) NULL,
-    meals VARCHAR(255) NULL,
-    transportation VARCHAR(255) NULL,
-    
-    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE,
-    UNIQUE (itinerary_id, day)
+CREATE TABLE public.tour_guides (
+  id bigint NOT NULL DEFAULT nextval('tour_guides_id_seq'::regclass),
+  user_id bigint NOT NULL,
+  bio text,
+  specialties jsonb,
+  location character varying NOT NULL,
+  short_bio text,
+  experience integer DEFAULT 0,
+  rating numeric DEFAULT 0,
+  review_count integer DEFAULT 0,
+  availability character varying,
+  is_verified boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT tour_guides_pkey PRIMARY KEY (id),
+  CONSTRAINT tour_guides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
--- Create Itinerary Activities Table
-CREATE TABLE itinerary_activities (
-    id BIGSERIAL PRIMARY KEY,
-    itinerary_day_id BIGINT NOT NULL,
-    time VARCHAR(100) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    
-    FOREIGN KEY (itinerary_day_id) REFERENCES itinerary_days(id) ON DELETE CASCADE
+CREATE TABLE public.tours (
+  id bigint NOT NULL DEFAULT nextval('tours_id_seq'::regclass),
+  tour_guide_id bigint NOT NULL,
+  title character varying NOT NULL,
+  description text NOT NULL,
+  location character varying NOT NULL,
+  duration character varying NOT NULL,
+  price numeric NOT NULL,
+  max_group_size integer NOT NULL,
+  is_active boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT tours_pkey PRIMARY KEY (id),
+  CONSTRAINT tours_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
-
--- Create Itinerary Requests Table
-CREATE TABLE itinerary_requests (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    itinerary_id BIGINT NOT NULL,
-    tour_guide_id BIGINT NULL,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(255) NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    group_size VARCHAR(50) NOT NULL,
-    additional_requests TEXT NULL,
-    status request_status DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE,
-    FOREIGN KEY (tour_guide_id) REFERENCES tour_guides(id) ON DELETE SET NULL
+CREATE TABLE public.travel_tips (
+  id bigint NOT NULL DEFAULT nextval('travel_tips_id_seq'::regclass),
+  destination_id bigint NOT NULL,
+  tip text NOT NULL,
+  CONSTRAINT travel_tips_pkey PRIMARY KEY (id),
+  CONSTRAINT travel_tips_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
-
--- Create indexes for itinerary_requests table
-CREATE INDEX idx_itinerary_requests_status ON itinerary_requests (status);
-
--- Create trigger for itinerary_requests updated_at
-CREATE TRIGGER update_itinerary_requests_updated_at 
-    BEFORE UPDATE ON itinerary_requests
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create Cultural Insights Table
-CREATE TABLE cultural_insights (
-    id BIGSERIAL PRIMARY KEY,
-    destination_id BIGINT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    image_url VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
+CREATE TABLE public.users (
+  id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+  email character varying NOT NULL UNIQUE,
+  username character varying,
+  first_name character varying NOT NULL,
+  last_name character varying NOT NULL,
+  email_verified_at timestamp without time zone,
+  password character varying NOT NULL,
+  role USER-DEFINED DEFAULT 'customer'::user_role,
+  phone character varying,
+  date_of_birth date,
+  gender USER-DEFINED,
+  profile_picture character varying,
+  is_active boolean DEFAULT true,
+  failed_login_attempts integer DEFAULT 0,
+  locked_until timestamp without time zone,
+  last_login_at timestamp without time zone,
+  last_login_ip character varying,
+  remember_token character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  experience character varying,
+  languages ARRAY,
+  bio text,
+  location character varying,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
 );
-
--- Create indexes for cultural_insights table
-CREATE INDEX idx_cultural_insights_title ON cultural_insights (title);
-
--- Create trigger for cultural_insights updated_at
-CREATE TRIGGER update_cultural_insights_updated_at 
-    BEFORE UPDATE ON cultural_insights
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Sample Data: Insert admin user
-INSERT INTO users (username, first_name, last_name, email, password, role) 
-VALUES ('admin', 'Admin', 'User', 'admin@wanderwise.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
-
--- Database setup completed successfully!
--- WanderWise PostgreSQL schema is ready for use with Supabase.

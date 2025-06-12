@@ -2,8 +2,8 @@ import { User } from "../types/user";
 import {
   supabase,
   checkSupabaseStorage,
-  ensureSupabaseBucket,
 } from "../utils/supabaseClient";
+import { convertToUTC } from "../utils/dateUtils";
 
 /**
  * Service to handle profile management with Supabase
@@ -14,44 +14,32 @@ class ProfileService {
   constructor() {
     // Check storage availability at initialization
     this.checkStorageAvailability();
-  }
-  /**
+  }  /**
    * Check if Supabase storage is available
    */
   private async checkStorageAvailability(): Promise<void> {
     try {
-      // First check general storage availability
+      // Check if storage is available using the updated checkSupabaseStorage function
       const status = await checkSupabaseStorage();
 
-      // Try to ensure the avatars bucket exists
-      if (status.ok) {
-        const bucketResult = await ensureSupabaseBucket("avatars", true);
-        this.storageAvailable = bucketResult.ok;
+      this.storageAvailable = status.ok;
 
-        if (!bucketResult.ok) {
-          console.warn(
-            "Failed to create/verify avatars bucket:",
-            bucketResult.error
-          );
-        } else {
-          console.log("Avatars bucket is available:", bucketResult.message);
-        }
-      } else {
-        this.storageAvailable = false;
+      if (!status.ok) {
         console.warn("Supabase storage is not available:", status.error);
+      } else {
+        console.log("Avatars bucket is available:", status.message);
       }
     } catch (error) {
       console.error("Failed to check storage availability:", error);
       this.storageAvailable = false;
     }
   }
-
   /**
    * Updates a user's profile in Supabase
    */
   async updateProfile(
     userId: string,
-    updates: Partial<User["profile"]> & { avatar?: string }
+    updates: Partial<User["profile"]> & { avatar?: string } & { dateOfBirth?: string; gender?: string }
   ): Promise<boolean> {
     try {
       console.log(`Updating profile for user ${userId}`, updates);
@@ -85,21 +73,26 @@ class ProfileService {
       } else if ("avatar" in updatesToApply && updatesToApply.avatar) {
         // Regular URL avatar
         updateData.profile_picture = updatesToApply.avatar;
-      }
-
-      // Map profile fields to database fields
+      }      // Map profile fields to database fields - Update all available columns
       if (updatesToApply.firstName)
         updateData.first_name = updatesToApply.firstName;
       if (updatesToApply.lastName)
         updateData.last_name = updatesToApply.lastName;
-      if (updatesToApply.phone) updateData.phone = updatesToApply.phone;
+      if (updatesToApply.phone) 
+        updateData.phone = updatesToApply.phone;
       if (updatesToApply.location)
         updateData.location = updatesToApply.location;
-      if (updatesToApply.bio) updateData.bio = updatesToApply.bio;
-      if (updatesToApply.languages !== undefined)
+      if (updatesToApply.bio) 
+        updateData.bio = updatesToApply.bio;      if (updatesToApply.languages !== undefined)
         updateData.languages = updatesToApply.languages;
       if (updatesToApply.experience !== undefined)
         updateData.experience = updatesToApply.experience;
+      
+      // Handle user-level fields
+      if ("dateOfBirth" in updatesToApply && updatesToApply.dateOfBirth !== undefined)
+        updateData.date_of_birth = updatesToApply.dateOfBirth;
+      if ("gender" in updatesToApply && updatesToApply.gender !== undefined)
+        updateData.gender = updatesToApply.gender;
 
       // Only update if there's data to update
       if (Object.keys(updateData).length > 0) {
@@ -108,7 +101,7 @@ class ProfileService {
           .from("users")
           .update({
             ...updateData,
-            updated_at: new Date().toISOString(),
+            updated_at: convertToUTC(new Date()),
           })
           .eq("id", userId);
 
@@ -276,9 +269,7 @@ class ProfileService {
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  }
-
-  /**
+  }  /**
    * Log user activity in Supabase
    */
   private async logActivity(
@@ -287,41 +278,57 @@ class ProfileService {
     details: string
   ): Promise<void> {
     try {
+      // Check if activity_logs table exists first
+      const { error: checkError } = await supabase
+        .from("activity_logs")
+        .select("id")
+        .limit(1);
+
+      if (checkError && checkError.code === "PGRST116") {
+        console.warn("Activity logs table does not exist, skipping activity log");
+        return;
+      }
+
       const { error } = await supabase.from("activity_logs").insert([
         {
           user_id: userId,
           action,
           details,
-          created_at: new Date().toISOString(),
+          created_at: convertToUTC(new Date()),
         },
       ]);
 
       if (error) {
-        // If the table doesn't exist, just log it but don't halt operations
-        if (error.code === "PGRST116") {
-          console.warn("Activity logs table does not exist:", error.message);
-        } else {
-          console.error("Failed to insert activity log:", error);
-        }
+        console.error("Failed to insert activity log:", error);
+      } else {
+        console.log("Activity logged successfully:", { userId, action, details });
       }
     } catch (error) {
       // Just log the error, don't fail the whole operation
-      console.error("Failed to log activity:", error);
+      console.warn("Failed to log activity (table might not exist):", error);
     }
   }
   /**
    * Test method to verify Supabase storage functionality
    * This can be called to check if image uploads are working correctly
-   */
-  async testImageUpload(): Promise<{
+   */  async testImageUpload(): Promise<{
     success: boolean;
     message: string;
     details?: unknown;
   }> {
     try {
+      console.log("🧪 Starting image upload test...");
+      
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("👤 Current user:", user?.id ? "Authenticated" : "Anonymous");
+      
       // First check storage availability
       await this.checkStorageAvailability();
+      console.log("📦 Storage availability check result:", this.storageAvailable);
+      
       if (!this.storageAvailable) {
+        console.log("❌ Storage not available, test failed");
         return {
           success: false,
           message: "Supabase storage is not available",
@@ -333,12 +340,16 @@ class ProfileService {
       const testBase64Image =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-      // Try to upload the test image
-      const testUserId = "test-" + Date.now();
+      // Use authenticated user ID if available, otherwise use test ID
+      const testUserId = user?.id || "test-" + Date.now();
+      console.log("📤 Attempting to upload test image for user:", testUserId);
+      
       const uploadResult = await this.uploadProfileImage(
         testUserId,
         testBase64Image
       );
+      
+      console.log("📋 Upload result:", uploadResult);
 
       if (uploadResult.success) {
         // Clean up the test file
@@ -346,21 +357,25 @@ class ProfileService {
           const filePath = uploadResult.url?.split("/").pop();
           if (filePath) {
             const profilesPath = `profiles/${filePath}`;
+            console.log("🧹 Cleaning up test file:", profilesPath);
             await supabase.storage.from("avatars").remove([profilesPath]);
           }
         } catch (cleanupError) {
           console.warn("Could not clean up test image:", cleanupError);
         }
 
+        console.log("✅ Image upload test passed!");
         return {
           success: true,
           message: "Image upload test passed successfully",
           details: {
             url: uploadResult.url,
             storageAvailable: this.storageAvailable,
+            userAuthenticated: !!user,
           },
         };
       } else {
+        console.log("❌ Image upload test failed:", uploadResult.error);
         return {
           success: false,
           message: "Image upload test failed",
@@ -368,7 +383,7 @@ class ProfileService {
         };
       }
     } catch (error) {
-      console.error("Image upload test error:", error);
+      console.error("🚨 Image upload test error:", error);
       return {
         success: false,
         message: "Image upload test threw an exception",

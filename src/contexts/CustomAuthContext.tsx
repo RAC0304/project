@@ -26,7 +26,7 @@ interface AuthContextType {
     role?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateProfile: (updates: Partial<User["profile"]>) => Promise<boolean>;
+  updateProfile: (updates: Partial<User["profile"]> & { dateOfBirth?: string; gender?: string }) => Promise<boolean>;
   updatePassword: (
     currentPassword: string,
     newPassword: string
@@ -238,9 +238,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUsesMockAuth(false);
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
-  };
-  const updateProfile = async (
-    updates: Partial<User["profile"]>
+  };  const updateProfile = async (
+    updates: Partial<User["profile"]> & { dateOfBirth?: string; gender?: string }
   ): Promise<boolean> => {
     if (!user) return false;
 
@@ -252,15 +251,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         // Use the dedicated profileService for real profile updates
         success = await profileService.updateProfile(user.id, updates);
-      }
-
-      if (success) {
+      }      if (success) {
         const updatedUser = {
           ...user,
           profile: {
             ...user.profile,
             ...updates,
           },
+          // Update user-level fields with proper typing
+          dateOfBirth: updates.dateOfBirth ?? user.dateOfBirth,
+          gender: (updates.gender as "male" | "female" | "other" | undefined) ?? user.gender,
           updatedAt: new Date().toISOString(),
         };
 

@@ -3,9 +3,9 @@ export type UserRole = "user" | "tour_guide" | "admin";
 export interface TourGuideProfile {
   firstName: string;
   lastName: string;
-  phone: string;
-  location: string;
-  bio: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
   languages?: string[];
   experience?: string;
   avatar?: string;
@@ -19,6 +19,8 @@ export interface User {
   profile: TourGuideProfile;
   createdAt: string;
   isActive?: boolean;
+  dateOfBirth?: string;
+  gender?: "male" | "female" | "other";
 }
 
 export const DEFAULT_PROFILE_IMAGE = "/images/default-profile.png";

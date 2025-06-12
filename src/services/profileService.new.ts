@@ -70,9 +70,7 @@ class ProfileService {
       } else if ("avatar" in updatesToApply && updatesToApply.avatar) {
         // Regular URL avatar
         updateData.profile_picture = updatesToApply.avatar;
-      }
-
-      // Map profile fields to database fields
+      } // Map profile fields to database fields
       if (updatesToApply.firstName)
         updateData.first_name = updatesToApply.firstName;
       if (updatesToApply.lastName)
@@ -83,8 +81,9 @@ class ProfileService {
       if (updatesToApply.bio) updateData.bio = updatesToApply.bio;
       if (updatesToApply.languages !== undefined)
         updateData.languages = updatesToApply.languages;
-      if (updatesToApply.experience !== undefined)
-        updateData.experience = updatesToApply.experience;
+      // Removed experience field as it doesn't exist in the users table
+      // if (updatesToApply.experience !== undefined)
+      //   updateData.experience = updatesToApply.experience;
 
       // Only update if there's data to update
       if (Object.keys(updateData).length > 0) {

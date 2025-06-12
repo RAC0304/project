@@ -8,14 +8,25 @@ import {
   Camera,
   LogOut,
   Database,
+  Phone,
+  Cake,
+  Users,
+  Award,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "../contexts/CustomAuthContext";
 import RoleBadge from "../components/common/RoleBadge";
+import { formatIndonesianDate } from "../utils/dateUtils";
 
 const UserProfilePage: React.FC = () => {
   const { user, logout, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(user?.profile || null);
+  // Add state for user-level fields
+  const [editedUserFields, setEditedUserFields] = useState({
+    dateOfBirth: user?.dateOfBirth || "",
+    gender: user?.gender || "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
     user?.profile?.avatar ||
@@ -43,26 +54,35 @@ const UserProfilePage: React.FC = () => {
   // If no user is logged in, this page should be protected by ProtectedRoute
   if (!user) {
     return null;
-  }
-
-  const handleInputChange = (
-    field: keyof typeof user.profile,
-    value: string
+  }  const handleInputChange = (
+    field: keyof typeof user.profile | "dateOfBirth" | "gender",
+    value: string | string[]
   ) => {
+    if (field === "dateOfBirth" || field === "gender") {
+      // Handle fields that are directly on user object, not in profile
+      // Note: This will need to be handled in the updateProfile function
+      return;
+    }
+    
     if (editedProfile) {
       setEditedProfile({
         ...editedProfile,
         [field]: value,
       });
     }
-  };
-  const handleSaveChanges = async () => {
+  };const handleSaveChanges = async () => {
     if (editedProfile) {
       setIsLoading(true);
 
       try {
+        // Combine profile updates with user field updates
+        const allUpdates = {
+          ...editedProfile,
+          ...editedUserFields,
+        };
+
         // Update the user profile through AuthContext with Supabase
-        const success = await updateProfile(editedProfile);
+        const success = await updateProfile(allUpdates);
 
         if (success) {
           setIsEditing(false);
@@ -80,9 +100,12 @@ const UserProfilePage: React.FC = () => {
       }
     }
   };
-
   const handleCancelEdit = () => {
     setEditedProfile(user.profile);
+    setEditedUserFields({
+      dateOfBirth: user?.dateOfBirth || "",
+      gender: user?.gender || "",
+    });
     setIsEditing(false);
   };
   const handleLogout = async () => {
@@ -479,8 +502,7 @@ const UserProfilePage: React.FC = () => {
                     <p className="text-sm text-gray-500">Email</p>
                     <p className="text-gray-900">{user.email}</p>
                   </div>
-                </div>
-                <div className="flex items-center">
+                </div>                <div className="flex items-center">
                   <MapPin className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Location</p>{" "}
@@ -501,15 +523,126 @@ const UserProfilePage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center">
+                  <Phone className="w-5 h-5 text-teal-500 mr-3" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Phone</p>{" "}
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={currentProfile.phone || ""}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                        placeholder="+62 xxx-xxxx-xxxx"
+                      />
+                    ) : (
+                      <p className="text-gray-900">
+                        {user.profile.phone || "Not specified"}
+                      </p>
+                    )}
+                  </div>
+                </div>                <div className="flex items-center">
+                  <Cake className="w-5 h-5 text-teal-500 mr-3" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Date of Birth</p>{" "}
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editedUserFields.dateOfBirth}
+                        onChange={(e) =>
+                          setEditedUserFields({
+                            ...editedUserFields,
+                            dateOfBirth: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    ) : (                      <p className="text-gray-900">
+                        {user.dateOfBirth 
+                          ? formatIndonesianDate(user.dateOfBirth)
+                          : "Not specified"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <Users className="w-5 h-5 text-teal-500 mr-3" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Gender</p>{" "}
+                    {isEditing ? (
+                      <select
+                        value={editedUserFields.gender}
+                        onChange={(e) =>
+                          setEditedUserFields({
+                            ...editedUserFields,
+                            gender: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900">
+                        {user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "Not specified"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <Award className="w-5 h-5 text-teal-500 mr-3" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Experience</p>{" "}
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={currentProfile.experience || ""}
+                        onChange={(e) =>
+                          handleInputChange("experience", e.target.value)
+                        }
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                        placeholder="e.g., 5+ years in tourism"
+                      />
+                    ) : (
+                      <p className="text-gray-900">
+                        {user.profile.experience || "Not specified"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <Globe className="w-5 h-5 text-teal-500 mr-3" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">Languages</p>{" "}
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={Array.isArray(currentProfile.languages) ? currentProfile.languages.join(", ") : ""}
+                        onChange={(e) => {
+                          const languageArray = e.target.value.split(",").map(lang => lang.trim()).filter(lang => lang);
+                          handleInputChange("languages", languageArray);
+                        }}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                        placeholder="e.g., Indonesian, English, Mandarin (separate with commas)"
+                      />
+                    ) : (
+                      <p className="text-gray-900">
+                        {Array.isArray(user.profile.languages) && user.profile.languages.length > 0 
+                          ? user.profile.languages.join(", ")
+                          : "Not specified"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
-                    <p className="text-sm text-gray-500">Member Since</p>
-                    <p className="text-gray-900">
-                      {new Date(user.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                    <p className="text-sm text-gray-500">Member Since</p>                    <p className="text-gray-900">
+                      {formatIndonesianDate(user.createdAt)}
                     </p>
                   </div>
                 </div>{" "}

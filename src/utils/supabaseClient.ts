@@ -25,10 +25,35 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Add a helper function to check storage status and ensure avatar bucket exists
 export const checkSupabaseStorage = async () => {
   try {
-    // Check if storage is configured properly
-    const { data: buckets, error } = await supabase.storage.listBuckets();
+    // Instead of listing buckets (which may fail due to RLS), 
+    // try to directly access the avatars bucket
+    console.log("Testing direct access to avatars bucket...");
+    
+    const { data, error } = await supabase.storage
+      .from("avatars")
+      .list("", { limit: 1 });
 
     if (error) {
+      // If error is about bucket not found, that's the real issue
+      if (error.message.includes("Bucket not found")) {
+        console.warn("Avatars bucket not found in Supabase storage.");
+        return {
+          ok: false,
+          error: "Avatars bucket not found. Please create it manually in Supabase dashboard.",
+        };
+      }
+      
+      // If it's a permission error, bucket exists but we can't list contents
+      // That's actually OK for our purposes
+      if (error.message.includes("permission") || error.message.includes("policy")) {
+        console.log("Avatars bucket exists but listing is restricted (this is OK)");
+        return {
+          ok: true,
+          message: "Avatars bucket exists (verified via direct access)",
+        };
+      }
+      
+      // Other errors
       console.error("Supabase storage error:", error);
       return {
         ok: false,
@@ -36,34 +61,11 @@ export const checkSupabaseStorage = async () => {
       };
     }
 
-    // Check if avatars bucket exists
-    const avatarBucket = buckets?.find((b) => b.name === "avatars");
-    if (!avatarBucket) {
-      console.warn(
-        "Avatars bucket missing in Supabase storage, attempting to create it"
-      );
-
-      // Use the ensureSupabaseBucket function to create the bucket
-      const bucketResult = await ensureSupabaseBucket("avatars", true);
-
-      if (!bucketResult.ok) {
-        return {
-          ok: false,
-          error: bucketResult.error,
-          buckets: buckets?.map((b) => b.name) || [],
-        };
-      }
-
-      return {
-        ok: true,
-        buckets: [...(buckets?.map((b) => b.name) || []), "avatars"],
-        message: bucketResult.message,
-      };
-    }
-
+    // If we can list contents, bucket definitely exists
+    console.log("Avatars bucket verified via direct access");
     return {
       ok: true,
-      buckets: buckets?.map((b) => b.name) || [],
+      message: "Avatars bucket exists and accessible",
     };
   } catch (e) {
     console.error("Failed to check Supabase storage status:", e);
