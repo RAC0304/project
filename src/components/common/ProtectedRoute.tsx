@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
 import { UserRole } from "../../types";
 
 interface ProtectedRouteProps {
@@ -21,7 +21,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredPermission,
   fallbackPath = "/login",
 }) => {
-  const { isLoggedIn, user, isMinRole, isRole, hasPermission } = useAuth();
+  const { isLoggedIn, user, isMinRole, isRole, hasPermission } =
+    useEnhancedAuth();
 
   // Check if user is logged in
   if (!isLoggedIn || !user) {

@@ -85,14 +85,14 @@ class CustomAuthService {
         "login",
         "Login successful",
         "success"
-      );
-
-      // Map to User object
+      ); // Map to User object
       const user: User = {
         id: userProfile.id.toString(),
         email: userProfile.email,
         username: userProfile.username || userProfile.email.split("@")[0],
         role: userProfile.role as UserRole,
+        dateOfBirth: userProfile.date_of_birth || undefined,
+        gender: userProfile.gender as "male" | "female" | "other" | undefined,
         profile: {
           firstName: userProfile.first_name || "",
           lastName: userProfile.last_name || "",
@@ -358,7 +358,11 @@ class CustomAuthService {
   }
   async updateProfile(
     userId: string,
-    updates: Partial<User["profile"]> & { avatar?: string }
+    updates: Partial<User["profile"]> & {
+      avatar?: string;
+      dateOfBirth?: string;
+      gender?: "male" | "female" | "other";
+    }
   ): Promise<boolean> {
     try {
       const updateData: Record<string, unknown> = {};
@@ -374,6 +378,10 @@ class CustomAuthService {
         updateData.experience = updates.experience;
       if ("avatar" in updates && updates.avatar !== undefined)
         updateData.profile_picture = updates.avatar;
+      // Add support for dateOfBirth and gender fields that are directly on the user
+      if (updates.dateOfBirth !== undefined)
+        updateData.date_of_birth = updates.dateOfBirth;
+      if (updates.gender !== undefined) updateData.gender = updates.gender;
 
       const { error } = await supabase
         .from("users")
@@ -400,13 +408,12 @@ class CustomAuthService {
 
           if (storageError) {
             console.error("Failed to upload profile image:", storageError);
-            // Continue despite image upload failure
-          } else if (imageData?.path) {
+            // Continue despite image upload failure          } else if (imageData?.path) {
             // Update user record with the new image URL
-            const imageUrl = `${
-              supabase.storage.getPublicUrl("avatars", imageData.path).data
-                ?.publicUrl
-            }`;
+            const { data: urlData } = supabase.storage
+              .from("avatars")
+              .getPublicUrl(imageData.path);
+            const imageUrl = urlData?.publicUrl;
             await supabase
               .from("users")
               .update({ profile_picture: imageUrl })
@@ -441,7 +448,7 @@ class CustomAuthService {
   }> {
     try {
       // Extract MIME type and base64 data
-      const matches = base64Image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const matches = base64Image.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
 
       if (!matches || matches.length !== 3) {
         throw new Error("Invalid base64 image string");

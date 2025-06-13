@@ -10,7 +10,7 @@ import ClientsContent from "../components/tourguide/dashboard/ClientsContent";
 import ReviewsContent from "../components/tourguide/dashboard/ReviewsContent";
 import EditTourModal from "../components/tourguide/modals/EditTourModal";
 import Toast, { ToastType } from "../components/common/Toast";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 import { TourData } from "../types/tourguide";
 import {
   calculateGuideStats,
@@ -20,7 +20,7 @@ import {
 } from "../data/tourGuideDashboardData";
 
 const TourGuideDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [tourToEdit, setTourToEdit] = useState<TourData | null>(null);

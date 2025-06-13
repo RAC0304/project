@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 import Logo from "../components/common/Logo";
 import { ArrowRight } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register } = useEnhancedAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
+    firstName: "",
+    lastName: "",
     role: "Traveler",
   });
 
@@ -36,10 +38,9 @@ const Register = () => {
       setIsLoading(false);
       return;
     }
-
     try {
       const result = await register({
-        name: formData.username,
+        name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         password: formData.password,
         role: formData.role,
@@ -119,7 +120,46 @@ const Register = () => {
           className="mt-8 space-y-6 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl animate-fadeIn animation-delay-150"
           onSubmit={handleSubmit}
         >
+          {" "}
           <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="transform transition-all duration-200 hover:-translate-y-0.5">
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
+                  placeholder="Enter your first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="transform transition-all duration-200 hover:-translate-y-0.5">
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
+                  placeholder="Enter your last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
             <div className="transform transition-all duration-200 hover:-translate-y-0.5">
               <label
                 htmlFor="username"

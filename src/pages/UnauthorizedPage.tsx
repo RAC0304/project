@@ -2,12 +2,12 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Home } from "lucide-react";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 import RoleBadge from "../components/common/RoleBadge";
 
 const UnauthorizedPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useEnhancedAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">

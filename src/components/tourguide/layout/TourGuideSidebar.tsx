@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../../../contexts/EnhancedAuthContextFix";
 import RoleBadge from "../../common/RoleBadge";
 import {
   Calendar,
@@ -34,7 +34,7 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   onMinimizeChange,
   isMinimized: externalIsMinimized = false,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useEnhancedAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [internalIsMinimized, setInternalIsMinimized] = useState(false);

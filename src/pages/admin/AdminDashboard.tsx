@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useAuth } from "../../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import AdminContent from "../../components/admin/AdminContent";
 import MinimizeButton from "../../components/admin/layout/MinimizeButton";
 import { Menu } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const [activePage, setActivePage] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);

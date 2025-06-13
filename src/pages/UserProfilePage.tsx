@@ -14,19 +14,29 @@ import {
   Award,
   Globe,
 } from "lucide-react";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 import RoleBadge from "../components/common/RoleBadge";
+import TimezoneInfo from "../components/common/TimezoneInfo";
 import { formatIndonesianDate } from "../utils/dateUtils";
 
 const UserProfilePage: React.FC = () => {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile } = useEnhancedAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(user?.profile || null);
-  // Add state for user-level fields
+  const [editedProfile, setEditedProfile] = useState(user?.profile || null); // Add state for user-level fields
   const [editedUserFields, setEditedUserFields] = useState({
     dateOfBirth: user?.dateOfBirth || "",
     gender: user?.gender || "",
   });
+
+  // Update editedUserFields whenever user object changes
+  useEffect(() => {
+    if (user) {
+      setEditedUserFields({
+        dateOfBirth: user.dateOfBirth || "",
+        gender: user.gender || "",
+      });
+    }
+  }, [user]);
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
     user?.profile?.avatar ||
@@ -54,31 +64,61 @@ const UserProfilePage: React.FC = () => {
   // If no user is logged in, this page should be protected by ProtectedRoute
   if (!user) {
     return null;
-  }  const handleInputChange = (
+  }
+  const handleInputChange = (
     field: keyof typeof user.profile | "dateOfBirth" | "gender",
     value: string | string[]
   ) => {
-    if (field === "dateOfBirth" || field === "gender") {
-      // Handle fields that are directly on user object, not in profile
-      // Note: This will need to be handled in the updateProfile function
+    if (field === "dateOfBirth") {
+      setEditedUserFields({
+        ...editedUserFields,
+        dateOfBirth: value as string,
+      });
       return;
     }
-    
+
+    if (field === "gender") {
+      // Ensure gender is one of the valid enum values
+      const genderValue = value as string;
+      if (
+        genderValue === "male" ||
+        genderValue === "female" ||
+        genderValue === "other" ||
+        genderValue === ""
+      ) {
+        setEditedUserFields({
+          ...editedUserFields,
+          gender: genderValue as "male" | "female" | "other" | "",
+        });
+      }
+      return;
+    }
+
     if (editedProfile) {
       setEditedProfile({
         ...editedProfile,
         [field]: value,
       });
     }
-  };const handleSaveChanges = async () => {
+  };
+  const handleSaveChanges = async () => {
     if (editedProfile) {
       setIsLoading(true);
 
       try {
+        // Make sure gender is typed correctly
+        const typedGender =
+          editedUserFields.gender === "male" ||
+          editedUserFields.gender === "female" ||
+          editedUserFields.gender === "other"
+            ? (editedUserFields.gender as "male" | "female" | "other")
+            : undefined;
+
         // Combine profile updates with user field updates
         const allUpdates = {
           ...editedProfile,
-          ...editedUserFields,
+          dateOfBirth: editedUserFields.dateOfBirth || undefined,
+          gender: typedGender,
         };
 
         // Update the user profile through AuthContext with Supabase
@@ -412,12 +452,13 @@ const UserProfilePage: React.FC = () => {
           {/* Left Column: Personal Information */}
           <div className="md:col-span-2">
             <div className="bg-white rounded-xl shadow-md p-6">
+              {" "}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">
                   Personal Information
                 </h2>
-                <div className="flex space-x-4">
-                  {" "}
+                <div className="flex items-center space-x-4">
+                  <TimezoneInfo />
                   {isEditing ? (
                     <>
                       <button
@@ -502,7 +543,8 @@ const UserProfilePage: React.FC = () => {
                     <p className="text-sm text-gray-500">Email</p>
                     <p className="text-gray-900">{user.email}</p>
                   </div>
-                </div>                <div className="flex items-center">
+                </div>{" "}
+                <div className="flex items-center">
                   <MapPin className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Location</p>{" "}
@@ -542,7 +584,8 @@ const UserProfilePage: React.FC = () => {
                       </p>
                     )}
                   </div>
-                </div>                <div className="flex items-center">
+                </div>{" "}
+                <div className="flex items-center">
                   <Cake className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Date of Birth</p>{" "}
@@ -558,8 +601,9 @@ const UserProfilePage: React.FC = () => {
                         }
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
                       />
-                    ) : (                      <p className="text-gray-900">
-                        {user.dateOfBirth 
+                    ) : (
+                      <p className="text-gray-900">
+                        {user.dateOfBirth
                           ? formatIndonesianDate(user.dateOfBirth)
                           : "Not specified"}
                       </p>
@@ -573,12 +617,20 @@ const UserProfilePage: React.FC = () => {
                     {isEditing ? (
                       <select
                         value={editedUserFields.gender}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const typedValue =
+                            value === "male" ||
+                            value === "female" ||
+                            value === "other" ||
+                            value === ""
+                              ? (value as "" | "male" | "female" | "other")
+                              : "";
                           setEditedUserFields({
                             ...editedUserFields,
-                            gender: e.target.value,
-                          })
-                        }
+                            gender: typedValue,
+                          });
+                        }}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
                       >
                         <option value="">Select Gender</option>
@@ -588,7 +640,10 @@ const UserProfilePage: React.FC = () => {
                       </select>
                     ) : (
                       <p className="text-gray-900">
-                        {user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "Not specified"}
+                        {user.gender
+                          ? user.gender.charAt(0).toUpperCase() +
+                            user.gender.slice(1)
+                          : "Not specified"}
                       </p>
                     )}
                   </div>
@@ -621,9 +676,16 @@ const UserProfilePage: React.FC = () => {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={Array.isArray(currentProfile.languages) ? currentProfile.languages.join(", ") : ""}
+                        value={
+                          Array.isArray(currentProfile.languages)
+                            ? currentProfile.languages.join(", ")
+                            : ""
+                        }
                         onChange={(e) => {
-                          const languageArray = e.target.value.split(",").map(lang => lang.trim()).filter(lang => lang);
+                          const languageArray = e.target.value
+                            .split(",")
+                            .map((lang) => lang.trim())
+                            .filter((lang) => lang);
                           handleInputChange("languages", languageArray);
                         }}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
@@ -631,7 +693,8 @@ const UserProfilePage: React.FC = () => {
                       />
                     ) : (
                       <p className="text-gray-900">
-                        {Array.isArray(user.profile.languages) && user.profile.languages.length > 0 
+                        {Array.isArray(user.profile.languages) &&
+                        user.profile.languages.length > 0
                           ? user.profile.languages.join(", ")
                           : "Not specified"}
                       </p>
@@ -641,7 +704,8 @@ const UserProfilePage: React.FC = () => {
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
-                    <p className="text-sm text-gray-500">Member Since</p>                    <p className="text-gray-900">
+                    <p className="text-sm text-gray-500">Member Since</p>{" "}
+                    <p className="text-gray-900">
                       {formatIndonesianDate(user.createdAt)}
                     </p>
                   </div>

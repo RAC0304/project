@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 import Logo from "../components/common/Logo";
 import { User, Shield, MapPin } from "lucide-react";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useEnhancedAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

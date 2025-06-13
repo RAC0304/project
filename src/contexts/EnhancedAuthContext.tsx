@@ -4,17 +4,17 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import { User, UserRole } from "../types/user";
 import { hasPermission } from "../data/users";
 import customAuthService from "../services/customAuthService";
 import mockAuthService from "../services/mockAuthService.js";
-import profileService from "../services/profileService";
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  isInitialized: boolean; // Tambahkan flag untuk track initialization
+  isInitialized: boolean;
   login: (
     email: string,
     password: string
@@ -30,7 +30,7 @@ interface AuthContextType {
   updateProfile: (
     updates: Partial<User["profile"]> & {
       dateOfBirth?: string;
-      gender?: string;
+      gender?: "male" | "female" | "other";
     }
   ) => Promise<boolean>;
   updatePassword: (
@@ -40,7 +40,7 @@ interface AuthContextType {
   hasPermission: (action: string, resource: string) => boolean;
   isRole: (role: UserRole) => boolean;
   isMinRole: (minRole: UserRole) => boolean;
-  refreshSession: () => Promise<void>; // Tambahkan method untuk refresh session
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,18 +61,22 @@ const SESSION_STORAGE_KEYS = {
   IS_LOGGED_IN: "wanderwise_isLoggedIn",
   SESSION_TIMESTAMP: "wanderwise_sessionTimestamp",
   SESSION_TIMEOUT: "wanderwise_sessionTimeout",
-};
+} as const;
 
 const SESSION_TIMEOUT_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [usesMockAuth, setUsesMockAuth] = useState(false);
+  // Flag to track whether session initialization has been done
+  const [initDone, setInitDone] = useState(false);
 
   // Function to validate session
-  const validateSession = (): boolean => {
+  const validateSession = useCallback((): boolean => {
     const sessionTimestamp = localStorage.getItem(
       SESSION_STORAGE_KEYS.SESSION_TIMESTAMP
     );
@@ -89,29 +93,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const timeoutDuration = parseInt(sessionTimeout);
 
     // Check if session has expired
-    return currentTime - lastActivity < timeoutDuration;
-  };
+    const isValid = currentTime - lastActivity < timeoutDuration;
+    if (!isValid) {
+      console.log(
+        "Session expired: Time difference:",
+        (currentTime - lastActivity) / 1000,
+        "seconds"
+      );
+    }
+    return isValid;
+  }, []);
 
-  // Function to update session timestamp
-  const updateSessionTimestamp = () => {
-    localStorage.setItem(
-      SESSION_STORAGE_KEYS.SESSION_TIMESTAMP,
-      Date.now().toString()
-    );
-  };
+  // Function to update session timestamp - only called explicitly, not during initialization
+  const updateSessionTimestamp = useCallback(() => {
+    if (initDone && isLoggedIn) {
+      localStorage.setItem(
+        SESSION_STORAGE_KEYS.SESSION_TIMESTAMP,
+        Date.now().toString()
+      );
+    }
+  }, [initDone, isLoggedIn]);
 
   // Function to clear session
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
     Object.values(SESSION_STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
     // Clear old keys for backward compatibility
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
-  };
+  }, []);
 
   // Function to save session
-  const saveSession = (userData: User) => {
+  const saveSession = useCallback((userData: User) => {
     localStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(userData));
     localStorage.setItem(SESSION_STORAGE_KEYS.IS_LOGGED_IN, "true");
     localStorage.setItem(
@@ -122,25 +136,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       SESSION_STORAGE_KEYS.SESSION_TIMEOUT,
       SESSION_TIMEOUT_DURATION.toString()
     );
-  };
+  }, []);
 
   // Function to refresh session
-  const refreshSession = async (): Promise<void> => {
+  const refreshSession = useCallback(async (): Promise<void> => {
     try {
-      if (user && isLoggedIn) {
+      if (user && isLoggedIn && initDone) {
         updateSessionTimestamp();
-        // Optionally validate with server here
         console.log("Session refreshed");
       }
     } catch (error) {
       console.error("Failed to refresh session:", error);
     }
-  };
+  }, [user, isLoggedIn, initDone, updateSessionTimestamp]);
 
-  // Initialize session on mount
+  // Logout function (defined early to avoid dependency issues)
+  const logout = useCallback(() => {
+    if (user && !usesMockAuth) {
+      customAuthService.logout(user.id).catch((err) => {
+        console.error("Error logging logout event:", err);
+      });
+    }
+
+    setUser(null);
+    setIsLoggedIn(false);
+    setUsesMockAuth(false);
+    clearSession();
+  }, [user, usesMockAuth, clearSession]);
+
+  // Initialize session on mount - separated from other effects
   useEffect(() => {
+    if (initDone) return; // Prevent re-initialization
+
     const initializeSession = () => {
       try {
+        console.log("Initializing session...");
         // Check for existing session with new keys
         let savedUser = localStorage.getItem(SESSION_STORAGE_KEYS.USER);
         let isUserLoggedIn =
@@ -153,8 +183,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           // If found old session, migrate to new format
           if (savedUser && isUserLoggedIn) {
-            const parsedUser = JSON.parse(savedUser);
-            saveSession(parsedUser);
+            localStorage.setItem(SESSION_STORAGE_KEYS.USER, savedUser);
+            localStorage.setItem(SESSION_STORAGE_KEYS.IS_LOGGED_IN, "true");
+            localStorage.setItem(
+              SESSION_STORAGE_KEYS.SESSION_TIMESTAMP,
+              Date.now().toString()
+            );
+            localStorage.setItem(
+              SESSION_STORAGE_KEYS.SESSION_TIMEOUT,
+              SESSION_TIMEOUT_DURATION.toString()
+            );
+
             // Clear old keys
             localStorage.removeItem("user");
             localStorage.removeItem("isLoggedIn");
@@ -162,16 +201,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         if (savedUser && isUserLoggedIn) {
-          // Validate session
-          if (validateSession()) {
-            const parsedUser = JSON.parse(savedUser);
-            setUser(parsedUser);
-            setIsLoggedIn(true);
-            updateSessionTimestamp(); // Update last activity
-            console.log("Session restored successfully");
+          // Validate session without side effects
+          const timestamp = localStorage.getItem(
+            SESSION_STORAGE_KEYS.SESSION_TIMESTAMP
+          );
+          const timeout = localStorage.getItem(
+            SESSION_STORAGE_KEYS.SESSION_TIMEOUT
+          );
+
+          if (timestamp && timeout) {
+            const currentTime = Date.now();
+            const lastActivity = parseInt(timestamp);
+            const timeoutDuration = parseInt(timeout);
+
+            if (currentTime - lastActivity < timeoutDuration) {
+              try {
+                const parsedUser = JSON.parse(savedUser);
+                setUser(parsedUser);
+                setIsLoggedIn(true);
+                console.log("Session restored successfully");
+              } catch (e) {
+                console.error("Error parsing user data:", e);
+                clearSession();
+              }
+            } else {
+              // Session expired, clear it
+              console.log("Session expired, clearing...");
+              clearSession();
+            }
           } else {
-            // Session expired, clear it
-            console.log("Session expired, clearing...");
             clearSession();
           }
         }
@@ -180,11 +238,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Clear invalid session data
         clearSession();
       } finally {
+        setInitDone(true);
         setIsInitialized(true);
       }
     };
 
+    // Only initialize once
     initializeSession();
+  }, [clearSession, initDone]); // Depends on clearSession and initDone
+
+  // Set up activity listeners in a separate effect
+  useEffect(() => {
+    if (!initDone) return; // Skip until initialization is complete
 
     // Set up activity listeners to update session timestamp
     const updateActivity = () => {
@@ -227,11 +292,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [isLoggedIn, user]);
+  }, [initDone, isLoggedIn, user, updateSessionTimestamp]);
 
   // Set up session timeout check
   useEffect(() => {
-    if (!isLoggedIn || !user) return;
+    if (!isLoggedIn || !user || !initDone) return;
 
     const checkSessionTimeout = () => {
       if (!validateSession()) {
@@ -244,7 +309,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const intervalId = setInterval(checkSessionTimeout, 5 * 60 * 1000);
 
     return () => clearInterval(intervalId);
-  }, [isLoggedIn, user]);
+  }, [isLoggedIn, user, initDone, validateSession, logout]);
 
   const login = async (
     email: string,
@@ -346,9 +411,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoggedIn(true);
           setUsesMockAuth(false);
 
-          // Save to localStorage
-          localStorage.setItem("user", JSON.stringify(result.user));
-          localStorage.setItem("isLoggedIn", "true");
+          // Save session with new format
+          saveSession(result.user);
 
           return { success: true };
         } else {
@@ -378,9 +442,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoggedIn(true);
           setUsesMockAuth(true);
 
-          // Save to localStorage
-          localStorage.setItem("user", JSON.stringify(mockResult.user));
-          localStorage.setItem("isLoggedIn", "true");
+          // Save session with new format
+          saveSession(mockResult.user);
 
           return { success: true };
         } else {
@@ -397,54 +460,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
     }
   };
-
-  const logout = () => {
-    if (user && !usesMockAuth) {
-      customAuthService.logout(user.id).catch((err) => {
-        console.error("Error logging logout event:", err);
-      });
-    }
-
-    setUser(null);
-    setIsLoggedIn(false);
-    setUsesMockAuth(false);
-    localStorage.removeItem("user");
-    localStorage.removeItem("isLoggedIn");
-  };
   const updateProfile = async (
     updates: Partial<User["profile"]> & {
       dateOfBirth?: string;
-      gender?: string;
+      gender?: "male" | "female" | "other";
     }
   ): Promise<boolean> => {
     if (!user) return false;
 
     try {
       let success;
-
       if (usesMockAuth) {
-        success = await mockAuthService.updateProfile(user.id, updates);
-      } else {
-        // Use the dedicated profileService for real profile updates
-        success = await profileService.updateProfile(user.id, updates);
-      }
-      if (success) {
+        // For mock auth, just update the local state
+        // Extract user-level fields and profile fields separately
+        const { dateOfBirth, gender, ...profileUpdates } = updates;
+
         const updatedUser = {
           ...user,
-          profile: {
-            ...user.profile,
-            ...updates,
-          },
-          // Update user-level fields with proper typing
-          dateOfBirth: updates.dateOfBirth ?? user.dateOfBirth,
-          gender:
-            (updates.gender as "male" | "female" | "other" | undefined) ??
-            user.gender,
-          updatedAt: new Date().toISOString(),
+          profile: { ...user.profile, ...profileUpdates },
+          ...(dateOfBirth !== undefined ? { dateOfBirth } : {}),
+          ...(gender !== undefined ? { gender } : {}),
         };
-
         setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        saveSession(updatedUser); // Update session storage
+        success = true;
+      } else {
+        success = await customAuthService.updateProfile(user.id, updates);
+        if (success) {
+          // Extract user-level fields and profile fields separately
+          const { dateOfBirth, gender, ...profileUpdates } = updates;
+
+          const updatedUser = {
+            ...user,
+            profile: { ...user.profile, ...profileUpdates },
+            ...(dateOfBirth !== undefined ? { dateOfBirth } : {}),
+            ...(gender !== undefined ? { gender } : {}),
+          };
+          setUser(updatedUser);
+          saveSession(updatedUser); // Update session storage
+        }
       }
 
       return success;
@@ -458,41 +512,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     currentPassword: string,
     newPassword: string
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!user || usesMockAuth) {
-      return { success: false, error: "Operation not supported" };
-    }
+    if (!user) return { success: false, error: "User not found" };
 
     try {
-      const result = await customAuthService.updatePassword(
-        user.id,
-        currentPassword,
-        newPassword
-      );
-
-      return result;
+      if (usesMockAuth) {
+        // For mock auth, just return success
+        return { success: true };
+      } else {
+        return await customAuthService.updatePassword(
+          user.id,
+          currentPassword,
+          newPassword
+        );
+      }
     } catch (error) {
-      console.error("Password update error:", error);
+      console.error("Update password error:", error);
       return { success: false, error: "Failed to update password" };
     }
   };
 
   const checkPermission = (action: string, resource: string): boolean => {
     if (!user) return false;
-    return hasPermission(user.role, action, resource);
+    return hasPermission(user, action, resource);
   };
-
   const isRole = (role: UserRole): boolean => {
-    return user?.role === role;
+    if (!user || typeof user.role !== "string") return false;
+    return (user.role as UserRole) === role;
   };
 
   const isMinRole = (minRole: UserRole): boolean => {
-    if (!user) return false;
-    return roleHierarchy[user.role] >= roleHierarchy[minRole];
+    if (!user || typeof user.role !== "string") return false;
+    return roleHierarchy[user.role as UserRole] >= roleHierarchy[minRole];
   };
 
   const value: AuthContextType = {
     user,
     isLoggedIn,
+    isInitialized,
     login,
     register,
     logout,
@@ -502,16 +558,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isRole,
     isMinRole,
     refreshSession,
-    isInitialized,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+export const useEnhancedAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error(
+      "useEnhancedAuth must be used within an EnhancedAuthProvider"
+    );
   }
   return context;
 };

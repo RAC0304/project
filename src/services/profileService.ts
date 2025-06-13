@@ -1,8 +1,5 @@
 import { User } from "../types/user";
-import {
-  supabase,
-  checkSupabaseStorage,
-} from "../utils/supabaseClient";
+import { supabase, checkSupabaseStorage } from "../utils/supabaseClient";
 import { convertToUTC } from "../utils/dateUtils";
 
 /**
@@ -14,7 +11,8 @@ class ProfileService {
   constructor() {
     // Check storage availability at initialization
     this.checkStorageAvailability();
-  }  /**
+  }
+  /**
    * Check if Supabase storage is available
    */
   private async checkStorageAvailability(): Promise<void> {
@@ -39,7 +37,10 @@ class ProfileService {
    */
   async updateProfile(
     userId: string,
-    updates: Partial<User["profile"]> & { avatar?: string } & { dateOfBirth?: string; gender?: string }
+    updates: Partial<User["profile"]> & { avatar?: string } & {
+      dateOfBirth?: string;
+      gender?: string;
+    }
   ): Promise<boolean> {
     try {
       console.log(`Updating profile for user ${userId}`, updates);
@@ -73,23 +74,25 @@ class ProfileService {
       } else if ("avatar" in updatesToApply && updatesToApply.avatar) {
         // Regular URL avatar
         updateData.profile_picture = updatesToApply.avatar;
-      }      // Map profile fields to database fields - Update all available columns
+      } // Map profile fields to database fields - Update all available columns
       if (updatesToApply.firstName)
         updateData.first_name = updatesToApply.firstName;
       if (updatesToApply.lastName)
         updateData.last_name = updatesToApply.lastName;
-      if (updatesToApply.phone) 
-        updateData.phone = updatesToApply.phone;
+      if (updatesToApply.phone) updateData.phone = updatesToApply.phone;
       if (updatesToApply.location)
         updateData.location = updatesToApply.location;
-      if (updatesToApply.bio) 
-        updateData.bio = updatesToApply.bio;      if (updatesToApply.languages !== undefined)
+      if (updatesToApply.bio) updateData.bio = updatesToApply.bio;
+      if (updatesToApply.languages !== undefined)
         updateData.languages = updatesToApply.languages;
       if (updatesToApply.experience !== undefined)
         updateData.experience = updatesToApply.experience;
-      
+
       // Handle user-level fields
-      if ("dateOfBirth" in updatesToApply && updatesToApply.dateOfBirth !== undefined)
+      if (
+        "dateOfBirth" in updatesToApply &&
+        updatesToApply.dateOfBirth !== undefined
+      )
         updateData.date_of_birth = updatesToApply.dateOfBirth;
       if ("gender" in updatesToApply && updatesToApply.gender !== undefined)
         updateData.gender = updatesToApply.gender;
@@ -269,7 +272,8 @@ class ProfileService {
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  }  /**
+  }
+  /**
    * Log user activity in Supabase
    */
   private async logActivity(
@@ -285,7 +289,9 @@ class ProfileService {
         .limit(1);
 
       if (checkError && checkError.code === "PGRST116") {
-        console.warn("Activity logs table does not exist, skipping activity log");
+        console.warn(
+          "Activity logs table does not exist, skipping activity log"
+        );
         return;
       }
 
@@ -301,7 +307,11 @@ class ProfileService {
       if (error) {
         console.error("Failed to insert activity log:", error);
       } else {
-        console.log("Activity logged successfully:", { userId, action, details });
+        console.log("Activity logged successfully:", {
+          userId,
+          action,
+          details,
+        });
       }
     } catch (error) {
       // Just log the error, don't fail the whole operation
@@ -311,22 +321,27 @@ class ProfileService {
   /**
    * Test method to verify Supabase storage functionality
    * This can be called to check if image uploads are working correctly
-   */  async testImageUpload(): Promise<{
+   */ async testImageUpload(): Promise<{
     success: boolean;
     message: string;
     details?: unknown;
   }> {
     try {
       console.log("🧪 Starting image upload test...");
-      
+
       // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       console.log("👤 Current user:", user?.id ? "Authenticated" : "Anonymous");
-      
+
       // First check storage availability
       await this.checkStorageAvailability();
-      console.log("📦 Storage availability check result:", this.storageAvailable);
-      
+      console.log(
+        "📦 Storage availability check result:",
+        this.storageAvailable
+      );
+
       if (!this.storageAvailable) {
         console.log("❌ Storage not available, test failed");
         return {
@@ -343,12 +358,12 @@ class ProfileService {
       // Use authenticated user ID if available, otherwise use test ID
       const testUserId = user?.id || "test-" + Date.now();
       console.log("📤 Attempting to upload test image for user:", testUserId);
-      
+
       const uploadResult = await this.uploadProfileImage(
         testUserId,
         testBase64Image
       );
-      
+
       console.log("📋 Upload result:", uploadResult);
 
       if (uploadResult.success) {

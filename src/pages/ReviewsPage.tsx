@@ -5,10 +5,10 @@ import { reviews } from "../data/reviews";
 import { destinations } from "../data/destinations";
 import { Review } from "../types";
 import ReviewCard from "../components/reviews/ReviewCard";
-import { useAuth } from "../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
 
 const ReviewsPage: React.FC = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn } = useEnhancedAuth();
   const [searchParams] = useSearchParams();
   const [filteredReviews, setFilteredReviews] = useState<Review[]>(reviews);
   const [selectedDestination, setSelectedDestination] = useState<string>("");

@@ -25,10 +25,10 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Add a helper function to check storage status and ensure avatar bucket exists
 export const checkSupabaseStorage = async () => {
   try {
-    // Instead of listing buckets (which may fail due to RLS), 
+    // Instead of listing buckets (which may fail due to RLS),
     // try to directly access the avatars bucket
     console.log("Testing direct access to avatars bucket...");
-    
+
     const { data, error } = await supabase.storage
       .from("avatars")
       .list("", { limit: 1 });
@@ -39,20 +39,26 @@ export const checkSupabaseStorage = async () => {
         console.warn("Avatars bucket not found in Supabase storage.");
         return {
           ok: false,
-          error: "Avatars bucket not found. Please create it manually in Supabase dashboard.",
+          error:
+            "Avatars bucket not found. Please create it manually in Supabase dashboard.",
         };
       }
-      
+
       // If it's a permission error, bucket exists but we can't list contents
       // That's actually OK for our purposes
-      if (error.message.includes("permission") || error.message.includes("policy")) {
-        console.log("Avatars bucket exists but listing is restricted (this is OK)");
+      if (
+        error.message.includes("permission") ||
+        error.message.includes("policy")
+      ) {
+        console.log(
+          "Avatars bucket exists but listing is restricted (this is OK)"
+        );
         return {
           ok: true,
           message: "Avatars bucket exists (verified via direct access)",
         };
       }
-      
+
       // Other errors
       console.error("Supabase storage error:", error);
       return {

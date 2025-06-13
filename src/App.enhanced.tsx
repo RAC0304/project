@@ -28,7 +28,6 @@ const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const LoginPage = lazy(() => import("./pages/Login"));
 const RegisterPage = lazy(() => import("./pages/Register"));
-const TestSessionPage = lazy(() => import("./pages/TestSessionPage"));
 const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 const UnauthorizedPage = lazy(() => import("./pages/UnauthorizedPage"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -79,11 +78,19 @@ function AppContent() {
             <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/tour-guides" element={<TourGuidesPage />} />
-            <Route path="/tour-guides/:id" element={<TourGuideProfile />} />
             <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/map" element={<MapDemoPage />} />
-            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/map-demo" element={<MapDemoPage />} />
+            <Route path="/tour-guide/:id" element={<TourGuideProfile />} />
+
             {/* Protected Routes */}
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute>
+                  <HistoryPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={
@@ -113,9 +120,8 @@ function AppContent() {
             {/* Auth Routes */}
             <Route path="/" element={<LoginPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />{" "}
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            <Route path="/test-session" element={<TestSessionPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

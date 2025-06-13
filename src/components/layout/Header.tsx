@@ -11,13 +11,13 @@ import {
   Book,
 } from "lucide-react";
 import Logo from "../common/Logo";
-import { useAuth } from "../../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout } = useEnhancedAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
