@@ -8,14 +8,16 @@ interface AuthResponse {
   error?: string;
 }
 
-class CustomAuthService {
-  async login(email: string, password: string): Promise<AuthResponse> {
+class CustomAuthService {  async login(emailOrUsername: string, password: string): Promise<AuthResponse> {
     try {
-      // Find user in the users table
+      // Determine if input is email or username
+      const isEmail = emailOrUsername.includes('@');
+      
+      // Find user in the users table by email or username
       const { data: userProfile, error: profileError } = await supabase
         .from("users")
         .select("*")
-        .eq("email", email)
+        .or(isEmail ? `email.eq.${emailOrUsername}` : `username.eq.${emailOrUsername}`)
         .single();
 
       if (profileError) {

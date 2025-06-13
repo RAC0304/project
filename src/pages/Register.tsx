@@ -136,7 +136,7 @@ const Register = () => {
                   type="text"
                   required
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                  placeholder="Enter your first name"
+                  placeholder="e.g., John"
                   value={formData.firstName}
                   onChange={handleChange}
                 />
@@ -154,7 +154,7 @@ const Register = () => {
                   type="text"
                   required
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                  placeholder="Enter your last name"
+                  placeholder="e.g., Doe"
                   value={formData.lastName}
                   onChange={handleChange}
                 />
@@ -173,7 +173,7 @@ const Register = () => {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                placeholder="Choose your username"
+                placeholder="e.g., johndoe123"
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -192,7 +192,7 @@ const Register = () => {
                 type="email"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                placeholder="Enter your email"
+                placeholder="e.g., john@example.com"
                 value={formData.email}
                 onChange={handleChange}
               />
@@ -211,7 +211,7 @@ const Register = () => {
                 type="password"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                placeholder="Create a strong password"
+                placeholder="Min. 6 characters with letters and numbers"
                 value={formData.password}
                 onChange={handleChange}
               />
@@ -230,7 +230,7 @@ const Register = () => {
                 type="password"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-teal-500"
-                placeholder="Confirm your password"
+                placeholder="Re-enter your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />

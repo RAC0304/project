@@ -16,7 +16,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isInitialized: boolean;
   login: (
-    email: string,
+    emailOrUsername: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
   register: (userData: {
@@ -310,14 +310,20 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
 
     return () => clearInterval(intervalId);
   }, [isLoggedIn, user, initDone, validateSession, logout]);
-
   const login = async (
-    email: string,
+    emailOrUsername: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Log login attempt for monitoring purposes
+      console.log(`Login attempt for: ${emailOrUsername}`);
+      
+      // Determine if input is email or username
+      const isEmail = emailOrUsername.includes('@');
+      const loginIdentifier = emailOrUsername.toLowerCase();
+
       // Try using the custom auth service first
-      const result = await customAuthService.login(email, password);
+      const result = await customAuthService.login(loginIdentifier, password);
 
       if (result.success && result.user) {
         setUser(result.user);
@@ -333,7 +339,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
         console.log("Custom auth service failed, trying mock service...");
 
         try {
-          const mockResult = await mockAuthService.login(email, password);
+          const mockResult = await mockAuthService.login(loginIdentifier, password);
 
           if (mockResult.success && mockResult.user) {
             setUser(mockResult.user);
@@ -347,7 +353,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
           } else {
             return {
               success: false,
-              error: mockResult.error || "Login failed",
+              error: mockResult.error || "Invalid email/username or password",
             };
           }
         } catch {
@@ -359,7 +365,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
 
       // If real auth fails, try mock auth as fallback
       try {
-        const mockResult = await mockAuthService.login(email, password);
+        const mockResult = await mockAuthService.login(emailOrUsername, password);
 
         if (mockResult.success && mockResult.user) {
           setUser(mockResult.user);
@@ -371,7 +377,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
 
           return { success: true };
         } else {
-          return { success: false, error: mockResult.error || "Login failed" };
+          return { success: false, error: mockResult.error || "Invalid email/username or password" };
         }
       } catch {
         return { success: false, error: "Login failed. Please try again." };

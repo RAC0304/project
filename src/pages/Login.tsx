@@ -8,7 +8,7 @@ import { User, Shield, MapPin } from "lucide-react";
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useEnhancedAuth();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,12 +39,11 @@ const LoginPage: React.FC = () => {
       description: "Full system access and user management",
       color: "text-purple-600",
     },
-  ];
-  const handleSubmit = async (e: React.FormEvent) => {
+  ];  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    const result = await login(email, password);
+    const result = await login(emailOrUsername, password);
     if (result.success) {
       // Check user role from local storage since the context might not be updated yet
       const userData = localStorage.getItem("user");
@@ -146,23 +145,22 @@ const LoginPage: React.FC = () => {
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-          >
-            <label
-              htmlFor="email"
+          >            <label
+              htmlFor="emailOrUsername"
               className="block text-teal-800 font-medium mb-2 text-sm uppercase tracking-wide"
             >
-              Email Address
-            </label>
-            <div className="relative">
+              Email or Username
+            </label>            <div className="relative">
               <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                id="emailOrUsername"
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
                 className="w-full px-5 py-3.5 border-2 border-teal-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300 bg-white/50 backdrop-blur-sm pl-12"
-                placeholder="Enter your email"
+                placeholder="Enter your email or username"
                 required
               />
+              <div className="text-xs text-teal-600 mt-1 ml-2">You can use either email or username to login</div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6 absolute left-3 top-3.5 text-teal-500"
@@ -268,11 +266,10 @@ const LoginPage: React.FC = () => {
                         <span className="font-medium text-teal-800 text-sm">
                           {user.role}
                         </span>
-                      </div>
-                      <button
+                      </div>                      <button
                         type="button"
                         onClick={() => {
-                          setEmail(user.email);
+                          setEmailOrUsername(user.email);
                           setPassword(user.password);
                         }}
                         className="text-xs text-teal-600 hover:text-teal-800 font-medium px-2 py-1 rounded bg-teal-100 hover:bg-teal-200 transition-colors"

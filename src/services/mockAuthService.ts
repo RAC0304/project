@@ -63,13 +63,18 @@ const mockUsers: User[] = [
 
 class MockAuthService {
   private users: User[] = [...mockUsers];
-
-  async login(email: string, _password: string): Promise<AuthResponse> {
+  async login(emailOrUsername: string, _password: string): Promise<AuthResponse> {
     try {
       // Simulate network delay
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const user = this.users.find((u) => u.email === email);
+      // Check if input is an email or username
+      const isEmail = emailOrUsername.includes('@');
+      
+      // Search for user by email or username
+      const user = isEmail 
+        ? this.users.find((u) => u.email === emailOrUsername)
+        : this.users.find((u) => u.username === emailOrUsername);
 
       if (!user) {
         return { success: false, error: "User not found" };
