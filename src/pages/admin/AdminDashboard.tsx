@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import AdminContent from "../../components/admin/AdminContent";
 import MinimizeButton from "../../components/admin/layout/MinimizeButton";

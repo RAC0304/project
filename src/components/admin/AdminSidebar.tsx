@@ -11,10 +11,11 @@ import {
   Shield,
   Database,
 } from "lucide-react";
-import { useAuth } from "../../contexts/CustomAuthContext";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 import { useNavigate } from "react-router-dom";
 import RoleBadge from "../common/RoleBadge";
 import Logo from "../common/Logo";
+import { supabase } from "../../../config/supabaseConfig";
 
 interface AdminSidebarProps {
   activePage: string;
@@ -31,11 +32,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   setMobileMenuOpen,
   isMinimized = false,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useEnhancedAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut(); // destroy supabase session
+    } catch (e) {
+      console.error("Supabase signOut error", e);
+    }
     logout();
+    console.log("Logout berhasil: session Supabase dan lokal sudah dihapus.");
     navigate("/login");
   };
 

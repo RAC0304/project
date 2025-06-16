@@ -1,18 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
+import { createClient } from "@supabase/supabase-js";
 
-dotenv.config();
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Missing Supabase environment variables. Please check your .env file.'
+    "Missing Supabase environment variables. Please check your .env file."
   );
 }
 
-// Create a Supabase client with service role key for backend operations
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Create a Supabase client for frontend usage
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export { supabase };

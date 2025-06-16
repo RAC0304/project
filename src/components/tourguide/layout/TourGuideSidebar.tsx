@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useEnhancedAuth } from "../../../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../../../contexts/useEnhancedAuth";
 import RoleBadge from "../../common/RoleBadge";
 import {
   Calendar,
@@ -53,12 +53,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   };
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
-    // If onLogout prop is provided, also call it (for backward compatibility)
-    if (onLogout) {
-      onLogout();
-    }
+    logout(); // Call the logout function to destroy the session
+    navigate("/login"); // Redirect the user to the login page
   };
 
   const menuItems = [

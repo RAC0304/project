@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useContext,
   useState,
   useEffect,
   ReactNode,
@@ -18,7 +17,7 @@ interface AuthContextType {
   login: (
     emailOrUsername: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; user?: User; error?: string }>;
   register: (userData: {
     name: string;
     email: string;
@@ -313,13 +312,12 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
   const login = async (
     emailOrUsername: string,
     password: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
       // Log login attempt for monitoring purposes
       console.log(`Login attempt for: ${emailOrUsername}`);
-      
+
       // Determine if input is email or username
-      const isEmail = emailOrUsername.includes('@');
       const loginIdentifier = emailOrUsername.toLowerCase();
 
       // Try using the custom auth service first
@@ -333,13 +331,16 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
         // Save session with new format
         saveSession(result.user);
 
-        return { success: true };
+        return { success: true, user: result.user };
       } else {
         // If real auth fails, try mock auth as fallback
         console.log("Custom auth service failed, trying mock service...");
 
         try {
-          const mockResult = await mockAuthService.login(loginIdentifier, password);
+          const mockResult = await mockAuthService.login(
+            loginIdentifier,
+            password
+          );
 
           if (mockResult.success && mockResult.user) {
             setUser(mockResult.user);
@@ -349,39 +350,17 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
             // Save session with new format
             saveSession(mockResult.user);
 
-            return { success: true };
-          } else {
-            return {
-              success: false,
-              error: mockResult.error || "Invalid email/username or password",
-            };
+            return { success: true, user: mockResult.user };
           }
-        } catch {
-          return { success: false, error: "Login failed. Please try again." };
+        } catch (mockError) {
+          console.error("Mock auth service failed:", mockError);
         }
       }
+
+      return { success: false, error: "Invalid credentials" };
     } catch (error) {
-      console.log("Custom auth service failed, trying mock service...", error);
-
-      // If real auth fails, try mock auth as fallback
-      try {
-        const mockResult = await mockAuthService.login(emailOrUsername, password);
-
-        if (mockResult.success && mockResult.user) {
-          setUser(mockResult.user);
-          setIsLoggedIn(true);
-          setUsesMockAuth(true);
-
-          // Save session with new format
-          saveSession(mockResult.user);
-
-          return { success: true };
-        } else {
-          return { success: false, error: mockResult.error || "Invalid email/username or password" };
-        }
-      } catch {
-        return { success: false, error: "Login failed. Please try again." };
-      }
+      console.error("Login error:", error);
+      return { success: false, error: "An unexpected error occurred" };
     }
   };
 
@@ -539,7 +518,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
 
   const checkPermission = (action: string, resource: string): boolean => {
     if (!user) return false;
-    return hasPermission(user, action, resource);
+    return hasPermission(user?.role || "", action, resource);
   };
   const isRole = (role: UserRole): boolean => {
     if (!user || typeof user.role !== "string") return false;
@@ -567,14 +546,4 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useEnhancedAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error(
-      "useEnhancedAuth must be used within an EnhancedAuthProvider"
-    );
-  }
-  return context;
 };

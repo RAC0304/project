@@ -7,10 +7,8 @@ import {
 import { lazy, Suspense } from "react";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
-import {
-  EnhancedAuthProvider,
-  useEnhancedAuth,
-} from "./contexts/EnhancedAuthContextFix";
+import { EnhancedAuthProvider } from "./contexts/EnhancedAuthContext";
+import { useEnhancedAuth } from "./contexts/useEnhancedAuth";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import SessionLoading from "./components/common/SessionLoading";
 import HistoryPage from "./pages/HistoryPage";

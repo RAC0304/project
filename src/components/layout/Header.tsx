@@ -11,7 +11,7 @@ import {
   Book,
 } from "lucide-react";
 import Logo from "../common/Logo";
-import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

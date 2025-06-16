@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useContext,
   useState,
   useEffect,
   ReactNode,
@@ -18,7 +17,7 @@ interface AuthContextType {
   login: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; user?: User; error?: string }>;
   register: (userData: {
     name: string;
     email: string;
@@ -314,7 +313,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
   const login = async (
     email: string,
     password: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
       // Try using the custom auth service first
       const result = await customAuthService.login(email, password);
@@ -323,27 +322,21 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
         setUser(result.user);
         setIsLoggedIn(true);
         setUsesMockAuth(false);
-
         // Save session with new format
         saveSession(result.user);
-
-        return { success: true };
+        return { success: true, user: result.user };
       } else {
         // If real auth fails, try mock auth as fallback
         console.log("Custom auth service failed, trying mock service...");
-
         try {
           const mockResult = await mockAuthService.login(email, password);
-
           if (mockResult.success && mockResult.user) {
             setUser(mockResult.user);
             setIsLoggedIn(true);
             setUsesMockAuth(true);
-
             // Save session with new format
             saveSession(mockResult.user);
-
-            return { success: true };
+            return { success: true, user: mockResult.user };
           } else {
             return {
               success: false,
@@ -533,7 +526,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
 
   const checkPermission = (action: string, resource: string): boolean => {
     if (!user) return false;
-    return hasPermission(user, action, resource);
+    return hasPermission(user?.role || "", action, resource);
   };
   const isRole = (role: UserRole): boolean => {
     if (!user || typeof user.role !== "string") return false;
@@ -563,12 +556,5 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useEnhancedAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error(
-      "useEnhancedAuth must be used within an EnhancedAuthProvider"
-    );
-  }
-  return context;
-};
+export { AuthContext };
+export type { AuthContextType };

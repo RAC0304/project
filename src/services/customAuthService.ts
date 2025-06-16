@@ -8,28 +8,42 @@ interface AuthResponse {
   error?: string;
 }
 
-class CustomAuthService {  async login(emailOrUsername: string, password: string): Promise<AuthResponse> {
+class CustomAuthService {
+  async login(
+    emailOrUsername: string,
+    password: string
+  ): Promise<AuthResponse> {
     try {
       // Determine if input is email or username
-      const isEmail = emailOrUsername.includes('@');
-      
+      const isEmail = emailOrUsername.includes("@");
+      console.log("[LOGIN DEBUG] Input:", { emailOrUsername, isEmail });
       // Find user in the users table by email or username
       const { data: userProfile, error: profileError } = await supabase
         .from("users")
         .select("*")
-        .or(isEmail ? `email.eq.${emailOrUsername}` : `username.eq.${emailOrUsername}`)
+        .or(
+          isEmail
+            ? `email.eq.${emailOrUsername}`
+            : `username.eq.${emailOrUsername}`
+        )
         .single();
-
+      console.log("[LOGIN DEBUG] Supabase result:", {
+        userProfile,
+        profileError,
+      });
       if (profileError) {
         return { success: false, error: "User not found" };
       }
-
       // Verify password
       const isPasswordValid = await bcrypt.compare(
         password,
         userProfile.password
       );
-
+      console.log("[LOGIN DEBUG] Password check:", {
+        input: password,
+        hash: userProfile.password,
+        isPasswordValid,
+      });
       if (!isPasswordValid) {
         // Log failed login attempt
         await this.updateFailedLoginAttempts(userProfile.id);

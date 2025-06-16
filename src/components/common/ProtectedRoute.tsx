@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useEnhancedAuth } from "../../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 import { UserRole } from "../../types";
 
 interface ProtectedRouteProps {
