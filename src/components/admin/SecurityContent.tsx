@@ -17,7 +17,6 @@ import {
   Info,
   BarChart3,
 } from "lucide-react";
-import { securityService } from "../../services/securityService";
 import { getUserSessions } from "../../services/userSessionsService";
 import {
   getSecuritySettings,
