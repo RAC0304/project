@@ -2,22 +2,20 @@ import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
-  Calendar,
   MapPin,
   Settings,
   Camera,
   LogOut,
   Database,
   Phone,
-  Cake,
   Users,
-  Award,
   Globe,
 } from "lucide-react";
-import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 import RoleBadge from "../components/common/RoleBadge";
 import TimezoneInfo from "../components/common/TimezoneInfo";
 import { formatIndonesianDate } from "../utils/dateUtils";
+import { getUserAccountStats } from "../services/userStatsService";
 
 const UserProfilePage: React.FC = () => {
   const { user, logout, updateProfile } = useEnhancedAuth();
@@ -60,6 +58,26 @@ const UserProfilePage: React.FC = () => {
       }
     }
   }, [user?.profile?.avatar]);
+
+  // Statistik akun user
+  const [accountStats, setAccountStats] = useState({
+    reviews_written: 0,
+    tours_booked: 0,
+    places_visited: 0,
+  });
+  useEffect(() => {
+    if (user?.id) {
+      getUserAccountStats(user.id)
+        .then(setAccountStats)
+        .catch(() =>
+          setAccountStats({
+            reviews_written: 0,
+            tours_booked: 0,
+            places_visited: 0,
+          })
+        );
+    }
+  }, [user?.id]);
 
   // If no user is logged in, this page should be protected by ProtectedRoute
   if (!user) {
@@ -585,8 +603,9 @@ const UserProfilePage: React.FC = () => {
                     )}
                   </div>
                 </div>{" "}
+                {/* Date of Birth */}
                 <div className="flex items-center">
-                  <Cake className="w-5 h-5 text-teal-500 mr-3" />
+                  <Users className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Date of Birth</p>{" "}
                     {isEditing ? (
@@ -648,90 +667,30 @@ const UserProfilePage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <Award className="w-5 h-5 text-teal-500 mr-3" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-500">Experience</p>{" "}
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={currentProfile.experience || ""}
-                        onChange={(e) =>
-                          handleInputChange("experience", e.target.value)
-                        }
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="e.g., 5+ years in tourism"
-                      />
-                    ) : (
-                      <p className="text-gray-900">
-                        {user.profile.experience || "Not specified"}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                {/* Hapus Experience */}
+                {/* Ganti Languages menjadi Asal Negara */}
                 <div className="flex items-center">
                   <Globe className="w-5 h-5 text-teal-500 mr-3" />
                   <div className="flex-1">
-                    <p className="text-sm text-gray-500">Languages</p>{" "}
+                    <p className="text-sm text-gray-500">Asal Negara</p>{" "}
                     {isEditing ? (
                       <input
                         type="text"
-                        value={
-                          Array.isArray(currentProfile.languages)
-                            ? currentProfile.languages.join(", ")
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const languageArray = e.target.value
-                            .split(",")
-                            .map((lang) => lang.trim())
-                            .filter((lang) => lang);
-                          handleInputChange("languages", languageArray);
-                        }}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="e.g., Indonesian, English, Mandarin (separate with commas)"
-                      />
-                    ) : (
-                      <p className="text-gray-900">
-                        {Array.isArray(user.profile.languages) &&
-                        user.profile.languages.length > 0
-                          ? user.profile.languages.join(", ")
-                          : "Not specified"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="w-5 h-5 text-teal-500 mr-3" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-500">Member Since</p>{" "}
-                    <p className="text-gray-900">
-                      {formatIndonesianDate(user.createdAt)}
-                    </p>
-                  </div>
-                </div>{" "}
-                {/* Bio Section */}
-                <div className="flex items-start">
-                  <Settings className="w-5 h-5 text-teal-500 mr-3 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-500">Bio</p>{" "}
-                    {isEditing ? (
-                      <textarea
-                        value={currentProfile.bio || ""}
+                        value={currentProfile.countryOfOrigin || ""}
                         onChange={(e) =>
-                          handleInputChange("bio", e.target.value)
+                          handleInputChange("countryOfOrigin", e.target.value)
                         }
-                        rows={3}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="Tell us about yourself..."
+                        placeholder="Contoh: Indonesia"
                       />
                     ) : (
                       <p className="text-gray-900">
-                        {user.profile.bio || "No bio available"}
+                        {user.profile.countryOfOrigin || "Tidak diisi"}
                       </p>
                     )}
                   </div>
                 </div>
+                {/* Hapus Bio */}
                 {/* Profile Photo Management */}
                 <div className="flex items-start">
                   <Camera className="w-5 h-5 text-teal-500 mr-3 mt-1" />
@@ -830,15 +789,21 @@ const UserProfilePage: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-500">Reviews Written</p>
-                  <p className="text-2xl font-semibold text-teal-600">0</p>
+                  <p className="text-2xl font-semibold text-teal-600">
+                    {accountStats.reviews_written}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Tours Booked</p>
-                  <p className="text-2xl font-semibold text-teal-600">0</p>
+                  <p className="text-2xl font-semibold text-teal-600">
+                    {accountStats.tours_booked}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Places Visited</p>
-                  <p className="text-2xl font-semibold text-teal-600">0</p>
+                  <p className="text-2xl font-semibold text-teal-600">
+                    {accountStats.places_visited}
+                  </p>
                 </div>
               </div>
             </div>

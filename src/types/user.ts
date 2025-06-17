@@ -1,13 +1,14 @@
-export type UserRole = "user" | "tour_guide" | "admin";
+export type UserRole = "user" | "tour_guide" | "admin" | "customer";
 
 export interface TourGuideProfile {
   firstName: string;
   lastName: string;
   phone?: string;
   location?: string;
-  bio?: string;
-  languages?: string[];
-  experience?: string;
+  countryOfOrigin?: string; // untuk user biasa
+  // bio?: string;
+  // languages?: string[];
+  // experience?: string;
   avatar?: string;
 }
 

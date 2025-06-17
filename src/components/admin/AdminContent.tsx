@@ -29,9 +29,7 @@ const AdminContent: React.FC<AdminContentProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8 gap-4">
         <div>
-          {" "}
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            {" "}
             {activePage === "dashboard" && "Admin Dashboard"}
             {activePage === "users" && "User Management"}
             {activePage === "guides" && "Tour Guide Management"}
@@ -46,10 +44,10 @@ const AdminContent: React.FC<AdminContentProps> = ({
           </p>
         </div>
       </div>
-      {/* Content based on active page */}{" "}
+      {/* Content based on active page */}
       {activePage === "dashboard" && (
         <DashboardContent setActivePage={setActivePage} />
-      )}{" "}
+      )}
       {activePage === "users" && <UsersContent />}{" "}
       {activePage === "guides" && <GuidesContent />}
       {activePage === "destinations" && <DestinationsContent />}

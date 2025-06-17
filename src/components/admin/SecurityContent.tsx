@@ -18,6 +18,14 @@ import {
   BarChart3,
 } from "lucide-react";
 import { securityService } from "../../services/securityService";
+import { getUserSessions } from "../../services/userSessionsService";
+import {
+  getSecuritySettings,
+  updateSecuritySettings,
+  type SecuritySettings,
+  type PasswordPolicy,
+} from "../../services/securitySettingsService";
+import { getSecurityLogsWithUsers } from "../../services/securityLogsWithUserService";
 
 interface SecurityLog {
   id: string;
@@ -29,25 +37,8 @@ interface SecurityLog {
   userAgent: string;
   status: "success" | "failed" | "warning";
   details: string;
-}
-
-interface PasswordPolicy {
-  minLength: number;
-  requireUppercase: boolean;
-  requireLowercase: boolean;
-  requireNumbers: boolean;
-  requireSpecialChars: boolean;
-  expirationDays: number;
-  preventReuse: number;
-}
-
-interface SecuritySettings {
-  maxLoginAttempts: number;
-  lockoutDuration: number;
-  sessionTimeout: number;
-  requireTwoFactor: boolean;
-  passwordPolicy: PasswordPolicy;
-  auditLogRetention: number;
+  email?: string | null;
+  role?: string | null;
 }
 
 interface UserSession {
@@ -60,6 +51,11 @@ interface UserSession {
   lastActivity: Date;
   isActive: boolean;
   location?: string;
+}
+
+// Helper untuk konversi waktu ke WIB (UTC+7)
+function toWIBString(date: Date) {
+  return date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 }
 
 const SecurityContent: React.FC = () => {
@@ -88,98 +84,59 @@ const SecurityContent: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<
     "all" | "success" | "failed" | "warning"
   >("all");
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Mock data for demonstration
+  const [isLoading, setIsLoading] = useState(false); // Fetch data from Supabase
   useEffect(() => {
-    // Generate mock security logs
-    const mockLogs: SecurityLog[] = [
-      {
-        id: "1",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-        userId: "user1",
-        userName: "john.doe@example.com",
-        action: "Login",
-        ipAddress: "192.168.1.100",
-        userAgent:
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        status: "success",
-        details: "Successful login from trusted device",
-      },
-      {
-        id: "2",
-        timestamp: new Date(Date.now() - 1000 * 60 * 45),
-        userId: "user2",
-        userName: "jane.smith@example.com",
-        action: "Failed Login",
-        ipAddress: "10.0.0.50",
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)",
-        status: "failed",
-        details: "Invalid password attempt",
-      },
-      {
-        id: "3",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60),
-        userId: "user3",
-        userName: "admin@wanderwise.com",
-        action: "Password Change",
-        ipAddress: "192.168.1.10",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        status: "success",
-        details: "Password successfully updated",
-      },
-      {
-        id: "4",
-        timestamp: new Date(Date.now() - 1000 * 60 * 90),
-        userId: "user4",
-        userName: "suspicious@example.com",
-        action: "Account Locked",
-        ipAddress: "203.0.113.1",
-        userAgent: "curl/7.68.0",
-        status: "warning",
-        details: "Account locked due to multiple failed login attempts",
-      },
-    ];
+    setIsLoading(true);
+    // Fetch security logs with user info
+    getSecurityLogsWithUsers()
+      .then((logs) => {
+        // Adapt Supabase data to SecurityLog interface
+        const adaptedLogs = logs.map((log) => ({
+          id: log.id,
+          timestamp: new Date(log.created_at),
+          userId: log.user_id || "",
+          userName:
+            log.full_name ||
+            log.username ||
+            log.email ||
+            `User ID: ${log.user_id}`,
+          action: log.action,
+          ipAddress: log.ip_address,
+          userAgent: log.user_agent,
+          status: log.status,
+          details: log.details,
+          email: log.email,
+          role: log.role,
+        }));
+        setSecurityLogs(adaptedLogs);
+      })
+      .catch(console.error);
 
-    // Generate mock user sessions
-    const mockSessions: UserSession[] = [
-      {
-        id: "session1",
-        userId: "user1",
-        userName: "john.doe@example.com",
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        loginTime: new Date(Date.now() - 1000 * 60 * 30),
-        lastActivity: new Date(Date.now() - 1000 * 60 * 5),
-        isActive: true,
-        location: "Jakarta, Indonesia",
-      },
-      {
-        id: "session2",
-        userId: "user2",
-        userName: "jane.smith@example.com",
-        ipAddress: "10.0.0.50",
-        userAgent: "Mobile Safari",
-        loginTime: new Date(Date.now() - 1000 * 60 * 60),
-        lastActivity: new Date(Date.now() - 1000 * 60 * 10),
-        isActive: true,
-        location: "Bali, Indonesia",
-      },
-      {
-        id: "session3",
-        userId: "user3",
-        userName: "admin@wanderwise.com",
-        ipAddress: "192.168.1.10",
-        userAgent: "Safari",
-        loginTime: new Date(Date.now() - 1000 * 60 * 120),
-        lastActivity: new Date(Date.now() - 1000 * 60 * 15),
-        isActive: false,
-        location: "Bandung, Indonesia",
-      },
-    ];
+    // Fetch user sessions
+    getUserSessions()
+      .then((sessions) => {
+        const adaptedSessions = sessions.map((session) => ({
+          id: session.id.toString(),
+          userId: session.user_id?.toString() || "",
+          userName: session.user_id ? `User ${session.user_id}` : "", // Ganti jika ingin ambil nama user
+          ipAddress: session.ip_address,
+          userAgent: session.user_agent,
+          loginTime: new Date(session.login_time),
+          lastActivity: new Date(session.last_activity),
+          isActive: session.is_active,
+          location: session.location || "",
+        }));
+        setUserSessions(adaptedSessions);
+      })
+      .catch(console.error);
 
-    setSecurityLogs(mockLogs);
-    setUserSessions(mockSessions);
+    // Fetch security settings
+    getSecuritySettings()
+      .then((settings) => {
+        setSecuritySettings(settings);
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false)); // Mock data sudah tidak diperlukan karena menggunakan data dari Supabase
   }, []);
 
   const handleTerminateSession = async (sessionId: string) => {
@@ -198,14 +155,33 @@ const SecurityContent: React.FC = () => {
       setIsLoading(false);
     }
   };
-
   const handleUpdateSecuritySettings = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      // Show success message
-      alert("Security settings updated successfully");
+      // Save to Supabase
+      const success = await updateSecuritySettings(securitySettings);
+
+      if (success) {
+        // Log the security setting change
+        import("../../services/securityLogger").then(({ securityLogger }) => {
+          // Assuming we have access to user info and client info in a real app
+          // In a real app, you would get these values from auth context
+          const userId = "1"; // Example user ID
+          const ipAddress = "127.0.0.1"; // Example IP
+          const userAgent = navigator.userAgent;
+
+          securityLogger.securitySettingChange(
+            userId,
+            ipAddress,
+            userAgent,
+            "Global Security Settings"
+          );
+        });
+
+        alert("Security settings updated successfully");
+      } else {
+        throw new Error("Failed to update settings in database");
+      }
     } catch (error) {
       console.error("Failed to update security settings:", error);
       alert("Failed to update security settings");
@@ -325,7 +301,7 @@ const SecurityContent: React.FC = () => {
                       {log.action}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {log.timestamp.toLocaleString()}
+                      {toWIBString(log.timestamp)}
                     </p>
                   </div>
                   <p className="text-xs text-gray-600">
@@ -400,10 +376,10 @@ const SecurityContent: React.FC = () => {
                     {session.location || "Unknown"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {session.loginTime.toLocaleString()}
+                    {toWIBString(session.loginTime)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {session.lastActivity.toLocaleString()}
+                    {toWIBString(session.lastActivity)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -465,7 +441,7 @@ const SecurityContent: React.FC = () => {
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </div>{" "}
+            </div>
             <select
               value={filterStatus}
               onChange={(e) =>
@@ -502,9 +478,6 @@ const SecurityContent: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   IP Address
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Details
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -514,22 +487,26 @@ const SecurityContent: React.FC = () => {
                     {getStatusIcon(log.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {log.timestamp.toLocaleString()}
+                    {toWIBString(log.timestamp)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {log.userName}
                     </div>
-                    <div className="text-sm text-gray-500">{log.userId}</div>
+                    <div className="text-sm text-gray-500">
+                      {log.email && <span className="mr-2">{log.email}</span>}
+                      {log.role && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
+                          {log.role}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {log.action}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {log.ipAddress}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.details}
                   </td>
                 </tr>
               ))}

@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Home } from "lucide-react";
-import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 import RoleBadge from "../components/common/RoleBadge";
 
 const UnauthorizedPage: React.FC = () => {

@@ -16,14 +16,14 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({
 }) => {
   const getRoleConfig = (role: UserRole) => {
     switch (role) {
-      case "user":
-        return {
-          label: getRoleDisplayName(role),
-          icon: User,
-          bgColor: "bg-blue-100",
-          textColor: "text-blue-800",
-          borderColor: "border-blue-200",
-        };
+      // case "user":
+      //   return {
+      //     label: getRoleDisplayName(role),
+      //     icon: User,
+      //     bgColor: "bg-blue-100",
+      //     textColor: "text-blue-800",
+      //     borderColor: "border-blue-200",
+      //   };
       case "tour_guide":
         return {
           label: getRoleDisplayName(role),
@@ -31,13 +31,22 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({
           bgColor: "bg-green-100",
           textColor: "text-green-800",
           borderColor: "border-green-200",
-        }; case "admin":
+        };
+      case "admin":
         return {
           label: getRoleDisplayName(role),
           icon: Shield,
           bgColor: "bg-teal-100",
           textColor: "text-teal-800",
           borderColor: "border-teal-200",
+        };
+      case "customer":
+        return {
+          label: getRoleDisplayName(role),
+          icon: User,
+          bgColor: "bg-yellow-100",
+          textColor: "text-yellow-800",
+          borderColor: "border-yellow-200",
         };
       default:
         return {

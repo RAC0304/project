@@ -5,7 +5,7 @@
 // Load environment variables from .env file
 require("dotenv").config({ path: ".env" });
 
-const { createClient } = require("@supabase/supabase-js");
+const { supabase } = require("./src/utils/supabaseClient");
 
 // Get environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -21,9 +21,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
   process.exit(1);
 }
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function checkSupabaseStorage() {
   try {

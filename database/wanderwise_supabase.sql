@@ -278,3 +278,15 @@ CREATE TABLE public.users (
   location character varying,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.user_sessions (
+  id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id bigint NOT NULL REFERENCES public.users(id),
+  ip_address character varying NOT NULL,
+  user_agent text NOT NULL,
+  login_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  last_activity timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  is_active boolean DEFAULT true,
+  location character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);

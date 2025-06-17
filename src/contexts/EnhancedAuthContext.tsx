@@ -9,6 +9,9 @@ import { User, UserRole } from "../types/user";
 import { hasPermission } from "../data/users";
 import customAuthService from "../services/customAuthService";
 import mockAuthService from "../services/mockAuthService.js";
+import { createUserSession } from "../services/createUserSession";
+import { updateUserSessionLogout } from "../services/updateUserSessionLogout";
+import { getPublicIP } from "../utils/getPublicIP";
 
 interface AuthContextType {
   user: User | null;
@@ -49,6 +52,7 @@ interface AuthProviderProps {
 }
 
 const roleHierarchy: Record<UserRole, number> = {
+  customer: 1,
   user: 1,
   tour_guide: 2,
   admin: 3,
@@ -155,21 +159,22 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
       customAuthService.logout(user.id).catch((err) => {
         console.error("Error logging logout event:", err);
       });
+      // Update user_sessions in Supabase
+      updateUserSessionLogout({ userId: Number(user.id) }).catch((err) => {
+        console.error("Error updating user session logout:", err);
+      });
     }
-
     setUser(null);
     setIsLoggedIn(false);
     setUsesMockAuth(false);
     clearSession();
   }, [user, usesMockAuth, clearSession]);
-
   // Initialize session on mount - separated from other effects
   useEffect(() => {
     if (initDone) return; // Prevent re-initialization
 
     const initializeSession = () => {
       try {
-        console.log("Initializing session...");
         // Check for existing session with new keys
         let savedUser = localStorage.getItem(SESSION_STORAGE_KEYS.USER);
         let isUserLoggedIn =
@@ -212,20 +217,18 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
             const currentTime = Date.now();
             const lastActivity = parseInt(timestamp);
             const timeoutDuration = parseInt(timeout);
-
             if (currentTime - lastActivity < timeoutDuration) {
               try {
                 const parsedUser = JSON.parse(savedUser);
                 setUser(parsedUser);
                 setIsLoggedIn(true);
-                console.log("Session restored successfully");
+                // Session restored successfully
               } catch (e) {
                 console.error("Error parsing user data:", e);
                 clearSession();
               }
             } else {
               // Session expired, clear it
-              console.log("Session expired, clearing...");
               clearSession();
             }
           } else {
@@ -324,6 +327,18 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
         setUsesMockAuth(false);
         // Save session with new format
         saveSession(result.user);
+        // Create user session in Supabase
+        try {
+          const ipAddress = await getPublicIP();
+          await createUserSession({
+            userId: Number(result.user.id),
+            ipAddress,
+            userAgent: navigator.userAgent,
+            location: "", // Optional: can use geolocation API
+          });
+        } catch (e) {
+          console.warn("Failed to create user session in Supabase", e);
+        }
         return { success: true, user: result.user };
       } else {
         // If real auth fails, try mock auth as fallback

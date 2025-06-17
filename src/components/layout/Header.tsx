@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Logo from "../common/Logo";
 import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
+import { toast } from "react-toastify";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,6 +80,14 @@ const Header: React.FC = () => {
     ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
     : "bg-white/10 backdrop-blur-sm text-white";
 
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logout berhasil!");
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 1200);
+  };
+
   return (
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${headerClass}`}
@@ -136,7 +145,7 @@ const Header: React.FC = () => {
                 </span>
               </Link>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                   bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
               >
@@ -214,7 +223,7 @@ const Header: React.FC = () => {
                       </li>
                       <li>
                         <button
-                          onClick={logout}
+                          onClick={handleLogout}
                           className="flex items-center space-x-2 text-red-500 hover:text-red-600 transition-colors duration-300"
                         >
                           <LogOut className="w-4 h-4" />

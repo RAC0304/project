@@ -81,7 +81,7 @@ app.post("/api/auth/login", async (req, res) => {
         "Login",
         user.id,
         req.ip,
-        req.get("User-Agent") || "Unknown",
+        req.get("User-Agent") || "Customer",
         "User logged in successfully",
       ]
     );
@@ -147,7 +147,7 @@ app.post("/api/auth/register", async (req, res) => {
         "Registration",
         newUser.id,
         req.ip,
-        req.get("User-Agent") || "Unknown",
+        req.get("User-Agent") || "Customer",
         "New user registered",
       ]
     );

@@ -15,7 +15,7 @@ import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 import { useNavigate } from "react-router-dom";
 import RoleBadge from "../common/RoleBadge";
 import Logo from "../common/Logo";
-import { supabase } from "../../../config/supabaseConfig";
+import { supabase } from "../../utils/supabaseClient";
 
 interface AdminSidebarProps {
   activePage: string;

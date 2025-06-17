@@ -13,6 +13,7 @@ import {
   Globe,
   Eye,
 } from "lucide-react";
+import { supabase } from "../../utils/supabaseClient";
 
 const GuidesContent: React.FC = () => {
   const [guides, setGuides] = useState<TourGuide[]>([]);
@@ -72,8 +73,74 @@ const GuidesContent: React.FC = () => {
 
   // Load guides data on component mount
   useEffect(() => {
-    setGuides(initialTourGuides);
-    setFilteredGuides(initialTourGuides);
+    const fetchGuides = async () => {
+      // Fetch tour guides
+      const { data: guidesData, error: guidesError } = await supabase.from(
+        "tour_guides"
+      ).select(`
+        id,
+        user_id,
+        bio,
+        specialties,
+        location,
+        short_bio,
+        experience,
+        rating,
+        review_count,
+        availability,
+        is_verified,
+        users:users!tour_guides_user_id_fkey(id, first_name, last_name, email, profile_picture),
+        tours:tours(id, title, description, duration, price, max_group_size, location)
+      `);
+      if (guidesError) {
+        console.error("Failed to fetch tour guides:", guidesError);
+        setGuides([]);
+        setFilteredGuides([]);
+        return;
+      }
+      // Fetch languages for all guides
+      const { data: languagesData } = await supabase
+        .from("tour_guide_languages")
+        .select("tour_guide_id, language");
+      // Map guides to TourGuide type
+      const guidesMapped = (guidesData || []).map((g: any) => {
+        const guideLanguages = (languagesData || [])
+          .filter((l: any) => l.tour_guide_id === g.id)
+          .map((l: any) => l.language);
+        return {
+          id: `guide-${g.id}`,
+          name: g.users ? `${g.users.first_name} ${g.users.last_name}` : "-",
+          specialties: Array.isArray(g.specialties) ? g.specialties : [],
+          location: g.location || "",
+          description: g.bio || "",
+          shortBio: g.short_bio || "",
+          imageUrl: g.users?.profile_picture || "",
+          languages: guideLanguages,
+          experience: g.experience || 0,
+          rating: Number(g.rating) || 0,
+          reviewCount: g.review_count || 0,
+          contactInfo: {
+            email: g.users?.email || "",
+            phone: "",
+          },
+          availability: g.availability || "",
+          isVerified: g.is_verified || false,
+          tours: (g.tours || []).map((t: any) => ({
+            id: `tour-${t.id}`,
+            title: t.title,
+            description: t.description,
+            duration: t.duration,
+            price: t.price?.toString() || "",
+            maxGroupSize: t.max_group_size || 0,
+            location: t.location || "",
+          })),
+          reviews: [], // <-- tambahkan ini agar sesuai tipe
+        };
+      });
+      setGuides(guidesMapped);
+      setFilteredGuides(guidesMapped);
+    };
+    fetchGuides();
   }, []);
 
   // Filter guides when search query changes
@@ -351,15 +418,78 @@ const GuidesContent: React.FC = () => {
     setIsReviewModalOpen(true);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (selectedGuide) {
-      setGuides((prev) =>
-        prev.map((guide) =>
-          guide.id === selectedGuide.id
-            ? { ...guide, isVerified: true }
-            : guide
-        )
-      );
+      // Update ke Supabase
+      const supabaseId = selectedGuide.id.replace("guide-", "");
+      const { error } = await supabase
+        .from("tour_guides")
+        .update({ is_verified: true })
+        .eq("id", supabaseId);
+      if (error) {
+        alert("Gagal memverifikasi guide: " + error.message);
+        return;
+      }
+      // Refresh data dari Supabase
+      const fetchGuides = async () => {
+        const { data: guidesData, error: guidesError } = await supabase.from(
+          "tour_guides"
+        ).select(`
+            id,
+            user_id,
+            bio,
+            specialties,
+            location,
+            short_bio,
+            experience,
+            rating,
+            review_count,
+            availability,
+            is_verified,
+            users:users!tour_guides_user_id_fkey(id, first_name, last_name, email, profile_picture),
+            tours:tours(id, title, description, duration, price, max_group_size, location)
+          `);
+        const { data: languagesData } = await supabase
+          .from("tour_guide_languages")
+          .select("tour_guide_id, language");
+        const guidesMapped = (guidesData || []).map((g: any) => {
+          const guideLanguages = (languagesData || [])
+            .filter((l: any) => l.tour_guide_id === g.id)
+            .map((l: any) => l.language);
+          return {
+            id: `guide-${g.id}`,
+            name: g.users ? `${g.users.first_name} ${g.users.last_name}` : "-",
+            specialties: Array.isArray(g.specialties) ? g.specialties : [],
+            location: g.location || "",
+            description: g.bio || "",
+            shortBio: g.short_bio || "",
+            imageUrl: g.users?.profile_picture || "",
+            languages: guideLanguages,
+            experience: g.experience || 0,
+            rating: Number(g.rating) || 0,
+            reviewCount: g.review_count || 0,
+            contactInfo: {
+              email: g.users?.email || "",
+              phone: "",
+            },
+            availability: g.availability || "",
+            isVerified: g.is_verified || false,
+            tours: (g.tours || []).map((t: any) => ({
+              id: `tour-${t.id}`,
+              title: t.title,
+              description: t.description,
+              duration: t.duration,
+              price: t.price?.toString() || "",
+              maxGroupSize: t.max_group_size || 0,
+              location: t.location || "",
+            })),
+            reviews: [], // <-- tambahkan ini agar sesuai tipe
+          };
+        });
+        setGuides(guidesMapped);
+        setFilteredGuides(guidesMapped);
+      };
+      await fetchGuides();
       setIsReviewModalOpen(false);
       setSelectedGuide(null);
     }
@@ -1291,7 +1421,15 @@ const GuidesContent: React.FC = () => {
       {/* Review Guide Modal */}
       {isReviewModalOpen && selectedGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl relative">
+            {/* Tombol close */}
+            <button
+              onClick={() => setIsReviewModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 text-center mb-4">
                 Review Guide: {selectedGuide.name}
@@ -1316,7 +1454,9 @@ const GuidesContent: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border border-teal-200 shadow-md">
-                  <p className="text-sm font-semibold text-teal-700">Location</p>
+                  <p className="text-sm font-semibold text-teal-700">
+                    Location
+                  </p>
                   <p className="text-base font-medium text-gray-900">
                     {selectedGuide.location}
                   </p>
@@ -1382,29 +1522,55 @@ const GuidesContent: React.FC = () => {
                   id="verifyCheck"
                   className="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                   onChange={(e) => setIsVerifyChecked(e.target.checked)}
+                  checked={isVerifyChecked}
+                  disabled={selectedGuide?.isVerified}
                 />
                 <label
                   htmlFor="verifyCheck"
                   className="ml-2 text-sm text-gray-700"
                 >
-                  I confirm that I have reviewed all the details and approve this guide for verification.
+                  I confirm that I have reviewed all the details and approve
+                  this guide for verification.
                 </label>
               </div>
               <div className="flex justify-end space-x-3">
+                {selectedGuide?.isVerified ? (
+                  <button
+                    onClick={() => setIsReviewModalOpen(false)}
+                    className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg"
+                  >
+                    Close
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleReject}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                  >
+                    Reject
+                  </button>
+                )}
                 <button
-                  onClick={handleReject}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={isVerifyChecked ? handleVerify : undefined}
-                  className={`px-4 py-2 bg-green-600 text-white rounded-lg ${!isVerifyChecked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'}`}
-                  disabled={!isVerifyChecked}
+                  onClick={
+                    isVerifyChecked && !selectedGuide?.isVerified
+                      ? handleVerify
+                      : undefined
+                  }
+                  className={`px-4 py-2 bg-green-600 text-white rounded-lg ${
+                    !isVerifyChecked || selectedGuide?.isVerified
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-green-700"
+                  }`}
+                  disabled={!isVerifyChecked || selectedGuide?.isVerified}
                 >
                   Verify
                 </button>
               </div>
+              {selectedGuide?.isVerified && (
+                <div className="mt-4 text-green-700 font-semibold text-sm text-center">
+                  This guide has already been verified. No further changes
+                  allowed.
+                </div>
+              )}
             </div>
           </div>
         </div>

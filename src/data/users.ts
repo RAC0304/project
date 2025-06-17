@@ -327,6 +327,8 @@ export const getRoleDisplayName = (role: UserRole): string => {
       return "Tour Guide";
     case "admin":
       return "Administrator";
+    case "customer":
+      return "Customer";
     default:
       return "Unknown";
   }

@@ -7,11 +7,7 @@
 // Load environment variables from .env file
 require("dotenv").config({ path: ".env" });
 
-const { createClient } = require("@supabase/supabase-js");
-
-// Get environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const { supabase } = require("./src/utils/supabaseClient");
 
 // Simple mock for the profile service functionality
 class ProfileServiceSimulator {
@@ -139,9 +135,6 @@ class ProfileServiceSimulator {
     }
   }
 }
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Create a profile service simulator
 const profileService = new ProfileServiceSimulator(supabase);

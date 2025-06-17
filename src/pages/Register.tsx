@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 import Logo from "../components/common/Logo";
 import { ArrowRight } from "lucide-react";
 

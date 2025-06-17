@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useEnhancedAuth } from "../contexts/EnhancedAuthContextFix";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 
 const TestSessionPage: React.FC = () => {
   const { user, isLoggedIn, isInitialized, refreshSession } = useEnhancedAuth();

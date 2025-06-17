@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { User, UserRole } from "../../types";
-import { DEMO_USERS } from "../../data/users";
 import {
   Search,
   Filter,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import RoleBadge from "../common/RoleBadge";
 import "./admin.css";
+import { supabase } from "../../utils/supabaseClient"; // Import Supabase client
 
 // Interface for modal form data
 interface UserFormData {
@@ -41,7 +41,7 @@ interface UserFormData {
 interface EnhancedUser extends Omit<User, "isActive"> {
   isActive: boolean;
   specialties: string[]; // Added specialties property
-  languages: string[];   // Added languages property
+  languages: string[]; // Added languages property
 }
 
 const initialFormData: UserFormData = {
@@ -94,15 +94,46 @@ const UsersContent: React.FC = () => {
     show: false,
   });
   useEffect(() => {
-    // Simulate API fetch and convert User[] to EnhancedUser[]
-    const enhancedUsers: EnhancedUser[] = DEMO_USERS.map((user) => ({
-      ...user,
-      isActive: user.isActive ?? true, // Default to true if undefined
-      specialties: [], // Initialize specialties as an empty array
-      languages: [],   // Initialize languages as an empty array
-    }));
-    setUsers(enhancedUsers);
-    setFilteredUsers(enhancedUsers);
+    // Fetch users from Supabase
+    const fetchUsers = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select(
+          "id, email, username, role, first_name, last_name, phone, date_of_birth, gender, profile_picture, is_active, bio, location, languages, experience, created_at"
+        );
+      if (error) {
+        // fallback: empty
+        setUsers([]);
+        setFilteredUsers([]);
+        return;
+      }
+      const enhancedUsers: EnhancedUser[] = (data || []).map((user: any) => ({
+        id: String(user.id),
+        email: user.email,
+        username: user.username || "",
+        role:
+          user.role === undefined ||
+          user.role === null ||
+          user.role === "unknown"
+            ? "customer"
+            : user.role,
+        profile: {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          location: user.location || "",
+          avatar: user.profile_picture || "",
+          bio: user.bio || "",
+          phone: user.phone || "",
+        },
+        createdAt: user.created_at,
+        isActive: user.is_active ?? true,
+        specialties: [], // You can map from user.experience or another field if needed
+        languages: Array.isArray(user.languages) ? user.languages : [],
+      }));
+      setUsers(enhancedUsers);
+      setFilteredUsers(enhancedUsers);
+    };
+    fetchUsers();
   }, []);
 
   useEffect(() => {
@@ -310,89 +341,202 @@ const UsersContent: React.FC = () => {
     setPreviewImage(null);
   };
 
+  // CREATE USER
+  const createUser = async (user: Omit<UserFormData, "id">) => {
+    const { data, error } = await supabase.from("users").insert([
+      {
+        email: user.email,
+        username: user.username,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        role: user.role,
+        phone: user.phone,
+        profile_picture: user.avatar,
+        is_active: user.isActive,
+        bio: user.bio,
+        location: user.location,
+      },
+    ]);
+    return { data, error };
+  };
+
+  // UPDATE USER
+  const updateUser = async (id: string, user: Omit<UserFormData, "id">) => {
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        email: user.email,
+        username: user.username,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        role: user.role,
+        phone: user.phone,
+        profile_picture: user.avatar,
+        is_active: user.isActive,
+        bio: user.bio,
+        location: user.location,
+      })
+      .eq("id", id);
+    return { data, error };
+  };
+
+  // DELETE USER
+  const deleteUser = async (id: string) => {
+    const { data, error } = await supabase.from("users").delete().eq("id", id);
+    return { data, error };
+  };
+
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    // In a real app, we would upload the image first and get a URL back
-    // Here we'll simulate that by using the preview URL if available
     let avatarUrl = formData.avatar;
     if (previewImage) {
       avatarUrl = previewImage;
-      // In a real application, you would:
-      // 1. Upload the image to a server
-      // 2. Get back a URL
-      // 3. Use that URL as the avatar
     }
     if (modalMode === "add") {
-      // In a real app, this would be an API call
-      const newUser: EnhancedUser = {
-        id: `${Date.now()}`, // Generate a temporary ID
-        email: formData.email,
-        username: formData.username,
-        role: formData.role,
-        profile: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          location: formData.location,
-          avatar: avatarUrl,
-          bio: formData.bio,
-          phone: formData.phone,
-          preferences: {
-            language: "en",
-            currency: "IDR",
-            notifications: true,
-            theme: "light",
-          },
-        },
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        specialties: [], // Initialize specialties
-        languages: [],   // Initialize languages
-      };
-
-      setUsers((prevUsers) => [...prevUsers, newUser]);
-      showNotification(
-        "success",
-        `User ${formData.firstName} ${formData.lastName} added successfully!`
-      );
+      // CREATE USER to Supabase
+      const { error } = await createUser({ ...formData, avatar: avatarUrl });
+      if (!error) {
+        showNotification(
+          "success",
+          `User ${formData.firstName} ${formData.lastName} added successfully!`
+        );
+        // Refresh user list
+        const { data } = await supabase
+          .from("users")
+          .select(
+            "id, email, username, role, first_name, last_name, phone, date_of_birth, gender, profile_picture, is_active, bio, location, languages, experience, created_at"
+          );
+        if (data) {
+          const enhancedUsers: EnhancedUser[] = (data || []).map(
+            (user: any) => ({
+              id: String(user.id),
+              email: user.email,
+              username: user.username || "",
+              role:
+                user.role === undefined ||
+                user.role === null ||
+                user.role === "unknown"
+                  ? "customer"
+                  : user.role,
+              profile: {
+                firstName: user.first_name,
+                lastName: user.last_name,
+                location: user.location || "",
+                avatar: user.profile_picture || "",
+                bio: user.bio || "",
+                phone: user.phone || "",
+              },
+              createdAt: user.created_at,
+              isActive: user.is_active ?? true,
+              specialties: [],
+              languages: Array.isArray(user.languages) ? user.languages : [],
+            })
+          );
+          setUsers(enhancedUsers);
+          setFilteredUsers(enhancedUsers);
+        }
+      } else {
+        showNotification("error", error.message);
+      }
     } else {
-      // Update existing user
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u.id === formData.id
-            ? {
-                ...u,
-                email: formData.email,
-                username: formData.username,
-                role: formData.role,
-                profile: {
-                  ...u.profile,
-                  firstName: formData.firstName,
-                  lastName: formData.lastName,
-                  location: formData.location,
-                  avatar: avatarUrl,
-                  bio: formData.bio,
-                  phone: formData.phone,
-                },
-                isActive:
-                  formData.isActive !== undefined
-                    ? formData.isActive
-                    : u.isActive,
-              }
-            : u
-        )
-      );
-      showNotification(
-        "success",
-        `User ${formData.firstName} ${formData.lastName} updated successfully!`
-      );
+      // UPDATE USER to Supabase
+      const { error } = await updateUser(formData.id, {
+        ...formData,
+        avatar: avatarUrl,
+      });
+      if (!error) {
+        showNotification(
+          "success",
+          `User ${formData.firstName} ${formData.lastName} updated successfully!`
+        );
+        // Refresh user list
+        const { data } = await supabase
+          .from("users")
+          .select(
+            "id, email, username, role, first_name, last_name, phone, date_of_birth, gender, profile_picture, is_active, bio, location, languages, experience, created_at"
+          );
+        if (data) {
+          const enhancedUsers: EnhancedUser[] = (data || []).map(
+            (user: any) => ({
+              id: String(user.id),
+              email: user.email,
+              username: user.username || "",
+              role:
+                user.role === undefined ||
+                user.role === null ||
+                user.role === "unknown"
+                  ? "customer"
+                  : user.role,
+              profile: {
+                firstName: user.first_name,
+                lastName: user.last_name,
+                location: user.location || "",
+                avatar: user.profile_picture || "",
+                bio: user.bio || "",
+                phone: user.phone || "",
+              },
+              createdAt: user.created_at,
+              isActive: user.is_active ?? true,
+              specialties: [],
+              languages: Array.isArray(user.languages) ? user.languages : [],
+            })
+          );
+          setUsers(enhancedUsers);
+          setFilteredUsers(enhancedUsers);
+        }
+      } else {
+        showNotification("error", error.message);
+      }
     }
-
     setIsModalOpen(false);
     resetForm();
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async (id: string) => {
+    const { error } = await deleteUser(id);
+    if (!error) {
+      showNotification("success", "User deleted successfully!");
+      // Refresh user list
+      const { data } = await supabase
+        .from("users")
+        .select(
+          "id, email, username, role, first_name, last_name, phone, date_of_birth, gender, profile_picture, is_active, bio, location, languages, experience, created_at"
+        );
+      if (data) {
+        const enhancedUsers: EnhancedUser[] = (data || []).map((user: any) => ({
+          id: String(user.id),
+          email: user.email,
+          username: user.username || "",
+          role:
+            user.role === undefined ||
+            user.role === null ||
+            user.role === "unknown"
+              ? "customer"
+              : user.role,
+          profile: {
+            firstName: user.first_name,
+            lastName: user.last_name,
+            location: user.location || "",
+            avatar: user.profile_picture || "",
+            bio: user.bio || "",
+            phone: user.phone || "",
+          },
+          createdAt: user.created_at,
+          isActive: user.is_active ?? true,
+          specialties: [],
+          languages: Array.isArray(user.languages) ? user.languages : [],
+        }));
+        setUsers(enhancedUsers);
+        setFilteredUsers(enhancedUsers);
+      }
+    } else {
+      showNotification("error", error.message);
+    }
   };
 
   return (
@@ -403,7 +547,7 @@ const UsersContent: React.FC = () => {
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
             <div className="text-sm text-teal-600 mb-1">Total Users</div>
             <div className="text-2xl font-bold">
-              {users.filter((u) => u.role === "user").length}
+              {users.filter((u) => u.role === "customer").length}
             </div>
           </div>
           <div className="bg-green-50 p-4 rounded-lg border border-green-100">
@@ -629,8 +773,23 @@ const UsersContent: React.FC = () => {
                         >
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 p-1 rounded"
+                          title="Delete User"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to delete ${user.profile.firstName} ${user.profile.lastName}?`
+                              )
+                            ) {
+                              handleDeleteUser(user.id);
+                            }
+                          }}
+                        >
+                          <UserX className="w-5 h-5" />
+                        </button>
                       </div>
-                    </td>{" "}
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -1202,7 +1361,8 @@ const UsersContent: React.FC = () => {
                             key={specialty}
                             className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
                           >
-                            {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                            {specialty.charAt(0).toUpperCase() +
+                              specialty.slice(1)}
                           </span>
                         ))}
                       </div>
@@ -1219,7 +1379,8 @@ const UsersContent: React.FC = () => {
                             key={language}
                             className="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200"
                           >
-                            {language.charAt(0).toUpperCase() + language.slice(1)}
+                            {language.charAt(0).toUpperCase() +
+                              language.slice(1)}
                           </span>
                         ))}
                       </div>

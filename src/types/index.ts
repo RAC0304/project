@@ -176,7 +176,7 @@ export interface UserPreferences {
   theme: "light" | "dark";
 }
 
-export type UserRole = "user" | "tour_guide" | "admin";
+export type UserRole = "user" | "tour_guide" | "admin" | "customer";
 
 export interface Permission {
   action: string;
