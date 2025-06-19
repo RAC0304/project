@@ -5,6 +5,11 @@ import {
   AnalyticsMetric,
   AnalyticsReportType,
 } from "../types";
+import {
+  getTotalUsers,
+  getMonthlyRevenue,
+  getTimeSeriesData as getTimeSeriesDataSupabase,
+} from "../services/analyticsService";
 
 // Sample analytics data - in a real app, this would come from a backend API
 export const analyticsData: AnalyticsData = {
@@ -131,12 +136,31 @@ export const analyticsData: AnalyticsData = {
 };
 
 // Helper functions for analytics data access and manipulation
-export const getAnalyticsOverview = (): typeof analyticsData.overview => {
-  return analyticsData.overview;
+export const getAnalyticsOverview = async () => {
+  // Ambil data dari Supabase
+  const [totalUsers, revenueThisMonth, bookings] = await Promise.all([
+    getTotalUsers(),
+    getMonthlyRevenue(),
+    getTimeSeriesDataSupabase("bookings"),
+  ]);
+  // Dummy values untuk field lain, bisa diubah jika sudah ada endpointnya
+  return {
+    totalUsers,
+    activeUsers: totalUsers, // sementara
+    newUsersThisMonth: 0, // perlu query tambahan
+    totalBookings: bookings.reduce((sum, b) => sum + b.value, 0),
+    bookingsThisMonth: bookings[bookings.length - 1]?.value || 0,
+    totalRevenue: revenueThisMonth, // sementara
+    revenueThisMonth,
+    averageRating: 4.7, // dummy
+    totalDestinations: 0, // dummy
+    totalTourGuides: 0, // dummy
+    activeTourGuides: 0, // dummy
+  };
 };
 
-export const getTimeSeriesData = (metric: AnalyticsMetric): AnalyticsItem[] => {
-  return analyticsData.timeSeries[metric] || [];
+export const getTimeSeriesData = async (metric: AnalyticsMetric) => {
+  return await getTimeSeriesDataSupabase(metric);
 };
 
 export const getTopDestinations = (

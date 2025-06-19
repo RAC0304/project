@@ -506,13 +506,13 @@ const GuidesContent: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900">
             Tour Guide Management
           </h2>
-          <button
+          {/* <button
             className="bg-teal-600 text-white px-4 py-2 rounded-md flex items-center"
             onClick={handleAddGuide}
           >
             <PlusCircle size={16} className="mr-2" />
             Add New Guide
-          </button>
+          </button> */}
         </div>{" "}
         {/* Search and Filters */}
         <div className="mb-8 bg-gradient-to-r from-gray-50 to-teal-50 p-6 rounded-xl border border-gray-200">
@@ -850,7 +850,7 @@ const GuidesContent: React.FC = () => {
                           <div className="flex items-center">
                             <span className="text-sm text-gray-900">
                               {guide.tours.length} tours
-                            </span>
+                            </span>{" "}
                             <button
                               onClick={() => toggleExpandGuide(guide.id)}
                               className="ml-2 text-teal-600 hover:text-teal-800"

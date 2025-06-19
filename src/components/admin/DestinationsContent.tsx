@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Destination, Attraction, Activity } from "../../types";
 import type { DestinationCategory } from "../../types";
-import { destinations } from "../../data/destinations";
 import Toast, { ToastType } from "../common/Toast";
+import { supabase } from "../../config/supabaseClient";
 
 const DestinationsContent: React.FC = () => {
-  const [allDestinations, setAllDestinations] =
-    useState<Destination[]>(destinations);
+  const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentDestination, setCurrentDestination] =
     useState<Destination | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -56,10 +56,136 @@ const DestinationsContent: React.FC = () => {
     type: "success" as ToastType,
     message: "",
   });
+  // Function to fetch destinations from Supabase
+  const fetchDestinations = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch destinations
+      const { data: destinations, error } = await supabase
+        .from("destinations")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching destinations:", error.message);
+        showToast("error", `Failed to fetch destinations: ${error.message}`);
+        setAllDestinations([]);
+        return;
+      }
+
+      if (!destinations || destinations.length === 0) {
+        setAllDestinations([]);
+        return;
+      }
+
+      // For each destination, fetch related data
+      const destinationsWithDetails = await Promise.all(
+        destinations.map(async (dest) => {
+          // Fetch images
+          const { data: images } = await supabase
+            .from("destination_images")
+            .select("image_url")
+            .eq("destination_id", dest.id);
+
+          // Fetch attractions
+          const { data: attractionsData } = await supabase
+            .from("attractions")
+            .select("id, name, description, image_url")
+            .eq("destination_id", dest.id);
+
+          // Map attractions to match our frontend model
+          const mappedAttractions = attractionsData
+            ? attractionsData.map((attr) => ({
+                id: attr.id.toString(),
+                name: attr.name,
+                description: attr.description,
+                imageUrl: attr.image_url || "",
+              }))
+            : [];
+
+          // Fetch activities
+          const { data: activitiesData } = await supabase
+            .from("activities")
+            .select("id, name, description, duration, price, image_url")
+            .eq("destination_id", dest.id);
+
+          // Map activities to match our frontend model
+          const mappedActivities = activitiesData
+            ? activitiesData.map((act) => ({
+                id: act.id.toString(),
+                name: act.name,
+                description: act.description,
+                duration: act.duration || "",
+                price: act.price || "",
+                imageUrl: act.image_url || "",
+              }))
+            : [];
+
+          // Fetch travel tips
+          const { data: travelTips } = await supabase
+            .from("travel_tips")
+            .select("tip")
+            .eq("destination_id", dest.id);
+
+          // Fetch categories
+          const { data: categories } = await supabase
+            .from("destination_categories")
+            .select("category")
+            .eq("destination_id", dest.id);
+
+          // Map to our frontend model
+          return {
+            id: dest.id.toString(),
+            name: dest.name,
+            location: dest.location,
+            description: dest.description,
+            shortDescription: dest.short_description || "",
+            imageUrl: dest.image_url || "",
+            images: images ? images.map((img) => img.image_url) : [],
+            attractions: mappedAttractions,
+            activities: mappedActivities,
+            bestTimeToVisit: dest.best_time_to_visit || "",
+            travelTips: travelTips ? travelTips.map((tip) => tip.tip) : [],
+            category: categories
+              ? categories.map((cat) => cat.category as DestinationCategory)
+              : [],
+            googleMapsUrl: dest.google_maps_url || "",
+            reviews: [],
+          } as Destination;
+        })
+      );
+
+      setAllDestinations(destinationsWithDetails);
+    } catch (err) {
+      console.error("Error fetching destinations:", err);
+      showToast("error", "Failed to load destinations. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  // Load destinations on component mount
+  useEffect(() => {
+    fetchDestinations();
+  }, [fetchDestinations]);
   useEffect(() => {
     if (currentDestination) {
-      setFormData(currentDestination);
-      setSelectedCategories(currentDestination.category || []);
+      setFormData({
+        id: currentDestination.id || "",
+        name: currentDestination.name || "",
+        location: currentDestination.location || "",
+        description: currentDestination.description || "",
+        shortDescription: currentDestination.shortDescription || "",
+        imageUrl: currentDestination.imageUrl || "",
+        images: [...(currentDestination.images || [])],
+        attractions: [...(currentDestination.attractions || [])],
+        activities: [...(currentDestination.activities || [])],
+        bestTimeToVisit: currentDestination.bestTimeToVisit || "",
+        travelTips: [...(currentDestination.travelTips || [])],
+        category: [...(currentDestination.category || [])],
+        googleMapsUrl: currentDestination.googleMapsUrl || "",
+      });
+      setSelectedCategories([...(currentDestination.category || [])]);
     }
   }, [currentDestination]);
 
@@ -221,40 +347,294 @@ const DestinationsContent: React.FC = () => {
         : [...selectedCategories, category],
     });
   };
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
 
-    // Validations
-    if (
-      !formData.id ||
-      !formData.name ||
-      !formData.location ||
-      !formData.description
-    ) {
-      showToast("error", "Please fill all required fields");
-      return;
-    }
+  // Helper functions for handling related entities in Supabase
+  const handleUpdateRelatedEntities = async (destinationId: number) => {
+    try {
+      // Handle attractions - first delete existing
+      const { error: deleteAttractionsError } = await supabase
+        .from("attractions")
+        .delete()
+        .eq("destination_id", destinationId);
 
-    if (isEditing) {
-      // Update existing destination
-      const updatedDestinations = allDestinations.map((dest) =>
-        dest.id === formData.id ? { ...(formData as Destination) } : dest
-      );
-      setAllDestinations(updatedDestinations);
-      showToast("success", "Destination updated successfully!");
-    } else {
-      // Check for ID duplication
-      if (allDestinations.some((dest) => dest.id === formData.id)) {
-        showToast(
-          "error",
-          "A destination with this ID already exists. Please choose a different ID."
-        );
-        return;
+      if (deleteAttractionsError) throw deleteAttractionsError;
+
+      // Add new attractions
+      if (formData.attractions && formData.attractions.length > 0) {
+        const attractionsToInsert = formData.attractions.map((attraction) => ({
+          destination_id: destinationId,
+          name: attraction.name,
+          description: attraction.description,
+          image_url: attraction.imageUrl,
+        }));
+
+        const { error: insertAttractionsError } = await supabase
+          .from("attractions")
+          .insert(attractionsToInsert);
+
+        if (insertAttractionsError) throw insertAttractionsError;
       }
 
-      // Add new destination
-      setAllDestinations([...allDestinations, formData as Destination]);
-      showToast("success", "New destination added successfully!");
+      // Handle activities - first delete existing
+      const { error: deleteActivitiesError } = await supabase
+        .from("activities")
+        .delete()
+        .eq("destination_id", destinationId);
+
+      if (deleteActivitiesError) throw deleteActivitiesError;
+
+      // Add new activities
+      if (formData.activities && formData.activities.length > 0) {
+        const activitiesToInsert = formData.activities.map((activity) => ({
+          destination_id: destinationId,
+          name: activity.name,
+          description: activity.description,
+          duration: activity.duration,
+          price: activity.price,
+          image_url: activity.imageUrl,
+        }));
+
+        const { error: insertActivitiesError } = await supabase
+          .from("activities")
+          .insert(activitiesToInsert);
+
+        if (insertActivitiesError) throw insertActivitiesError;
+      }
+
+      // Handle categories - first delete existing
+      const { error: deleteCategoriesError } = await supabase
+        .from("destination_categories")
+        .delete()
+        .eq("destination_id", destinationId);
+
+      if (deleteCategoriesError) throw deleteCategoriesError;
+
+      // Add new categories
+      if (selectedCategories && selectedCategories.length > 0) {
+        const categoriesToInsert = selectedCategories.map((category) => ({
+          destination_id: destinationId,
+          category: category,
+        }));
+
+        const { error: insertCategoriesError } = await supabase
+          .from("destination_categories")
+          .insert(categoriesToInsert);
+
+        if (insertCategoriesError) throw insertCategoriesError;
+      }
+    } catch (error) {
+      console.error("Error updating related entities:", error);
+      throw error;
+    }
+  };
+
+  const handleCreateRelatedEntities = async (destinationId: number) => {
+    try {
+      // Add attractions
+      if (formData.attractions && formData.attractions.length > 0) {
+        const attractionsToInsert = formData.attractions.map((attraction) => ({
+          destination_id: destinationId,
+          name: attraction.name,
+          description: attraction.description,
+          image_url: attraction.imageUrl,
+        }));
+
+        const { error: insertAttractionsError } = await supabase
+          .from("attractions")
+          .insert(attractionsToInsert);
+
+        if (insertAttractionsError) throw insertAttractionsError;
+      }
+
+      // Add activities
+      if (formData.activities && formData.activities.length > 0) {
+        const activitiesToInsert = formData.activities.map((activity) => ({
+          destination_id: destinationId,
+          name: activity.name,
+          description: activity.description,
+          duration: activity.duration,
+          price: activity.price,
+          image_url: activity.imageUrl,
+        }));
+
+        const { error: insertActivitiesError } = await supabase
+          .from("activities")
+          .insert(activitiesToInsert);
+
+        if (insertActivitiesError) throw insertActivitiesError;
+      }
+
+      // Add categories
+      if (selectedCategories && selectedCategories.length > 0) {
+        const categoriesToInsert = selectedCategories.map((category) => ({
+          destination_id: destinationId,
+          category: category,
+        }));
+
+        const { error: insertCategoriesError } = await supabase
+          .from("destination_categories")
+          .insert(categoriesToInsert);
+
+        if (insertCategoriesError) throw insertCategoriesError;
+      }
+    } catch (error) {
+      console.error("Error creating related entities:", error);
+      throw error;
+    }
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Validations
+      if (!formData.name || !formData.location || !formData.description) {
+        showToast("error", "Please fill all required fields");
+        setIsLoading(false);
+        return;
+      }
+      // Generate slug from name if creating a new destination
+      const slug = !isEditing
+        ? (formData.name || "")
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w-]+/g, "")
+        : formData.id;
+
+      if (isEditing && formData.id) {
+        // Update existing destination
+        const destinationId = parseInt(formData.id);
+
+        const { error: destError } = await supabase
+          .from("destinations")
+          .update({
+            name: formData.name,
+            location: formData.location,
+            description: formData.description,
+            short_description: formData.shortDescription,
+            image_url: formData.imageUrl,
+            best_time_to_visit: formData.bestTimeToVisit,
+            google_maps_url: formData.googleMapsUrl,
+            updated_at: new Date(),
+          })
+          .eq("id", destinationId);
+
+        if (destError) throw destError; // Handle images - first remove existing
+        const { error: deleteImagesError } = await supabase
+          .from("destination_images")
+          .delete()
+          .eq("destination_id", destinationId);
+
+        if (deleteImagesError) throw deleteImagesError;
+
+        // Add new images
+        if (formData.images && formData.images.length > 0) {
+          const imagesToInsert = formData.images.map((imageUrl) => ({
+            destination_id: destinationId,
+            image_url: imageUrl,
+          }));
+
+          const { error: insertImagesError } = await supabase
+            .from("destination_images")
+            .insert(imagesToInsert);
+
+          if (insertImagesError) throw insertImagesError;
+        } // Handle travel tips - first delete existing
+        const { error: deleteTipsError } = await supabase
+          .from("travel_tips")
+          .delete()
+          .eq("destination_id", destinationId);
+
+        if (deleteTipsError) throw deleteTipsError;
+
+        // Add new travel tips
+        if (formData.travelTips && formData.travelTips.length > 0) {
+          const tipsToInsert = formData.travelTips.map((tip) => ({
+            destination_id: destinationId,
+            tip,
+          }));
+
+          const { error: insertTipsError } = await supabase
+            .from("travel_tips")
+            .insert(tipsToInsert);
+
+          if (insertTipsError) throw insertTipsError;
+        }
+
+        // Similar logic for attractions, activities, categories
+        await handleUpdateRelatedEntities(destinationId);
+
+        showToast("success", "Destination updated successfully!");
+      } else {
+        // Create new destination
+        if (!slug) {
+          throw new Error(
+            "Could not create a valid slug from the destination name"
+          );
+        }
+
+        const { data: newDestination, error: createError } = await supabase
+          .from("destinations")
+          .insert({
+            slug,
+            name: formData.name,
+            location: formData.location,
+            description: formData.description,
+            short_description: formData.shortDescription,
+            image_url: formData.imageUrl,
+            best_time_to_visit: formData.bestTimeToVisit,
+            google_maps_url: formData.googleMapsUrl,
+            created_at: new Date(),
+          })
+          .select("id")
+          .single();
+
+        if (createError) throw createError;
+        if (!newDestination) throw new Error("Failed to create destination");
+
+        const newId = newDestination.id;
+
+        // Handle images
+        if (formData.images && formData.images.length > 0) {
+          const imagesToInsert = formData.images.map((imageUrl) => ({
+            destination_id: newId,
+            image_url: imageUrl,
+          }));
+
+          const { error: insertImagesError } = await supabase
+            .from("destination_images")
+            .insert(imagesToInsert);
+
+          if (insertImagesError) throw insertImagesError;
+        }
+
+        // Handle travel tips
+        if (formData.travelTips && formData.travelTips.length > 0) {
+          const tipsToInsert = formData.travelTips.map((tip) => ({
+            destination_id: newId,
+            tip,
+          }));
+
+          const { error: insertTipsError } = await supabase
+            .from("travel_tips")
+            .insert(tipsToInsert);
+
+          if (insertTipsError) throw insertTipsError;
+        }
+
+        // Handle categories, attractions, activities
+        await handleCreateRelatedEntities(newId);
+
+        showToast("success", "New destination added successfully!");
+      }
+
+      // Refresh destinations list
+      fetchDestinations();
+    } catch (err) {
+      console.error("Error saving destination:", err);
+      showToast("error", "Failed to save destination. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
 
     // Reset form and states
@@ -269,18 +649,64 @@ const DestinationsContent: React.FC = () => {
     setShowForm(true);
     window.scrollTo(0, 0);
   };
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this destination?")) {
-      const destinationToDelete = allDestinations.find(
-        (dest) => dest.id === id
-      );
-      setAllDestinations(
-        allDestinations.filter((destination) => destination.id !== id)
-      );
-      showToast(
-        "success",
-        `Destination "${destinationToDelete?.name}" deleted successfully!`
-      );
+      try {
+        setIsLoading(true);
+        const destinationToDelete = allDestinations.find(
+          (dest) => dest.id === id
+        );
+
+        const numericId = parseInt(id);
+
+        // Delete all related entities first (due to foreign key constraints)
+        const tables = [
+          "destination_images",
+          "attractions",
+          "activities",
+          "travel_tips",
+          "destination_categories",
+          "cultural_insights",
+        ];
+
+        // Delete from all related tables
+        for (const table of tables) {
+          const { error } = await supabase
+            .from(table)
+            .delete()
+            .eq("destination_id", numericId);
+
+          if (error) {
+            console.error(`Error deleting from ${table}:`, error);
+            // Continue with other tables even if one fails
+          }
+        }
+
+        // Finally delete the destination
+        const { error: deleteError } = await supabase
+          .from("destinations")
+          .delete()
+          .eq("id", numericId);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        // Update local state
+        setAllDestinations(
+          allDestinations.filter((destination) => destination.id !== id)
+        );
+
+        showToast(
+          "success",
+          `Destination "${destinationToDelete?.name}" deleted successfully!`
+        );
+      } catch (err) {
+        console.error("Error deleting destination:", err);
+        showToast("error", "Failed to delete destination. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
   const resetForm = () => {
@@ -329,25 +755,57 @@ const DestinationsContent: React.FC = () => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        {" "}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Destinations Management
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Destinations Management
+            </h2>
+            {isLoading && (
+              <div className="flex items-center">
+                <svg
+                  className="animate-spin h-5 w-5 text-teal-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span className="ml-2 text-sm text-gray-600">
+                  Processing...
+                </span>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => {
               resetForm();
               setShowForm(!showForm);
             }}
+            disabled={isLoading}
             className={`px-4 py-2 rounded-md ${
               showForm
                 ? "bg-gray-500 hover:bg-gray-600"
                 : "bg-teal-500 hover:bg-teal-600"
-            } text-white font-medium transition-colors`}
+            } text-white font-medium transition-colors ${
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             {showForm ? "Cancel" : "Add New Destination"}
           </button>
         </div>
-
         {/* Search bar */}
         <div className="mb-6">
           <input
@@ -358,7 +816,6 @@ const DestinationsContent: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         {/* Form Section */}
         {showForm && (
           <div className="bg-gray-50 p-6 rounded-md mb-6">
@@ -368,24 +825,24 @@ const DestinationsContent: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ID*{" "}
-                    <span className="text-xs text-gray-500">
-                      (used in URLs, no spaces)
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    name="id"
-                    required
-                    disabled={isEditing}
-                    value={formData.id}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    placeholder="e.g., bali-indonesia"
-                  />
-                </div>
+                {" "}
+                {isEditing && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ID{" "}
+                      <span className="text-xs text-gray-500">
+                        (auto-generated, cannot be changed)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      name="id"
+                      disabled
+                      value={formData.id}
+                      className="w-full p-2 border border-gray-300 bg-gray-100 text-gray-500 rounded-md"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Name*
@@ -768,154 +1225,217 @@ const DestinationsContent: React.FC = () => {
 
               {/* Form Actions */}
               <div className="border-t pt-4 flex justify-end gap-3">
+                {" "}
                 <button
                   type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    resetForm();
+                    setShowForm(false);
+                  }}
+                  disabled={isLoading}
+                  className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 ${
+                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                  disabled={isLoading}
+                  className={`px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center ${
+                    isLoading ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 >
+                  {isLoading && (
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  )}
                   {isEditing ? "Update Destination" : "Add Destination"}
                 </button>
               </div>
             </form>
           </div>
-        )}
-
+        )}{" "}
         {/* Destinations List */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             All Destinations ({filteredDestinations.length})
           </h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Destination
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Location
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Categories
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Attractions
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Activities
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDestinations.length > 0 ? (
-                  filteredDestinations.map((destination) => (
-                    <tr key={destination.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <img
-                              className="h-10 w-10 rounded-md object-cover"
-                              src={destination.imageUrl}
-                              alt={destination.name}
-                              onError={(e) =>
-                                (e.currentTarget.src =
-                                  "https://via.placeholder.com/40?text=Image+Error")
-                              }
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {destination.name}
+            {isLoading && allDestinations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <svg
+                  className="animate-spin h-8 w-8 text-teal-500 mb-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <p className="text-gray-500">Loading destinations...</p>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Destination
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Location
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Categories
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Attractions
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Activities
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredDestinations.length > 0 ? (
+                    filteredDestinations.map((destination) => (
+                      <tr key={destination.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0">
+                              <img
+                                className="h-10 w-10 rounded-md object-cover"
+                                src={destination.imageUrl}
+                                alt={destination.name}
+                                onError={(e) =>
+                                  (e.currentTarget.src =
+                                    "https://via.placeholder.com/40?text=Image+Error")
+                                }
+                              />
                             </div>
-                            <div className="text-sm text-gray-500">
-                              ID: {destination.id}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {destination.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                ID: {destination.id}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {destination.location}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {destination.category &&
-                        destination.category.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {destination.category.map((cat, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 text-xs rounded-full bg-teal-100 text-blue-800"
-                              >
-                                {cat}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">None</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {destination.attractions?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {destination.activities?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(destination)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(destination.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {destination.location}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {destination.category &&
+                          destination.category.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {destination.category.map((cat, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-1 text-xs rounded-full bg-teal-100 text-blue-800"
+                                >
+                                  {cat}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">None</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {destination.attractions?.length || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {destination.activities?.length || 0}
+                        </td>{" "}
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(destination)}
+                            disabled={isLoading}
+                            className={`text-blue-600 hover:text-blue-900 mr-4 ${
+                              isLoading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(destination.id)}
+                            disabled={isLoading}
+                            className={`text-red-600 hover:text-red-900 ${
+                              isLoading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500"
+                      >
+                        {searchTerm
+                          ? "No destinations match your search criteria."
+                          : "No destinations available."}
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500"
-                    >
-                      {searchTerm
-                        ? "No destinations match your search criteria."
-                        : "No destinations available."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>{" "}
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

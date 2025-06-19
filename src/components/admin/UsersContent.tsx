@@ -27,6 +27,7 @@ interface UserFormData {
   id: string;
   email: string;
   username: string;
+  password?: string; // Added password field
   role: UserRole;
   firstName: string;
   lastName: string;
@@ -48,7 +49,8 @@ const initialFormData: UserFormData = {
   id: "",
   email: "",
   username: "",
-  role: "user",
+  password: "", // Added password field
+  role: "customer", // Changed default role to customer
   firstName: "",
   lastName: "",
   location: "",
@@ -347,6 +349,7 @@ const UsersContent: React.FC = () => {
       {
         email: user.email,
         username: user.username,
+        password: user.password, // Add password to payload
         first_name: user.firstName,
         last_name: user.lastName,
         role: user.role,
@@ -1098,7 +1101,7 @@ const UsersContent: React.FC = () => {
                       onChange={handleInputChange}
                       className="block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     >
-                      <option value="user">User</option>
+                      <option value="customer">Customer</option>
                       <option value="tour_guide">Tour Guide</option>
                       <option value="admin">Administrator</option>
                     </select>
@@ -1130,6 +1133,31 @@ const UsersContent: React.FC = () => {
                     />
                   </div>
                 </div>
+                {/* Password - Only show in add mode */}
+                {modalMode === "add" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className={`block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                        formErrors.password
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      placeholder="Enter password"
+                    />
+                    {formErrors.password && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.password}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {/* Bio */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
