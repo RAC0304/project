@@ -10,6 +10,8 @@ dotenv.config();
 // Import routes
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
+import reviewsRoutes from "./routes/reviews.js";
+import messagesRoutes from "./routes/messages.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,6 +29,8 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/reviews", reviewsRoutes);
+app.use("/api/messages", messagesRoutes);
 
 // Database connection
 const pool = new Pool({

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TourGuideSidebar from "../components/tourguide/layout/TourGuideSidebar";
 import MinimizeButton from "../components/tourguide/layout/MinimizeButton";
 import MessagesContent from "../components/tourguide/dashboard/MessagesContent";
@@ -11,20 +11,22 @@ import ReviewsContent from "../components/tourguide/dashboard/ReviewsContent";
 import EditTourModal from "../components/tourguide/modals/EditTourModal";
 import Toast, { ToastType } from "../components/common/Toast";
 import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
-import { TourData } from "../types/tourguide";
+import { Tour } from "../services/tourService";
 import {
-  calculateGuideStats,
-  getUpcomingTours,
-  recentReviews,
-  tours as initialTours,
-} from "../data/tourGuideDashboardData";
+  getToursByGuide,
+  createTour,
+  updateTour,
+  deleteTour,
+} from "../services/tourService";
+import { getTourGuideIdByUserId } from "../services/tourGuideService";
+import { getGuideStats } from "../services/guideStatsService";
 
 const TourGuideDashboard: React.FC = () => {
   const { user } = useEnhancedAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [tourToEdit, setTourToEdit] = useState<TourData | null>(null);
-  const [tours, setTours] = useState<TourData[]>(initialTours);
+  const [tourToEdit, setTourToEdit] = useState<Tour | null>(null);
+  const [tours, setTours] = useState<Tour[]>([]);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [toast, setToast] = useState<{
     isVisible: boolean;
@@ -36,8 +38,20 @@ const TourGuideDashboard: React.FC = () => {
     message: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [tourGuideId, setTourGuideId] = useState<number | null>(null);
+  const [guideStats, setGuideStats] = useState<GuideStats | null>(null);
 
-  // Redirect if no user is authenticated
+  interface GuideStats {
+    totalTours: number;
+    activeTours: number;
+    inactiveTours: number;
+    totalBookings: number;
+    totalClients: number;
+    totalReviews: number;
+    averageRating: number;
+    monthlyEarnings: number;
+  }
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -57,41 +71,43 @@ const TourGuideDashboard: React.FC = () => {
       message,
     });
   };
-
   const hideToast = () => {
     setToast((prev) => ({ ...prev, isVisible: false }));
   };
-  const handleEditTour = (tour: TourData) => {
-    console.log("Editing tour:", tour);
+  const handleEditTour = (tour: Tour) => {
     setTourToEdit(tour);
     setIsEditModalOpen(true);
   };
   const handleCreateTour = () => {
-    console.log("Creating new tour...");
     setTourToEdit(null);
     setIsEditModalOpen(true);
   };
-  const handleSaveTour = async (tourData: TourData) => {
-    console.log("Saving tour:", tourData);
+  const handleSaveTour = async (tourData: Tour) => {
+    console.log("TourGuideDashboard - handleSaveTour received:", tourData);
+    console.log("TourGuideDashboard - tourData.id:", tourData.id);
+
     setIsLoading(true);
-
     try {
-      const isUpdating = tourData.id && tours.find((t) => t.id === tourData.id);
-
-      if (isUpdating) {
-        // Update existing tour
+      const { id, ...tourToSave } = tourData;
+      console.log("TourGuideDashboard - destructured id:", id);
+      console.log("TourGuideDashboard - tourToSave:", tourToSave);
+      if (id && id > 0) {
+        console.log("TourGuideDashboard - Updating tour with id:", id);
+        const updated = await updateTour(id, tourToSave);
+        console.log("TourGuideDashboard - Updated tour result:", updated);
         setTours((prev) =>
-          prev.map((tour) => (tour.id === tourData.id ? tourData : tour))
+          prev.map((t) => (t.id === updated.id ? updated : t))
         );
         showToast("success", "Tour updated successfully!");
       } else {
-        // Create new tour
-        const newTour = {
-          ...tourData,
-          id: Math.max(...tours.map((t) => t.id), 0) + 1,
-          clients: 0,
-        };
-        setTours((prev) => [...prev, newTour]);
+        console.log("TourGuideDashboard - Creating new tour");
+        if (!tourGuideId) throw new Error("Tour guide ID not found");
+        const created = await createTour({
+          ...tourToSave,
+          tour_guide_id: tourGuideId,
+        });
+        console.log("TourGuideDashboard - Created tour result:", created);
+        setTours((prev) => [...prev, created]);
         showToast("success", "Tour created successfully!");
       }
       setIsEditModalOpen(false);
@@ -103,26 +119,67 @@ const TourGuideDashboard: React.FC = () => {
     }
   };
   const handleDeleteTour = async (tourId: number) => {
+    setIsLoading(true);
     try {
-      const tourToDelete = tours.find((t) => t.id === tourId);
+      await deleteTour(tourId);
       setTours((prev) => prev.filter((tour) => tour.id !== tourId));
-      showToast(
-        "success",
-        `Tour "${tourToDelete?.title}" deleted successfully!`
-      );
+      showToast("success", "Tour deleted successfully!");
     } catch (error) {
       console.error("Failed to delete tour:", error);
       showToast("error", "Failed to delete tour. Please try again.");
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleSidebarMinimize = (isMinimized: boolean) => {
     setSidebarMinimized(isMinimized);
   };
-
   const toggleSidebar = () => {
     setSidebarMinimized(!sidebarMinimized);
   };
+
+  useEffect(() => {
+    if (!user) {
+      setTourGuideId(null);
+      setTours([]);
+      setGuideStats(null);
+    } else {
+      getTourGuideIdByUserId(Number(user.id)).then(setTourGuideId);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    if (!user || !tourGuideId) {
+      setTours([]);
+      setGuideStats(null);
+      setIsLoading(false);
+    } else {
+      Promise.all([
+        getToursByGuide(tourGuideId).then((data) => setTours(data)),
+        getGuideStats(tourGuideId).then((stats) => {
+          const formattedStats: GuideStats = {
+            totalTours: stats.totalTours || 0,
+            activeTours: stats.activeTours || 0,
+            inactiveTours: stats.inactiveTours || 0,
+            totalBookings: stats.totalBookings || 0,
+            totalClients: stats.totalClients || 0,
+            totalReviews: stats.totalReviews || 0,
+            averageRating: stats.averageRating || 0,
+            monthlyEarnings: stats.monthlyEarnings || 0,
+          };
+          setGuideStats(formattedStats);
+        }),
+      ])
+        .catch((err) => {
+          console.error("Gagal mengambil data tours/stats dari Supabase:", err);
+          showToast("error", "Gagal memuat data tours/stats dari server.");
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [user, tourGuideId]);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <TourGuideSidebar
@@ -136,8 +193,6 @@ const TourGuideDashboard: React.FC = () => {
           sidebarMinimized ? "lg:pl-28" : "lg:pl-80"
         } transition-all duration-300`}
       >
-        {" "}
-        {/* Header with Minimize Button */}
         <div className="sticky top-0 z-10  px-4 py-3 flex items-center justify-between">
           <div className="hidden lg:block">
             <MinimizeButton
@@ -146,17 +201,15 @@ const TourGuideDashboard: React.FC = () => {
             />
           </div>
         </div>
-        {/* Content Area */}
         <div className="px-4 pt-4">
           {activePage === "dashboard" && (
             <DashboardContent
-              guideStats={calculateGuideStats(user.id)}
-              upcomingTours={getUpcomingTours(user.id)}
-              recentReviews={recentReviews}
-              setActivePage={setActivePage}
+              tours={tours}
+              isLoading={isLoading}
+              guideStats={guideStats}
             />
           )}
-          {activePage === "profile" && <ProfileContent user={user} />}{" "}
+          {activePage === "profile" && <ProfileContent user={user} />}
           {activePage === "tours" && (
             <ToursContent
               tours={tours}
@@ -165,15 +218,17 @@ const TourGuideDashboard: React.FC = () => {
               onDeleteTour={handleDeleteTour}
               isLoading={isLoading}
             />
-          )}{" "}
+          )}
           {activePage === "bookings" && (
-            <BookingsContent tourGuideId={user.id} />
-          )}{" "}
+            <BookingsContent tourGuideId={Number(user.id)} />
+          )}
           {activePage === "clients" && <ClientsContent tourGuideId={user.id} />}
           {activePage === "reviews" && <ReviewsContent tourGuideId={user.id} />}
-          {activePage === "messages" && <MessagesContent />}
+          {activePage === "messages" && tourGuideId && (
+            <MessagesContent tourGuideId={tourGuideId.toString()} />
+          )}
         </div>
-      </main>{" "}
+      </main>
       <EditTourModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

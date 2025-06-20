@@ -1,23 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { getGuideBookings } from "../../../data/tourGuideDashboardData";
-import { updateBookingStatus } from "../../../data/bookings";
-import { Booking } from "../../../types/tourguide";
+import {
+  getBookingsWithDetailsByGuide,
+  BookingWithDetails,
+} from "../../../services/bookingDetailsService";
+import {
+  Booking,
+  updateBookingStatusSupabase,
+} from "../../../services/bookingService";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import MessageModal from "../modals/MessageModal";
 import Toast from "../../common/Toast";
 
 interface BookingsContentProps {
-  tourGuideId: string;
+  tourGuideId: number;
 }
 
 const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    useState<BookingWithDetails | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [toast, setToast] = useState({
@@ -25,26 +31,20 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     type: "success" as const,
     message: "",
   });
+
   const itemsPerPage = 10;
-  const loadBookings = React.useCallback(() => {
-    try {
-      const guideBookings = getGuideBookings(tourGuideId);
-      setBookings(guideBookings);
-    } catch (error) {
-      console.error("Error loading bookings:", error);
-    }
-  }, [tourGuideId]);
 
   useEffect(() => {
-    loadBookings();
-  }, [loadBookings]);
+    if (!tourGuideId) return;
+    getBookingsWithDetailsByGuide(tourGuideId).then(setBookings);
+  }, [tourGuideId]);
 
   // Filter bookings based on search term and filters
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
       searchTerm === "" ||
-      booking.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.tourName.toLowerCase().includes(searchTerm.toLowerCase());
+      booking.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.tourName?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === "" || booking.status === statusFilter;
@@ -54,6 +54,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
 
     const bookingDate = new Date(booking.date);
     const today = new Date();
+
     switch (timeFilter) {
       case "today":
         return (
@@ -102,22 +103,14 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
   const currentBookings = filteredBookings.slice(startIndex, endIndex);
 
   // Handler functions
-  const handleViewDetails = (booking: Booking) => {
+  const handleViewDetails = (booking: BookingWithDetails) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
-  const handleSendMessage = (booking: Booking) => {
+
+  const handleSendMessage = (booking: BookingWithDetails) => {
     setSelectedBooking(booking);
     setShowMessageModal(true);
-  };
-
-  const handleMessageSent = (message: string) => {
-    // Show success notification outside modal
-    setToast({
-      isVisible: true,
-      type: "success",
-      message: `Pesan berhasil dikirim kepada ${selectedBooking?.userName}!`,
-    });
   };
 
   const handlePageChange = (page: number) => {
@@ -131,38 +124,34 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
       setStatusFilter("");
     }
   };
+
   // Handle status update
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     bookingId: string,
     newStatus: "confirmed" | "cancelled"
   ) => {
-    const updatedBooking = updateBookingStatus(bookingId, newStatus);
-
-    if (updatedBooking) {
-      // Update the bookings list
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === bookingId ? updatedBooking : booking
+    try {
+      await updateBookingStatusSupabase(Number(bookingId), newStatus);
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === Number(bookingId) ? { ...b, status: newStatus } : b
         )
       );
-
-      // Update the selected booking if it's open in the modal
-      if (selectedBooking && selectedBooking.id === bookingId) {
-        setSelectedBooking(updatedBooking);
-      } // Show toast notification
       setToast({
         isVisible: true,
         type: "success",
         message:
           newStatus === "confirmed"
-            ? `Pemesanan wisata ${updatedBooking.tourName} dari ${updatedBooking.userName} telah berhasil diterima!`
-            : `Pemesanan wisata ${updatedBooking.tourName} dari ${updatedBooking.userName} telah ditolak.`,
+            ? "Booking has been accepted successfully!"
+            : "Booking has been rejected",
       });
-
-      // Close the modal after a short delay
-      setTimeout(() => {
-        setShowDetailsModal(false);
-      }, 1500);
+      setTimeout(() => setShowDetailsModal(false), 1500);
+    } catch {
+      setToast({
+        isVisible: true,
+        type: "error",
+        message: "Failed to update booking status.",
+      });
     }
   };
 
@@ -181,15 +170,6 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         return "bg-gray-100 text-gray-800";
     }
   };
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   return (
     <>
@@ -199,6 +179,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         message={toast.message}
         onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
       />
+
       <div className="space-y-6">
         {/* Header and Search/Filter Section */}
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -248,41 +229,8 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
               </select>
-            </div>{" "}
+            </div>
           </div>{" "}
-          {/* Quick Action Buttons */}
-          <div className="mb-4">
-            {(() => {
-              const pendingCount = bookings.filter(
-                (booking) => booking.status === "pending"
-              ).length;
-              return (
-                <button
-                  onClick={() => setStatusFilter("pending")}
-                  className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Lihat Pemesanan Menunggu
-                  {pendingCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                      {pendingCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })()}
-          </div>
           {/* Filter Chips */}
           <div className="flex flex-wrap gap-2 mb-4">
             {timeFilter && (
@@ -394,32 +342,28 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {" "}
                         <div className="text-sm text-gray-900">
                           {booking.tourName}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(booking.date)}
+                        {new Date(booking.date).toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {booking.participants}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                              booking.status
-                            )}`}
-                          >
-                            {booking.status}
-                          </span>
-                          {booking.status === "pending" && (
-                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 animate-pulse">
-                              Perlu tindakan
-                            </span>
-                          )}
-                        </div>
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                            booking.status
+                          )}`}
+                        >
+                          {booking.status}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
@@ -427,9 +371,9 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                           onClick={() => handleViewDetails(booking)}
                         >
                           Details
-                        </button>{" "}
+                        </button>
                         <button
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="text-blue-600 hover:text-blue-900"
                           onClick={() => handleSendMessage(booking)}
                         >
                           Message
@@ -481,18 +425,19 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
           )}
         </div>
       </div>
+
       {/* Modals */}
       <BookingDetailsModal
-        booking={selectedBooking}
+        booking={selectedBooking as BookingWithDetails}
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
         onStatusUpdate={handleStatusUpdate}
-      />{" "}
+      />
+
       <MessageModal
-        booking={selectedBooking}
+        booking={selectedBooking as BookingWithDetails}
         isOpen={showMessageModal}
         onClose={() => setShowMessageModal(false)}
-        onMessageSent={handleMessageSent}
       />
     </>
   );

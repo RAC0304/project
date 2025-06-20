@@ -13,68 +13,87 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-import { clients as clientsData, Client } from "../../../data/clients";
+import { useClients } from "../../../hooks/useClients";
+import type { ClientData } from "../../../services/clientsService";
 
 interface ClientsContentProps {
   tourGuideId: string;
 }
 
 const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const {
+    clients,
+    stats,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    total,
+    refreshClients,
+    updateFilters,
+    getClientDetails,
+    sendMessage,
+  } = useClients(tourGuideId);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientData | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const clientsPerPage = 10; // Load clients data on component mount
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const clientsPerPage = 10;
+
+  // Update filters when search term or status filter changes
   useEffect(() => {
-    const loadClients = () => {
-      // Load clients data - in a real app, this would filter by tourGuideId
-      setClients(clientsData);
-      setFilteredClients(clientsData);
-    };
+    updateFilters({
+      searchTerm,
+      status: statusFilter,
+      page: 1,
+      limit: clientsPerPage,
+    });
+  }, [searchTerm, statusFilter, updateFilters]);
 
-    loadClients();
-  }, [tourGuideId]);
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    updateFilters({
+      searchTerm,
+      status: statusFilter,
+      page,
+      limit: clientsPerPage,
+    });
+  };
+  const handleViewDetails = async (client: ClientData) => {
+    try {
+      const detailedClient = await getClientDetails(client.id);
+      setSelectedClient(detailedClient as ClientData);
+      setIsDetailModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch client details:", err);
+      // For now, just show the basic client data
+      setSelectedClient(client);
+      setIsDetailModalOpen(true);
+    }
+  };
 
-  // Filter clients based on search and status
-  useEffect(() => {
-    let filtered = clients;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (client) =>
-          client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleSendMessage = async (clientId: string) => {
+    try {
+      setSendingMessage(true);
+      await sendMessage(
+        clientId,
+        "Hello! This is a test message from your tour guide."
       );
+      // In a real app, you'd probably show a success notification here
+      alert("Message sent successfully!");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      alert("Failed to send message. Please try again.");
+    } finally {
+      setSendingMessage(false);
     }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((client) => client.status === statusFilter);
-    }
-
-    setFilteredClients(filtered);
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, clients]);
-
-  // Pagination
-  const indexOfLastClient = currentPage * clientsPerPage;
-  const indexOfFirstClient = indexOfLastClient - clientsPerPage;
-  const currentClients = filteredClients.slice(
-    indexOfFirstClient,
-    indexOfLastClient
-  );
-  const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  const handleViewDetails = (client: Client) => {
-    setSelectedClient(client);
-    setIsDetailModalOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -91,6 +110,35 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
     }).format(amount);
   };
 
+  // Show loading state
+  if (loading && clients.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+        <span className="ml-2 text-gray-600">Loading clients...</span>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertCircle className="w-8 h-8 text-red-600" />
+        <div className="ml-2">
+          <p className="text-red-600 font-medium">Error loading clients</p>
+          <p className="text-gray-600 text-sm">{error}</p>
+          <button
+            onClick={refreshClients}
+            className="mt-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header */}
@@ -100,8 +148,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
           Manage your client relationships and booking history
         </p>
       </div>
-
-      {/* Stats Cards */}
+      {/* Stats Cards */}{" "}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="flex items-center">
@@ -109,7 +156,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Total Clients</p>
               <p className="text-xl font-semibold text-gray-900">
-                {clients.length}
+                {stats?.totalClients || clients.length}
               </p>
             </div>
           </div>
@@ -122,7 +169,8 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                 Active Clients
               </p>
               <p className="text-xl font-semibold text-gray-900">
-                {clients.filter((c) => c.status === "active").length}
+                {stats?.activeClients ||
+                  clients.filter((c) => c.status === "active").length}
               </p>
             </div>
           </div>
@@ -135,7 +183,11 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                 Total Bookings
               </p>
               <p className="text-xl font-semibold text-gray-900">
-                {clients.reduce((sum, client) => sum + client.totalBookings, 0)}
+                {stats?.totalBookings ||
+                  clients.reduce(
+                    (sum, client) => sum + client.totalBookings,
+                    0
+                  )}
               </p>
             </div>
           </div>
@@ -146,20 +198,20 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Avg Rating</p>
               <p className="text-xl font-semibold text-gray-900">
-                {clients.length > 0
-                  ? (
-                      clients.reduce(
-                        (sum, client) => sum + client.averageRating,
-                        0
-                      ) / clients.length
-                    ).toFixed(1)
-                  : "0.0"}
+                {stats?.averageRating ||
+                  (clients.length > 0
+                    ? (
+                        clients.reduce(
+                          (sum, client) => sum + client.averageRating,
+                          0
+                        ) / clients.length
+                      ).toFixed(1)
+                    : "0.0")}
               </p>
             </div>
           </div>
         </div>
       </div>
-
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-4 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -193,7 +245,6 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
           </div>
         </div>
       </div>
-
       {/* Clients Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
@@ -227,8 +278,8 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentClients.length > 0 ? (
-                currentClients.map((client) => (
+              {clients.length > 0 ? (
+                clients.map((client: ClientData) => (
                   <tr key={client.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -236,7 +287,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                           <span className="text-sm font-medium text-teal-800">
                             {client.name
                               .split(" ")
-                              .map((n) => n[0])
+                              .map((n: string) => n[0])
                               .join("")
                               .toUpperCase()}
                           </span>
@@ -292,7 +343,11 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(client.lastBooking).toLocaleDateString("id-ID")}
+                      {client.lastBooking
+                        ? new Date(client.lastBooking).toLocaleDateString(
+                            "id-ID"
+                          )
+                        : "No bookings"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -303,8 +358,10 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => handleSendMessage(client.id)}
                         className="text-blue-600 hover:text-blue-900"
                         title="Send Message"
+                        disabled={sendingMessage}
                       >
                         <MessageSquare className="w-4 h-4" />
                       </button>
@@ -323,21 +380,20 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
               )}
             </tbody>
           </table>
-        </div>
-
+        </div>{" "}
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
               <button
-                onClick={() => paginate(currentPage - 1)}
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 Previous
               </button>
               <button
-                onClick={() => paginate(currentPage + 1)}
+                onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
@@ -348,20 +404,25 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
               <div>
                 <p className="text-sm text-gray-700">
                   Showing{" "}
-                  <span className="font-medium">{indexOfFirstClient + 1}</span>{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * clientsPerPage + 1}
+                  </span>{" "}
                   to{" "}
                   <span className="font-medium">
-                    {Math.min(indexOfLastClient, filteredClients.length)}
+                    {Math.min(
+                      currentPage * clientsPerPage,
+                      total || clients.length
+                    )}
                   </span>{" "}
                   of{" "}
-                  <span className="font-medium">{filteredClients.length}</span>{" "}
+                  <span className="font-medium">{total || clients.length}</span>{" "}
                   clients
                 </p>
               </div>
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
-                    onClick={() => paginate(currentPage - 1)}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
@@ -371,7 +432,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                     (number) => (
                       <button
                         key={number}
-                        onClick={() => paginate(number)}
+                        onClick={() => handlePageChange(number)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                           currentPage === number
                             ? "z-10 bg-teal-50 border-teal-500 text-teal-600"
@@ -383,7 +444,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                     )
                   )}
                   <button
-                    onClick={() => paginate(currentPage + 1)}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
@@ -395,7 +456,6 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
           </div>
         )}
       </div>
-
       {/* Client Detail Modal */}
       {isDetailModalOpen && selectedClient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -504,9 +564,11 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                         Last Booking:
                       </span>
                       <span className="text-sm font-medium text-gray-900">
-                        {new Date(
-                          selectedClient.lastBooking
-                        ).toLocaleDateString("id-ID")}
+                        {selectedClient.lastBooking
+                          ? new Date(
+                              selectedClient.lastBooking
+                            ).toLocaleDateString("id-ID")
+                          : "No bookings"}
                       </span>
                     </div>
                     <div className="flex justify-between">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Message {
   id: string;
@@ -18,99 +18,56 @@ interface Message {
 }
 
 interface MessagesContentProps {
-  messages?: Message[];
-  isLoading?: boolean;
+  tourGuideId: string;
 }
 
-const MessagesContent: React.FC<MessagesContentProps> = ({
-  messages = [],
-  isLoading = false,
-}) => {
+const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyText, setReplyText] = useState("");
 
-  const defaultMessages: Message[] = [
-    {
-      id: "1",
-      sender: {
-        name: "Sarah Johnson",
-        initials: "SJ",
-        time: "2 hours ago",
-      },
-      subject: "Re: Historic Rome Walking Tour",
-      preview:
-        "Hi! I wanted to ask about the meeting point for tomorrow's tour...",
-      isUnread: true,
-      messages: [
-        {
-          content:
-            "Hi! I wanted to ask about the meeting point for tomorrow's tour. Will it be at the Colosseum entrance or somewhere else?",
-          timestamp: "2 hours ago",
-          isFromGuide: false,
-        },
-      ],
-    },
-    {
-      id: "2",
-      sender: {
-        name: "David Chen",
-        initials: "DC",
-        time: "1 day ago",
-      },
-      subject: "Thank you for the amazing tour!",
-      preview:
-        "The Vatican tour was incredible. Thank you for making it so special...",
-      messages: [
-        {
-          content:
-            "The Vatican tour was incredible. Thank you for making it so special. Your knowledge of the art and history made everything come alive!",
-          timestamp: "1 day ago",
-          isFromGuide: false,
-        },
-        {
-          content:
-            "Thank you for your kind words, David! It was my pleasure to show you around the Vatican. I'm glad you enjoyed the experience!",
-          timestamp: "23 hours ago",
-          isFromGuide: true,
-        },
-      ],
-    },
-    {
-      id: "3",
-      sender: {
-        name: "Emma Wilson",
-        initials: "EW",
-        time: "3 days ago",
-      },
-      subject: "Booking Confirmation Required",
-      preview: "Could you please confirm our booking for the Colosseum tour...",
-      messages: [
-        {
-          content:
-            "Could you please confirm our booking for the Colosseum tour? We're a group of 4 and would like to do it next Tuesday.",
-          timestamp: "3 days ago",
-          isFromGuide: false,
-        },
-        {
-          content:
-            "Hi Emma! Yes, I can confirm your booking for next Tuesday. The tour will start at 9 AM at the Colosseum entrance.",
-          timestamp: "3 days ago",
-          isFromGuide: true,
-        },
-        {
-          content: "Perfect, thank you! Looking forward to it.",
-          timestamp: "2 days ago",
-          isFromGuide: false,
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/messages/${tourGuideId}`);
+        const data = await res.json();
+        // Transform Supabase data to Message[]
+        const transformed: Message[] = (data || []).map((msg: any) => ({
+          id: msg.id.toString(),
+          sender: {
+            name:
+              msg.sender?.first_name + " " + msg.sender?.last_name || "Unknown",
+            initials:
+              (msg.sender?.first_name?.[0] || "") +
+              (msg.sender?.last_name?.[0] || ""),
+            time: new Date(msg.sent_at).toLocaleString(),
+          },
+          subject: msg.subject || "No Subject",
+          preview: msg.content?.slice(0, 60) + "...",
+          isUnread: !msg.is_read,
+          messages: [
+            {
+              content: msg.content,
+              timestamp: new Date(msg.sent_at).toLocaleString(),
+              isFromGuide: msg.sender_id === Number(tourGuideId),
+            },
+          ],
+        }));
+        setMessages(transformed);
+      } catch (e) {
+        setMessages([]);
+      }
+      setIsLoading(false);
+    };
+    if (tourGuideId) fetchMessages();
+  }, [tourGuideId]);
 
   const handleReply = () => {
     if (!selectedMessage || !replyText.trim()) return;
 
-    const updatedMessages =
-      messages.length > 0 ? [...messages] : [...defaultMessages];
+    const updatedMessages = messages.length > 0 ? [...messages] : [];
     const messageIndex = updatedMessages.findIndex(
       (m) => m.id === selectedMessage.id
     );
@@ -126,7 +83,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({
     }
   };
 
-  const displayMessages = messages.length > 0 ? messages : defaultMessages;
+  const displayMessages = messages.length > 0 ? messages : [];
 
   if (isLoading) {
     return (

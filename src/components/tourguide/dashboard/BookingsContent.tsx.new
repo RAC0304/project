@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { getGuideBookings } from "../../../data/tourGuideDashboardData";
-import { updateBookingStatus } from "../../../data/bookings";
-import { Booking } from "../../../types/tourguide";
-import { formatCurrency } from "../../../utils/statusHelpers";
+import { getBookingsByGuide, updateBookingStatusSupabase, Booking } from "../../../services/bookingService";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import MessageModal from "../modals/MessageModal";
 import Toast from "../../common/Toast";
 
 interface BookingsContentProps {
-  tourGuideId: string;
+  tourGuideId: number;
 }
 
 const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
@@ -30,17 +27,9 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
   const itemsPerPage = 10;
   
   useEffect(() => {
-    loadBookings();
+    if (!tourGuideId) return;
+    getBookingsByGuide(tourGuideId).then(setBookings);
   }, [tourGuideId]);
-
-  const loadBookings = () => {
-    try {
-      const guideBookings = getGuideBookings(tourGuideId);
-      setBookings(guideBookings);
-    } catch (error) {
-      console.error("Error loading bookings:", error);
-    }
-  };
 
   // Filter bookings based on search term and filters
   const filteredBookings = bookings.filter((booking) => {
@@ -129,35 +118,18 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
   };
   
   // Handle status update
-  const handleStatusUpdate = (bookingId: string, newStatus: "confirmed" | "cancelled") => {
-    const updatedBooking = updateBookingStatus(bookingId, newStatus);
-    
-    if (updatedBooking) {
-      // Update the bookings list
-      setBookings(prevBookings => 
-        prevBookings.map(booking => 
-          booking.id === bookingId ? updatedBooking : booking
-        )
-      );
-      
-      // Update the selected booking if it's open in the modal
-      if (selectedBooking && selectedBooking.id === bookingId) {
-        setSelectedBooking(updatedBooking);
-      }
-      
-      // Show toast notification
+  const handleStatusUpdate = async (bookingId: number, newStatus: string) => {
+    try {
+      await updateBookingStatusSupabase(bookingId, newStatus);
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
       setToast({
         isVisible: true,
         type: 'success',
-        message: newStatus === 'confirmed' 
-          ? 'Booking has been accepted successfully!' 
-          : 'Booking has been rejected'
+        message: newStatus === 'confirmed' ? 'Booking has been accepted successfully!' : 'Booking has been rejected'
       });
-      
-      // Close the modal after a short delay
-      setTimeout(() => {
-        setShowDetailsModal(false);
-      }, 1500);
+      setTimeout(() => setShowDetailsModal(false), 1500);
+    } catch (error) {
+      setToast({ isVisible: true, type: 'error', message: 'Failed to update booking status.' });
     }
   };
   
