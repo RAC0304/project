@@ -14,6 +14,7 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
+  Database,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PROFILE_IMAGE } from "../../../constants/images";
@@ -55,7 +56,6 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
     logout(); // Call the logout function to destroy the session
     navigate("/login"); // Redirect the user to the login page
   };
-
   const menuItems = [
     {
       group: "Main",
@@ -84,6 +84,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
           id: "clients",
           label: "Clients",
           icon: <Users className="w-[18px] h-[18px]" />,
+        },
+        {
+          id: "tour-guides",
+          label: "Tour Guides Database",
+          icon: <Database className="w-[18px] h-[18px]" />,
         },
       ],
     },

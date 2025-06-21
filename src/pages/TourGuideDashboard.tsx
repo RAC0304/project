@@ -8,6 +8,7 @@ import ToursContent from "../components/tourguide/dashboard/ToursContent";
 import BookingsContent from "../components/tourguide/dashboard/BookingsContent";
 import ClientsContent from "../components/tourguide/dashboard/ClientsContent";
 import ReviewsContent from "../components/tourguide/dashboard/ReviewsContent";
+import TourGuidesListContent from "../components/tourguide/dashboard/TourGuidesListContent";
 import EditTourModal from "../components/tourguide/modals/EditTourModal";
 import Toast, { ToastType } from "../components/common/Toast";
 import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
@@ -288,9 +289,12 @@ const TourGuideDashboard: React.FC = () => {
           )}
           {activePage === "bookings" && (
             <BookingsContent tourGuideId={Number(user.id)} />
-          )}
+          )}{" "}
           {activePage === "clients" && <ClientsContent tourGuideId={user.id} />}
           {activePage === "reviews" && <ReviewsContent tourGuideId={user.id} />}
+          {activePage === "tour-guides" && (
+            <TourGuidesListContent loading={isLoading} />
+          )}
           {activePage === "messages" && tourGuideId && (
             <MessagesContent tourGuideId={tourGuideId.toString()} />
           )}

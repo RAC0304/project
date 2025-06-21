@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Star, MapPin, Globe, MessageCircle, Calendar } from "lucide-react";
 import { TourGuide } from "../../types";
 import BookingModal from "./BookingModal";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
 
 interface TourGuideCardProps {
   guide: TourGuide;
@@ -12,10 +13,10 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useEnhancedAuth();
 
   const handleBookNowClick = () => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (isLoggedIn) {
+    if (isLoggedIn && user) {
       setIsBookingModalOpen(true);
     } else {
       setShowWarningModal(true);

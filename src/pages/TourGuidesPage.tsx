@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Filter, X, Search } from "lucide-react";
-import { tourGuides } from "../data/tourGuides";
+import { getAllTourGuides, TourGuideData } from "../services/tourGuideService";
 import { TourGuide, TourGuideSpecialty } from "../types";
 import TourGuideCard from "../components/tour-guides/TourGuideCard";
 
 const TourGuidesPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [filteredGuides, setFilteredGuides] = useState<TourGuide[]>(tourGuides);
+  const [allGuides, setAllGuides] = useState<TourGuide[]>([]);
+  const [filteredGuides, setFilteredGuides] = useState<TourGuide[]>([]);
   const [selectedSpecialties, setSelectedSpecialties] = useState<
     TourGuideSpecialty[]
   >([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const specialties: { label: string; value: TourGuideSpecialty }[] = [
     { label: "Adventure", value: "adventure" },
@@ -25,16 +28,51 @@ const TourGuidesPage: React.FC = () => {
     { label: "Diving", value: "diving" },
   ];
 
-  // Get unique locations from tour guides data
+  // Fetch data dari Supabase saat mount
+  useEffect(() => {
+    setLoading(true);
+    getAllTourGuides()
+      .then((data) => {
+        // Mapping ke tipe TourGuide
+        const mapped = (data || []).map((g: TourGuideData): TourGuide => ({
+          id: String(g.id),
+          name: `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
+          specialties: g.specialties ? Object.keys(g.specialties) as TourGuideSpecialty[] : [],
+          location: g.location,
+          description: g.bio || g.short_bio || "",
+          shortBio: g.short_bio || g.bio || "",
+          imageUrl: g.users?.profile_picture || "/default-profile.png",
+          languages: g.tour_guide_languages?.map(l => l.language) || [],
+          experience: g.experience || 0,
+          rating: g.rating || 0,
+          reviewCount: g.review_count || 0,
+          contactInfo: {
+            email: g.users?.email || "",
+            phone: g.users?.phone || undefined,
+          },
+          availability: g.availability || "",
+          tours: [], // Anda bisa fetch tours jika ingin
+          isVerified: g.is_verified,
+          reviews: [], // Anda bisa fetch reviews jika ingin
+        }));
+        setAllGuides(mapped);
+        setError(null);
+      })
+      .catch(() => setError("Failed to fetch tour guides from server."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Get unique locations dari hasil fetch Supabase
   const locations = Array.from(
-    new Set(tourGuides.map((guide) => guide.location))
+    new Set(allGuides.map((guide) => guide.location))
   );
 
+  // Filtering dan search
   useEffect(() => {
     const searchTerm =
       searchParams.get("search")?.toLowerCase() || searchQuery.toLowerCase();
 
-    const filtered = tourGuides.filter((guide) => {
+    const filtered = allGuides.filter((guide) => {
       const matchesSearch = searchTerm
         ? guide.name.toLowerCase().includes(searchTerm) ||
           guide.location.toLowerCase().includes(searchTerm) ||
@@ -62,7 +100,7 @@ const TourGuidesPage: React.FC = () => {
     });
 
     setFilteredGuides(filtered);
-  }, [searchParams, selectedSpecialties, selectedLocation, searchQuery]);
+  }, [allGuides, searchParams, selectedSpecialties, selectedLocation, searchQuery]);
 
   const toggleSpecialty = (specialty: TourGuideSpecialty) => {
     setSelectedSpecialties((prev) =>
@@ -197,7 +235,11 @@ const TourGuidesPage: React.FC = () => {
         </div>
 
         {/* Tour guides grid */}
-        {filteredGuides.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12 text-gray-500">Loading...</div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">{error}</div>
+        ) : filteredGuides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGuides.map((guide) => (
               <TourGuideCard key={guide.id} guide={guide} />
