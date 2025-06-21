@@ -6,10 +6,17 @@ export interface TourGuideProfile {
   phone?: string;
   location?: string;
   countryOfOrigin?: string; // untuk user biasa
-  // bio?: string;
-  // languages?: string[];
-  // experience?: string;
   avatar?: string;
+  // Tour guide specific fields
+  bio?: string;
+  languages?: string[];
+  experience?: string | number;
+  specialties?: string[];
+  short_bio?: string;
+  availability?: string;
+  rating?: number;
+  review_count?: number;
+  is_verified?: boolean;
 }
 
 export interface User {

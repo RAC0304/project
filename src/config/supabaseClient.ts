@@ -34,6 +34,12 @@ if (!_supabaseGlobal._supabase) {
         persistSession: true,
         autoRefreshToken: true,
       },
+      global: {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      },
     }
   );
 }
@@ -43,7 +49,7 @@ export const supabase: SupabaseClient<Database> = _supabaseGlobal._supabase;
 // Simple test function to check connection
 export const testConnection = async () => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("destinations")
       .select("count")
       .limit(1)

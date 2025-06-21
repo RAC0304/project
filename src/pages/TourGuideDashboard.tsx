@@ -20,6 +20,10 @@ import {
 } from "../services/tourService";
 import { getTourGuideIdByUserId } from "../services/tourGuideService";
 import { getGuideStats } from "../services/guideStatsService";
+import { getUpcomingToursByGuide } from "../services/upcomingToursService";
+import { UpcomingTour } from "../services/upcomingToursService";
+import { Review } from "../services/recentReviewsService";
+import { getRecentReviewsByGuide } from "../services/recentReviewsService";
 
 const TourGuideDashboard: React.FC = () => {
   const { user } = useEnhancedAuth();
@@ -40,17 +44,129 @@ const TourGuideDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [tourGuideId, setTourGuideId] = useState<number | null>(null);
   const [guideStats, setGuideStats] = useState<GuideStats | null>(null);
+  const [upcomingTours, setUpcomingTours] = useState<UpcomingTour[]>([]);
+  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
 
   interface GuideStats {
     totalTours: number;
-    activeTours: number;
-    inactiveTours: number;
-    totalBookings: number;
+    upcomingTours: number;
     totalClients: number;
-    totalReviews: number;
     averageRating: number;
     monthlyEarnings: number;
+    responseRate: number;
+    monthlyBookings: number;
+    bookingsTrend?: string;
+    earningsTrend?: string;
+    clientsTrend?: string;
+    ratingTrend?: string;
   }
+
+  useEffect(() => {
+    if (!user) {
+      setTourGuideId(null);
+      setTours([]);
+      setGuideStats(null);
+    } else {
+      getTourGuideIdByUserId(Number(user.id)).then(setTourGuideId);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    if (!user || !tourGuideId) {
+      setTours([]);
+      setGuideStats(null);
+      setUpcomingTours([]);
+      setRecentReviews([]);
+      setIsLoading(false);
+    } else {
+      Promise.all([
+        getToursByGuide(tourGuideId).then((data) => setTours(data)),
+        getGuideStats(tourGuideId).then((stats) => {
+          const formattedStats: GuideStats = {
+            totalTours: stats.totalTours || 0,
+            upcomingTours: stats.activeTours || 0,
+            totalClients: stats.totalClients || 0,
+            averageRating: stats.averageRating || 0,
+            monthlyEarnings: stats.monthlyEarnings || 0,
+            responseRate: 94, // Dummy, sesuaikan jika ada data
+            monthlyBookings: stats.totalBookings || 0,
+            bookingsTrend: "100% this month", // Dummy, sesuaikan jika ada data
+            earningsTrend: `IDR ${stats.monthlyEarnings?.toLocaleString(
+              "id-ID"
+            )}`,
+            clientsTrend: `${stats.activeTours || 0} upcoming`,
+            ratingTrend: "Active guide",
+          };
+          setGuideStats(formattedStats);
+        }),
+        getUpcomingToursByGuide(tourGuideId).then(setUpcomingTours),
+        getRecentReviewsByGuide(tourGuideId).then(setRecentReviews),
+      ])
+        .catch((err) => {
+          console.error("Gagal mengambil data dari Supabase:", err);
+          showToast("error", "Gagal memuat data dashboard dari server.");
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [user, tourGuideId]);
+
+  // Tambahkan efek untuk refetch data dashboard setiap kali menu dashboard diaktifkan
+  useEffect(() => {
+    if (activePage === "dashboard") {
+      setIsLoading(true);
+      if (!user || !tourGuideId) {
+        setTours([]);
+        setGuideStats(null);
+        setUpcomingTours([]);
+        setRecentReviews([]);
+        setIsLoading(false);
+      } else {
+        Promise.all([
+          getToursByGuide(tourGuideId).then((data) => setTours(data)),
+          getGuideStats(tourGuideId).then((stats) => {
+            const formattedStats: GuideStats = {
+              totalTours: stats.totalTours || 0,
+              upcomingTours: stats.activeTours || 0,
+              totalClients: stats.totalClients || 0,
+              averageRating: stats.averageRating || 0,
+              monthlyEarnings: stats.monthlyEarnings || 0,
+              responseRate: 94,
+              monthlyBookings: stats.totalBookings || 0,
+              bookingsTrend: "100% this month",
+              earningsTrend: `IDR ${stats.monthlyEarnings?.toLocaleString(
+                "id-ID"
+              )}`,
+              clientsTrend: `${stats.activeTours || 0} upcoming`,
+              ratingTrend: "Active guide",
+            };
+            setGuideStats(formattedStats);
+          }),
+          getUpcomingToursByGuide(tourGuideId).then(setUpcomingTours),
+          getRecentReviewsByGuide(tourGuideId).then(setRecentReviews),
+        ])
+          .catch((err) => {
+            console.error("Gagal mengambil data dari Supabase:", err);
+            showToast("error", "Gagal memuat data dashboard dari server.");
+          })
+          .finally(() => setIsLoading(false));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage]);
+
+  const showToast = (type: ToastType, message: string) => {
+    setToast({
+      isVisible: true,
+      type,
+      message,
+    });
+  };
+
+  const hideToast = () => {
+    setToast((prev) => ({ ...prev, isVisible: false }));
+  };
 
   if (!user) {
     return (
@@ -64,16 +180,6 @@ const TourGuideDashboard: React.FC = () => {
     );
   }
 
-  const showToast = (type: ToastType, message: string) => {
-    setToast({
-      isVisible: true,
-      type,
-      message,
-    });
-  };
-  const hideToast = () => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
-  };
   const handleEditTour = (tour: Tour) => {
     setTourToEdit(tour);
     setIsEditModalOpen(true);
@@ -138,48 +244,6 @@ const TourGuideDashboard: React.FC = () => {
     setSidebarMinimized(!sidebarMinimized);
   };
 
-  useEffect(() => {
-    if (!user) {
-      setTourGuideId(null);
-      setTours([]);
-      setGuideStats(null);
-    } else {
-      getTourGuideIdByUserId(Number(user.id)).then(setTourGuideId);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    setIsLoading(true);
-
-    if (!user || !tourGuideId) {
-      setTours([]);
-      setGuideStats(null);
-      setIsLoading(false);
-    } else {
-      Promise.all([
-        getToursByGuide(tourGuideId).then((data) => setTours(data)),
-        getGuideStats(tourGuideId).then((stats) => {
-          const formattedStats: GuideStats = {
-            totalTours: stats.totalTours || 0,
-            activeTours: stats.activeTours || 0,
-            inactiveTours: stats.inactiveTours || 0,
-            totalBookings: stats.totalBookings || 0,
-            totalClients: stats.totalClients || 0,
-            totalReviews: stats.totalReviews || 0,
-            averageRating: stats.averageRating || 0,
-            monthlyEarnings: stats.monthlyEarnings || 0,
-          };
-          setGuideStats(formattedStats);
-        }),
-      ])
-        .catch((err) => {
-          console.error("Gagal mengambil data tours/stats dari Supabase:", err);
-          showToast("error", "Gagal memuat data tours/stats dari server.");
-        })
-        .finally(() => setIsLoading(false));
-    }
-  }, [user, tourGuideId]);
-
   return (
     <div className="flex h-screen bg-gray-50">
       <TourGuideSidebar
@@ -202,11 +266,14 @@ const TourGuideDashboard: React.FC = () => {
           </div>
         </div>
         <div className="px-4 pt-4">
+          {" "}
           {activePage === "dashboard" && (
             <DashboardContent
-              tours={tours}
-              isLoading={isLoading}
-              guideStats={guideStats}
+              guideStats={guideStats || undefined}
+              upcomingTours={upcomingTours}
+              recentReviews={recentReviews}
+              setActivePage={setActivePage}
+              loading={isLoading}
             />
           )}
           {activePage === "profile" && <ProfileContent user={user} />}

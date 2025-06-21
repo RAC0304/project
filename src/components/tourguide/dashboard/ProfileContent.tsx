@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Mail, Phone, Languages, Award, Clock, MapPin } from "lucide-react";
 import { User } from "../../../types";
 import Toast from "../../common/Toast";
 import { PROFILE_IMAGE } from "../../../constants/images";
+import supabase from "../../../config/supabaseClient";
 
 // Extended form data interface to include languages and experience
 interface ProfileFormData {
@@ -13,6 +14,9 @@ interface ProfileFormData {
   bio: string;
   languages: string;
   experience: string;
+  specialties: string; // comma separated
+  shortBio: string;
+  availability: string;
 }
 
 interface ProfileContentProps {
@@ -23,13 +27,17 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState({
     isVisible: false,
-    type: "success" as const,
+    type: "success" as "success" | "error",
     message: "",
   });
+  const [tourCount, setTourCount] = useState<number>(0);
 
   // Default values for languages and experience
   const defaultLanguages = "English, Spanish";
   const defaultExperience = "5+ years of guiding experience";
+  const defaultSpecialties = "Nature, Culture";
+  const defaultShortBio = "";
+  const defaultAvailability = "Available";
 
   // Form state
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -40,7 +48,78 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     bio: user?.profile.bio || "",
     languages: defaultLanguages,
     experience: defaultExperience,
+    specialties:
+      (user?.profile as { specialties?: string[] })?.specialties?.join(", ") ||
+      defaultSpecialties,
+    shortBio:
+      (user?.profile as { short_bio?: string })?.short_bio || defaultShortBio,
+    availability:
+      (user?.profile as { availability?: string })?.availability ||
+      defaultAvailability,
   });
+  // Fetch tour guide data from Supabase
+  const fetchTourGuide = useCallback(async () => {
+    if (!user) return;
+    // Fetch tour guide, user, tours
+    const { data } = await supabase
+      .from("tour_guides")
+      .select("*, users:user_id(*), tours:tours(*)")
+      .eq("user_id", user.id)
+      .single();
+    // Fetch tour_guide_languages
+    const { data: langData } = await supabase
+      .from("tour_guide_languages")
+      .select("language")
+      .eq("tour_guide_id", data?.id);
+    if (data) {
+      console.log("Fetched data:", data); // Debug log
+      let specialtiesStr = "";
+      if (data.specialties) {
+        if (Array.isArray(data.specialties)) {
+          specialtiesStr = data.specialties.join(", ");
+        } else if (typeof data.specialties === "object") {
+          // Convert JSONB object to comma-separated string
+          specialtiesStr = Object.keys(data.specialties)
+            .filter((k) => data.specialties[k])
+            .map((k) => k.charAt(0).toUpperCase() + k.slice(1)) // Capitalize first letter
+            .join(", ");
+        }
+      }
+      console.log("Processed specialties:", specialtiesStr); // Debug log
+
+      setFormData((prev) => ({
+        ...prev,
+        firstName: data.users?.first_name || "",
+        lastName: data.users?.last_name || "",
+        phone: data.users?.phone || "",
+        location: data.location || "",
+        bio: data.bio || "",
+        specialties: specialtiesStr || defaultSpecialties,
+        shortBio: data.short_bio || "",
+        experience: data.experience?.toString() || "",
+        availability: data.availability || "",
+        languages:
+          langData && langData.length > 0
+            ? langData.map((l) => l.language).join(", ")
+            : "",
+      }));
+      // Tours count
+      if (Array.isArray(data.tours)) {
+        setTourCount(data.tours.length);
+      } else {
+        // fallback: fetch count
+        const { count } = await supabase
+          .from("tours")
+          .select("id", { count: "exact", head: true })
+          .eq("tour_guide_id", data.id);
+        setTourCount(count || 0);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchTourGuide();
+  }, [fetchTourGuide]);
 
   // Handle input change
   const handleInputChange = (
@@ -54,36 +133,92 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Here you would typically send the updated data to your API
-    // For this example, we'll just simulate a successful update
-
-    setTimeout(() => {
-      // Show success notification
+    if (!user) return;
+    // Update tour_guides table
+    const specialtiesArr = formData.specialties
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const specialtiesObj = specialtiesArr.reduce((acc, cur) => {
+      acc[cur.toLowerCase()] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+    // Get tour_guide_id
+    const { data: guideData } = await supabase
+      .from("tour_guides")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    const tourGuideId = guideData?.id;
+    const { error: guideError } = await supabase
+      .from("tour_guides")
+      .update({
+        bio: formData.bio,
+        specialties: specialtiesObj,
+        short_bio: formData.shortBio,
+        experience: Number(formData.experience),
+        availability: formData.availability,
+        location: formData.location,
+      })
+      .eq("user_id", user.id);
+    // Update users table
+    const { error: userError } = await supabase
+      .from("users")
+      .update({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+      })
+      .eq("id", user.id); // Update tour_guide_languages
+    let langError = null;
+    if (tourGuideId) {
+      // Hapus semua dulu
+      await supabase
+        .from("tour_guide_languages")
+        .delete()
+        .eq("tour_guide_id", tourGuideId);
+      // Insert ulang
+      const langArr = formData.languages
+        .split(",")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      if (langArr.length > 0) {
+        const inserts = langArr.map((language) => ({
+          tour_guide_id: tourGuideId,
+          language,
+        }));
+        const { error: insError } = await supabase
+          .from("tour_guide_languages")
+          .insert(inserts);
+        langError = insError;
+      }
+    }
+    if (!guideError && !userError && !langError) {
       setToast({
         isVisible: true,
         type: "success",
         message: "Profile updated successfully!",
       });
-
-      // Exit editing mode
       setIsEditing(false);
-    }, 500);
+      // Fetch latest data from Supabase after update
+      await fetchTourGuide();
+    } else {
+      setToast({
+        isVisible: true,
+        type: "error",
+        message:
+          guideError?.message ||
+          userError?.message ||
+          langError?.message ||
+          "Update failed",
+      });
+    }
   };
 
   const handleEditClick = () => {
     // Enter editing mode and initialize form with current user data
-    setFormData({
-      firstName: user?.profile.firstName || "",
-      lastName: user?.profile.lastName || "",
-      phone: user?.profile.phone || "",
-      location: user?.profile.location || "",
-      bio: user?.profile.bio || "",
-      languages: defaultLanguages,
-      experience: defaultExperience,
-    });
     setIsEditing(true);
   };
 
@@ -91,6 +226,16 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     // Exit edit mode without saving
     setIsEditing(false);
   };
+
+  const SPECIALTIES_OPTIONS = [
+    "Adventure",
+    "Cultural",
+    "Historical",
+    "Nature",
+    "Culinary",
+    "Photography",
+    "Diving",
+  ];
 
   return (
     <>
@@ -107,8 +252,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         <div className="h-28 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
         <div className="px-6 py-6 md:px-8 md:py-8 -mt-20">
           <div className="flex flex-col md:flex-row">
-            {" "}
-            {/* Profile Image */}{" "}
+            {/* Profile Image */}
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 bg-white">
               <img
                 src={PROFILE_IMAGE}
@@ -120,15 +264,13 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
               <div className="flex flex-col md:flex-row md:items-start justify-between">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-                    {user?.profile.firstName} {user?.profile.lastName}
+                    {formData.firstName} {formData.lastName}
                   </h1>
 
-                  {user?.profile.location && (
+                  {formData.location && (
                     <div className="flex items-center space-x-2 mb-2">
                       <MapPin className="w-4 h-4 text-gray-600" />
-                      <span className="text-gray-700">
-                        {user.profile.location}
-                      </span>
+                      <span className="text-gray-700">{formData.location}</span>
                     </div>
                   )}
 
@@ -137,8 +279,14 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                       Tour Guide
                     </span>
                     <span className="inline-block px-3 py-1 text-sm bg-emerald-50 text-emerald-700 rounded-full">
-                      47 Tours
+                      {tourCount} Tours
                     </span>
+                    {(user?.profile as { is_verified?: boolean })
+                      ?.is_verified && (
+                      <span className="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full ml-2">
+                        Verified
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -167,9 +315,25 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
 
               <div className="mt-4">
                 <p className="text-gray-600">
-                  {user?.profile.bio ||
+                  {formData.bio ||
                     "No bio available. Add your professional bio to tell clients about your experience and expertise."}
                 </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-600">Rating:</span>
+                  <span className="font-semibold text-yellow-600">
+                    {(user?.profile as { rating?: number })?.rating ?? 0}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-600">Reviews:</span>
+                  <span className="font-semibold">
+                    {(user?.profile as { review_count?: number })
+                      ?.review_count ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -199,7 +363,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
               <div>
                 <p className="text-sm text-gray-500">Phone</p>
                 <p className="text-gray-800">
-                  {user?.profile.phone || "No phone available"}
+                  {formData.phone || "No phone available"}
                 </p>
               </div>
             </div>
@@ -248,7 +412,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                 readOnly
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -258,11 +421,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                   type="text"
                   name="firstName"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  value={
-                    isEditing
-                      ? formData.firstName
-                      : user?.profile.firstName || ""
-                  }
+                  value={formData.firstName}
                   onChange={handleInputChange}
                   readOnly={!isEditing}
                 />
@@ -275,15 +434,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                   type="text"
                   name="lastName"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                  value={
-                    isEditing ? formData.lastName : user?.profile.lastName || ""
-                  }
+                  value={formData.lastName}
                   onChange={handleInputChange}
                   readOnly={!isEditing}
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number
@@ -292,12 +448,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                 type="tel"
                 name="phone"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                value={isEditing ? formData.phone : user?.profile.phone || ""}
+                value={formData.phone}
                 onChange={handleInputChange}
                 readOnly={!isEditing}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Location
@@ -306,64 +461,147 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                 type="text"
                 name="location"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                value={
-                  isEditing ? formData.location : user?.profile.location || ""
-                }
+                value={formData.location}
                 onChange={handleInputChange}
                 readOnly={!isEditing}
               />
             </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Languages
+                </label>
+                <input
+                  type="text"
+                  name="languages"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  value={formData.languages}
+                  onChange={handleInputChange}
+                  readOnly={!isEditing}
+                  placeholder="English, Spanish, Indonesian, etc. (comma separated)"
+                />
+                {isEditing && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Separate languages with commas (e.g., "English, Spanish,
+                    Indonesian")
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Experience
+                </label>
+                <input
+                  type="text"
+                  name="experience"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                  value={formData.experience}
+                  onChange={handleInputChange}
+                  readOnly={!isEditing}
+                  placeholder="e.g., 5+ years of guiding experience"
+                />
+              </div>
+            </div>{" "}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Languages
+                Specialties
               </label>
-              <input
-                type="text"
-                name="languages"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                value={isEditing ? formData.languages : formData.languages}
-                onChange={handleInputChange}
-                readOnly={!isEditing}
-                placeholder="English, Spanish, Indonesian, etc. (comma separated)"
-              />
+              <div className="flex flex-wrap gap-2 mb-2">
+                {SPECIALTIES_OPTIONS.map((option) => {
+                  const selected = formData.specialties
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  const isChecked = selected.includes(option);
+
+                  return (
+                    <div
+                      key={option}
+                      className={`inline-flex items-center px-4 py-1 rounded-full select-none text-sm border transition-all duration-200 cursor-pointer
+                        ${
+                          isChecked
+                            ? "bg-teal-500 text-white border-teal-600 shadow-md transform scale-105"
+                            : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
+                        }
+                        ${isEditing ? "cursor-pointer" : "cursor-default"}
+                      `}
+                      onClick={() => {
+                        if (!isEditing) return;
+                        let updated: string[];
+                        if (isChecked) {
+                          updated = selected.filter((s) => s !== option);
+                        } else {
+                          updated = Array.from(new Set([...selected, option]));
+                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          specialties: updated.join(", "),
+                        }));
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        name="specialties"
+                        value={option}
+                        checked={isChecked}
+                        onChange={() => {}} // Handled by onClick above
+                        className="sr-only" // Hide default checkbox
+                        disabled={!isEditing}
+                      />
+                      {isChecked && (
+                        <svg
+                          className="mr-1 w-4 h-4 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                      {option}
+                    </div>
+                  );
+                })}
+              </div>
               {isEditing && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Separate languages with commas (e.g., "English, Spanish,
-                  Indonesian")
+                  Click to select or deselect specialties.
                 </p>
               )}
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Experience
+                Availability
               </label>
               <input
                 type="text"
-                name="experience"
+                name="availability"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                value={isEditing ? formData.experience : formData.experience}
+                value={formData.availability}
                 onChange={handleInputChange}
                 readOnly={!isEditing}
-                placeholder="e.g., 5+ years of guiding experience"
+                placeholder="Available, Unavailable, etc."
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bio
+                Short Bio
               </label>
               <textarea
-                rows={4}
-                name="bio"
+                rows={2}
+                name="shortBio"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                value={isEditing ? formData.bio : user?.profile.bio || ""}
+                value={formData.shortBio}
                 onChange={handleInputChange}
                 readOnly={!isEditing}
+                placeholder="Short summary about yourself"
               ></textarea>
             </div>
-
             <div className="flex justify-end space-x-3">
               {isEditing ? (
                 <>
