@@ -371,8 +371,7 @@ class CustomAuthService {
         error: "Registration failed. Please try again.",
       };
     }
-  }
-  async updateProfile(
+  }  async updateProfile(
     userId: string,
     updates: Partial<User["profile"]> & {
       avatar?: string;
@@ -392,12 +391,51 @@ class CustomAuthService {
         updateData.languages = updates.languages;
       if (updates.experience !== undefined)
         updateData.experience = updates.experience;
-      if ("avatar" in updates && updates.avatar !== undefined)
+      
+      // Handle avatar upload first if it's a base64 image
+      if (
+        "avatar" in updates &&
+        updates.avatar &&
+        updates.avatar.startsWith("data:image")
+      ) {
+        try {
+          console.log("Uploading profile image to storage...");
+          const { data: imageData, error: storageError } =
+            await this.uploadProfileImage(userId, updates.avatar);
+
+          if (storageError) {
+            console.error("Failed to upload profile image:", storageError);
+            throw new Error("Failed to upload profile image");
+          } else if (imageData?.path) {
+            // Get public URL for the uploaded image
+            const { data: urlData } = supabase.storage
+              .from("avatars")
+              .getPublicUrl(imageData.path);
+            
+            if (urlData?.publicUrl) {
+              updateData.profile_picture = urlData.publicUrl;
+              console.log("Profile image uploaded successfully, URL:", urlData.publicUrl);
+            }
+          }
+        } catch (imageError) {
+          console.error("Error processing profile image:", imageError);
+          throw imageError;
+        }
+      } else if ("avatar" in updates && updates.avatar && !updates.avatar.startsWith("data:image")) {
+        // If it's already a URL, use it directly
         updateData.profile_picture = updates.avatar;
-      // Add support for dateOfBirth and gender fields that are directly on the user
+      }
+        // Add support for dateOfBirth and gender fields that are directly on the user
       if (updates.dateOfBirth !== undefined)
         updateData.date_of_birth = updates.dateOfBirth;
       if (updates.gender !== undefined) updateData.gender = updates.gender;
+
+      // Validate the final update data before saving to database
+      const validation = this.validateProfileData(updateData);
+      if (!validation.isValid) {
+        console.error("Profile data validation failed:", validation.errors);
+        throw new Error(`Invalid profile data: ${validation.errors.join(', ')}`);
+      }
 
       const { error } = await supabase
         .from("users")
@@ -410,35 +448,6 @@ class CustomAuthService {
       if (error) {
         console.error("Supabase profile update error:", error);
         return false;
-      }
-
-      // Store avatar separately in storage if it's a new base64 image
-      if (
-        "avatar" in updates &&
-        updates.avatar &&
-        updates.avatar.startsWith("data:image")
-      ) {
-        try {
-          const { data: imageData, error: storageError } =
-            await this.uploadProfileImage(userId, updates.avatar);
-
-          if (storageError) {
-            console.error("Failed to upload profile image:", storageError);
-            // Continue despite image upload failure          } else if (imageData?.path) {
-            // Update user record with the new image URL
-            const { data: urlData } = supabase.storage
-              .from("avatars")
-              .getPublicUrl(imageData.path);
-            const imageUrl = urlData?.publicUrl;
-            await supabase
-              .from("users")
-              .update({ profile_picture: imageUrl })
-              .eq("id", userId);
-          }
-        } catch (imageError) {
-          console.error("Error processing profile image:", imageError);
-          // Continue despite image errors
-        }
       }
 
       await this.logSecurityEvent(
@@ -472,7 +481,13 @@ class CustomAuthService {
 
       const mimeType = matches[1];
       const base64Data = matches[2];
-      const buffer = Buffer.from(base64Data, "base64");
+      // Use Uint8Array for browser compatibility
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
 
       // Determine file extension based on MIME type
       let extension = "jpg";
@@ -484,7 +499,7 @@ class CustomAuthService {
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from("avatars")
-        .upload(`profiles/${filename}`, buffer, {
+        .upload(`profiles/${filename}`, byteArray, {
           contentType: mimeType,
           upsert: true,
         });
@@ -642,6 +657,40 @@ class CustomAuthService {
         console.error("Logout logging error:", error);
       }
     }
+  }
+  // Helper function to validate and sanitize profile update data
+  private validateProfileData(updates: Record<string, unknown>): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // Check if avatar is base64 data (which should not be saved directly to DB)
+    if (updates.profile_picture && typeof updates.profile_picture === 'string') {
+      if (updates.profile_picture.startsWith('data:image')) {
+        errors.push('Base64 image data should not be stored directly in database');
+      }
+      
+      // Check URL length (should be reasonable for a URL)
+      if (updates.profile_picture.length > 2000) {
+        errors.push('Profile picture URL is too long');
+      }
+    }
+    
+    // Validate other string fields for reasonable lengths
+    const stringFields = ['first_name', 'last_name', 'phone', 'location', 'experience'];
+    stringFields.forEach(field => {
+      if (updates[field] && typeof updates[field] === 'string' && (updates[field] as string).length > 255) {
+        errors.push(`${field} is too long (max 255 characters)`);
+      }
+    });
+    
+    // Validate bio length
+    if (updates.bio && typeof updates.bio === 'string' && updates.bio.length > 1000) {
+      errors.push('Bio is too long (max 1000 characters)');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 }
 

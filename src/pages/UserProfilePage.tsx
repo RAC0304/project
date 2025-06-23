@@ -196,13 +196,22 @@ const UserProfilePage: React.FC = () => {
       const previousImage = user?.profile?.avatar || "";
       setIsLoading(true);
 
-      const reader = new FileReader();
-
-      reader.onload = async (e) => {
+      const reader = new FileReader();      reader.onload = async (e) => {
         try {
           const result = e.target?.result as string;
 
           console.log("Image loaded, converting to base64...");
+
+          // Validate image size (optional: limit to reasonable size)
+          const base64Data = result.split(',')[1];
+          const sizeInBytes = (base64Data.length * 3) / 4;
+          const sizeInMB = sizeInBytes / (1024 * 1024);
+          
+          if (sizeInMB > 5) { // 5MB limit
+            alert("Image size too large. Please choose an image smaller than 5MB.");
+            setIsLoading(false);
+            return;
+          }
 
           // Show the image immediately for responsive UX
           setProfileImage(result);
@@ -219,7 +228,7 @@ const UserProfilePage: React.FC = () => {
 
             // Show more detailed error message
             const errorMessage =
-              "Failed to update profile image. This might be due to storage limits or network issues. Please try again later.";
+              "Failed to update profile image. This might be due to storage limits, network issues, or the image being too large. Please try again with a smaller image.";
             alert(errorMessage);
 
             // Restore previous image if update failed
@@ -244,6 +253,15 @@ const UserProfilePage: React.FC = () => {
             ) {
               errorMessage =
                 "Network error: Please check your internet connection and try again.";
+            } else if (
+              error.message.includes("too long") ||
+              error.message.includes("character varying")
+            ) {
+              errorMessage =
+                "Image data too large: Please try a smaller image or different format.";
+            } else if (error.message.includes("upload")) {
+              errorMessage =
+                "Failed to upload image to storage. Please try again or contact support.";
             }
           }
 
