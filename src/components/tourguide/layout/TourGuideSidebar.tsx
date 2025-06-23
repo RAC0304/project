@@ -86,11 +86,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
           label: "Clients",
           icon: <Users className="w-[18px] h-[18px]" />,
         },
-        {
-          id: "tour-guides",
-          label: "Tour Guides Database",
-          icon: <Database className="w-[18px] h-[18px]" />,
-        },
+        // {
+        //   id: "tour-guides",
+        //   label: "Tour Guides Database",
+        //   icon: <Database className="w-[18px] h-[18px]" />,
+        // },
       ],
     },
     {
