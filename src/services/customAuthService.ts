@@ -39,11 +39,6 @@ class CustomAuthService {
         password,
         userProfile.password
       );
-      console.log("[LOGIN DEBUG] Password check:", {
-        input: password,
-        hash: userProfile.password,
-        isPasswordValid,
-      });
       if (!isPasswordValid) {
         // Log failed login attempt
         await this.updateFailedLoginAttempts(userProfile.id);

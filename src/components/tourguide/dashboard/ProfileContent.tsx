@@ -23,6 +23,11 @@ interface ProfileContentProps {
   user: User | null;
 }
 
+const DEFAULT_PROFILE_IMAGE = (user?: User | null) =>
+  `https://api.dicebear.com/7.x/avataaars/svg?seed=${
+    user?.profile?.firstName || user?.profile?.lastName || "default"
+  }`;
+
 const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState({
@@ -31,6 +36,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     message: "",
   });
   const [tourCount, setTourCount] = useState<number>(0);
+  const [profileImage, setProfileImage] = useState<string>(
+    user?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
+  );
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   // Default values for languages and experience
   const defaultLanguages = "English, Spanish";
@@ -227,6 +236,82 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     setIsEditing(false);
   };
 
+  // Handle image upload (to Supabase Storage)
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({ isVisible: true, type: "error", message: "File size must be less than 5MB" });
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setToast({ isVisible: true, type: "error", message: "Please select an image file" });
+      return;
+    }
+    setIsImageLoading(true);
+    const fileExt = file.name.split('.').pop();
+    const filePath = `profiles/${user.id}.${fileExt}`;
+    try {
+      // Upload ke bucket avatars
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+      if (uploadError) {
+        setToast({ isVisible: true, type: "error", message: "Failed to upload image to storage." });
+        setIsImageLoading(false);
+        return;
+      }
+      // Get public URL
+      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl;
+      if (!publicUrl) {
+        setToast({ isVisible: true, type: "error", message: "Failed to get public URL." });
+        setIsImageLoading(false);
+        return;
+      }
+      setProfileImage(publicUrl);
+      // Update profile_picture di table users
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ profile_picture: publicUrl })
+        .eq("id", user.id);
+      if (!updateError) {
+        setToast({ isVisible: true, type: "success", message: "Profile image updated!" });
+      } else {
+        setToast({ isVisible: true, type: "error", message: "Failed to update profile image URL." });
+      }
+    } catch {
+      setToast({ isVisible: true, type: "error", message: "Failed to upload image. Please try again." });
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
+
+  // Remove image (reset to default in table)
+  const handleRemoveImage = async () => {
+    if (!user) return;
+    const defaultImage = DEFAULT_PROFILE_IMAGE(user);
+    setIsImageLoading(true);
+    try {
+      setProfileImage(defaultImage);
+      const { error } = await supabase
+        .from("users")
+        .update({ profile_picture: defaultImage })
+        .eq("id", user.id);
+      if (!error) {
+        setToast({ isVisible: true, type: "success", message: "Profile image removed." });
+      } else {
+        setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
+        setProfileImage(user?.profile_picture || "");
+      }
+    } catch {
+      setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
+      setProfileImage(user?.profile_picture || "");
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
+
   const SPECIALTIES_OPTIONS = [
     "Adventure",
     "Cultural",
@@ -246,18 +331,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         message={toast.message}
         onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
       />
-
       {/* Profile Header */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
         <div className="h-28 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
         <div className="px-6 py-6 md:px-8 md:py-8 -mt-20">
           <div className="flex flex-col md:flex-row">
             {/* Profile Image */}
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 bg-white">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 bg-white relative">
               <img
-                src={PROFILE_IMAGE}
+                src={profileImage}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                style={{ opacity: isImageLoading ? 0.5 : 1 }}
               />
             </div>
             <div className="flex-1">
@@ -602,6 +687,73 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                 placeholder="Short summary about yourself"
               ></textarea>
             </div>
+            {isEditing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Photo
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-300 bg-white">
+                    <img
+                      src={profileImage}
+                      alt="Profile Preview"
+                      className="w-full h-full object-cover"
+                      style={{ opacity: isImageLoading ? 0.5 : 1 }}
+                    />
+                  </div>
+                  {isEditing && (
+                    <div className="flex flex-col space-y-2">
+                      <label
+                        className={`inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-md cursor-pointer border border-teal-200 hover:bg-teal-100 transition-colors ${
+                          isImageLoading ? "opacity-70 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 5v14m7-7H5" />
+                        </svg>
+                        Upload New Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isImageLoading}
+                          className="hidden"
+                        />
+                      </label>
+                      {profileImage &&
+                        profileImage !== DEFAULT_PROFILE_IMAGE(user) && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            disabled={isImageLoading}
+                            className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md border border-gray-200 hover:bg-gray-200 transition-colors"
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Remove Photo
+                          </button>
+                        )}
+                      <span className="text-xs text-gray-500 mt-1">
+                        Max file size: 5MB. Supported formats: JPG, PNG, GIF
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="flex justify-end space-x-3">
               {isEditing ? (
                 <>
