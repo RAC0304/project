@@ -371,7 +371,8 @@ class CustomAuthService {
         error: "Registration failed. Please try again.",
       };
     }
-  }  async updateProfile(
+  }
+  async updateProfile(
     userId: string,
     updates: Partial<User["profile"]> & {
       avatar?: string;
@@ -391,7 +392,7 @@ class CustomAuthService {
         updateData.languages = updates.languages;
       if (updates.experience !== undefined)
         updateData.experience = updates.experience;
-      
+
       // Handle avatar upload first if it's a base64 image
       if (
         "avatar" in updates &&
@@ -411,21 +412,28 @@ class CustomAuthService {
             const { data: urlData } = supabase.storage
               .from("avatars")
               .getPublicUrl(imageData.path);
-            
+
             if (urlData?.publicUrl) {
               updateData.profile_picture = urlData.publicUrl;
-              console.log("Profile image uploaded successfully, URL:", urlData.publicUrl);
+              console.log(
+                "Profile image uploaded successfully, URL:",
+                urlData.publicUrl
+              );
             }
           }
         } catch (imageError) {
           console.error("Error processing profile image:", imageError);
           throw imageError;
         }
-      } else if ("avatar" in updates && updates.avatar && !updates.avatar.startsWith("data:image")) {
+      } else if (
+        "avatar" in updates &&
+        updates.avatar &&
+        !updates.avatar.startsWith("data:image")
+      ) {
         // If it's already a URL, use it directly
         updateData.profile_picture = updates.avatar;
       }
-        // Add support for dateOfBirth and gender fields that are directly on the user
+      // Add support for dateOfBirth and gender fields that are directly on the user
       if (updates.dateOfBirth !== undefined)
         updateData.date_of_birth = updates.dateOfBirth;
       if (updates.gender !== undefined) updateData.gender = updates.gender;
@@ -434,7 +442,9 @@ class CustomAuthService {
       const validation = this.validateProfileData(updateData);
       if (!validation.isValid) {
         console.error("Profile data validation failed:", validation.errors);
-        throw new Error(`Invalid profile data: ${validation.errors.join(', ')}`);
+        throw new Error(
+          `Invalid profile data: ${validation.errors.join(", ")}`
+        );
       }
 
       const { error } = await supabase
@@ -659,37 +669,59 @@ class CustomAuthService {
     }
   }
   // Helper function to validate and sanitize profile update data
-  private validateProfileData(updates: Record<string, unknown>): { isValid: boolean; errors: string[] } {
+  private validateProfileData(updates: Record<string, unknown>): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
-    
+
     // Check if avatar is base64 data (which should not be saved directly to DB)
-    if (updates.profile_picture && typeof updates.profile_picture === 'string') {
-      if (updates.profile_picture.startsWith('data:image')) {
-        errors.push('Base64 image data should not be stored directly in database');
+    if (
+      updates.profile_picture &&
+      typeof updates.profile_picture === "string"
+    ) {
+      if (updates.profile_picture.startsWith("data:image")) {
+        errors.push(
+          "Base64 image data should not be stored directly in database"
+        );
       }
-      
+
       // Check URL length (should be reasonable for a URL)
       if (updates.profile_picture.length > 2000) {
-        errors.push('Profile picture URL is too long');
+        errors.push("Profile picture URL is too long");
       }
     }
-    
+
     // Validate other string fields for reasonable lengths
-    const stringFields = ['first_name', 'last_name', 'phone', 'location', 'experience'];
-    stringFields.forEach(field => {
-      if (updates[field] && typeof updates[field] === 'string' && (updates[field] as string).length > 255) {
+    const stringFields = [
+      "first_name",
+      "last_name",
+      "phone",
+      "location",
+      "experience",
+    ];
+    stringFields.forEach((field) => {
+      if (
+        updates[field] &&
+        typeof updates[field] === "string" &&
+        (updates[field] as string).length > 255
+      ) {
         errors.push(`${field} is too long (max 255 characters)`);
       }
     });
-    
+
     // Validate bio length
-    if (updates.bio && typeof updates.bio === 'string' && updates.bio.length > 1000) {
-      errors.push('Bio is too long (max 1000 characters)');
+    if (
+      updates.bio &&
+      typeof updates.bio === "string" &&
+      updates.bio.length > 1000
+    ) {
+      errors.push("Bio is too long (max 1000 characters)");
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

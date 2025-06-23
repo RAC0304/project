@@ -196,19 +196,23 @@ const UserProfilePage: React.FC = () => {
       const previousImage = user?.profile?.avatar || "";
       setIsLoading(true);
 
-      const reader = new FileReader();      reader.onload = async (e) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
         try {
           const result = e.target?.result as string;
 
           console.log("Image loaded, converting to base64...");
 
           // Validate image size (optional: limit to reasonable size)
-          const base64Data = result.split(',')[1];
+          const base64Data = result.split(",")[1];
           const sizeInBytes = (base64Data.length * 3) / 4;
           const sizeInMB = sizeInBytes / (1024 * 1024);
-          
-          if (sizeInMB > 5) { // 5MB limit
-            alert("Image size too large. Please choose an image smaller than 5MB.");
+
+          if (sizeInMB > 5) {
+            // 5MB limit
+            alert(
+              "Image size too large. Please choose an image smaller than 5MB."
+            );
             setIsLoading(false);
             return;
           }
