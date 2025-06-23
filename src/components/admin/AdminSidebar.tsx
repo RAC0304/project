@@ -129,11 +129,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           isMinimized ? "w-20" : "w-72"
         } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col overflow-hidden`}
       >
-        {" "}        {/* Logo/Brand - Improved styling */}{" "}
+        {" "}
+        {/* Logo/Brand - Improved styling */}{" "}
         <div className="h-20 bg-gradient-to-r from-teal-600 to-emerald-600 flex items-center justify-center px-4 flex-shrink-0">
           <div className="flex items-center">
             <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-md overflow-hidden">
-              <AdminSidebarLogo width={48} height={48} className="object-contain" />
+              <AdminSidebarLogo
+                width={48}
+                height={48}
+                className="object-contain"
+              />
             </div>
             {!isMinimized && (
               <h1 className="ml-3 text-xl font-bold text-white tracking-wide">
@@ -148,7 +153,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             className={`flex ${
               isMinimized ? "justify-center" : "items-center space-x-4"
             }`}
-          >            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
+          >
+            {" "}
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <AdminSidebarLogo
                 width={48}
                 height={48}
