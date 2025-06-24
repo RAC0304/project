@@ -34,27 +34,45 @@ const TourGuidesPage: React.FC = () => {
     getAllTourGuides()
       .then((data) => {
         // Mapping ke tipe TourGuide
-        const mapped = (data || []).map((g: TourGuideData): TourGuide => ({
-          id: String(g.id),
-          name: `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
-          specialties: g.specialties ? Object.keys(g.specialties) as TourGuideSpecialty[] : [],
-          location: g.location,
-          description: g.bio || g.short_bio || "",
-          shortBio: g.short_bio || g.bio || "",
-          imageUrl: g.users?.profile_picture || "/default-profile.png",
-          languages: g.tour_guide_languages?.map(l => l.language) || [],
-          experience: g.experience || 0,
-          rating: g.rating || 0,
-          reviewCount: g.review_count || 0,
-          contactInfo: {
-            email: g.users?.email || "",
-            phone: g.users?.phone || undefined,
-          },
-          availability: g.availability || "",
-          tours: [], // Anda bisa fetch tours jika ingin
-          isVerified: g.is_verified,
-          reviews: [], // Anda bisa fetch reviews jika ingin
-        }));
+        const mapped = (data || []).map(
+          (g: TourGuideData): TourGuide => ({
+            id: String(g.id),
+            name:
+              `${g.users?.first_name || ""} ${
+                g.users?.last_name || ""
+              }`.trim() || "-",
+            specialties: g.specialties
+              ? (Object.keys(g.specialties) as TourGuideSpecialty[])
+              : [],
+            location: g.location,
+            description: g.bio || g.short_bio || "",
+            shortBio: g.short_bio || g.bio || "",
+            imageUrl: g.users?.profile_picture || "/default-profile.png",
+            languages: g.tour_guide_languages?.map((l) => l.language) || [],
+            experience: g.experience || 0,
+            rating: g.rating || 0,
+            reviewCount: g.review_count || 0,
+            contactInfo: {
+              email: g.users?.email || "",
+              phone: g.users?.phone || undefined,
+            },
+            availability: g.availability || "",
+            tours: g.tours
+              ? g.tours
+                  .filter((tour) => tour.is_active)
+                  .map((tour) => ({
+                    id: String(tour.id),
+                    title: tour.title,
+                    description: tour.description,
+                    duration: tour.duration,
+                    price: `$${Number(tour.price).toFixed(2)}`,
+                    maxGroupSize: tour.max_group_size,
+                  }))
+              : [],
+            isVerified: g.is_verified,
+            reviews: [], // Anda bisa fetch reviews jika ingin
+          })
+        );
         setAllGuides(mapped);
         setError(null);
       })
@@ -100,7 +118,13 @@ const TourGuidesPage: React.FC = () => {
     });
 
     setFilteredGuides(filtered);
-  }, [allGuides, searchParams, selectedSpecialties, selectedLocation, searchQuery]);
+  }, [
+    allGuides,
+    searchParams,
+    selectedSpecialties,
+    selectedLocation,
+    searchQuery,
+  ]);
 
   const toggleSpecialty = (specialty: TourGuideSpecialty) => {
     setSelectedSpecialties((prev) =>
@@ -123,6 +147,7 @@ const TourGuidesPage: React.FC = () => {
   return (
     <div className="pt-24 pb-16">
       <div className="container mx-auto px-4">
+        {" "}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
             Local Tour Guides
@@ -131,8 +156,61 @@ const TourGuidesPage: React.FC = () => {
             Connect with experienced local guides who can provide authentic
             experiences and insider knowledge of Indonesia
           </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-50 text-teal-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Verified Guides
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Local Expertise
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-50 text-purple-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+              </svg>
+              Personalized Tours
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-50 text-amber-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Top-Rated Experiences
+            </span>
+          </div>
         </div>
-
         {/* Search Bar */}
         <div className="max-w-lg mx-auto mb-8">
           <div className="relative">
@@ -154,7 +232,6 @@ const TourGuidesPage: React.FC = () => {
             )}
           </div>
         </div>
-
         {/* Filters section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -233,7 +310,6 @@ const TourGuidesPage: React.FC = () => {
             </div>
           </div>
         </div>
-
         {/* Tour guides grid */}
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading...</div>

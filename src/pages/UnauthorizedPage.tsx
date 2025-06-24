@@ -68,7 +68,13 @@ const UnauthorizedPage: React.FC = () => {
           className="flex flex-col sm:flex-row gap-3 mt-8"
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate("/");
+              }
+            }}
             className="flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

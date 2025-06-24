@@ -4,7 +4,7 @@ import ItineraryCard from "../components/itineraries/ItineraryCard";
 
 const ItinerariesPage: React.FC = () => {
   return (
-    <div className="pt-14 pb-16">
+    <div className="pt-32 pb-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
@@ -23,7 +23,6 @@ const ItinerariesPage: React.FC = () => {
         </div>
 
         {/* Custom itinerary CTA */}
-
       </div>
     </div>
   );

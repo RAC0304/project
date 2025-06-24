@@ -34,6 +34,17 @@ export interface TourGuideData {
   tour_guide_languages?: {
     language: string;
   }[];
+  // Join dengan tours
+  tours?: {
+    id: number;
+    title: string;
+    description: string;
+    location: string;
+    duration: string;
+    price: number;
+    max_group_size: number;
+    is_active: boolean;
+  }[];
 }
 
 // Interface untuk statistik tour guide
@@ -93,6 +104,16 @@ export async function getAllTourGuides(): Promise<TourGuideData[]> {
         ),
         tour_guide_languages (
           language
+        ),
+        tours (
+          id,
+          title,
+          description,
+          location,
+          duration,
+          price,
+          max_group_size,
+          is_active
         )
       `
       )
@@ -131,6 +152,16 @@ export async function getTourGuideById(
         ),
         tour_guide_languages (
           language
+        ),
+        tours (
+          id,
+          title,
+          description,
+          location,
+          duration,
+          price,
+          max_group_size,
+          is_active
         )
       `
       )

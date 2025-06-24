@@ -52,8 +52,10 @@ const LoginPage: React.FC = () => {
         navigate("/guide/dashboard");
       } else if (user.role === "admin") {
         navigate("/admin/dashboard");
-      } else {
+      } else if (user.role === "customer") {
         navigate("/home");
+      } else {
+        navigate("/unauthorized"); // Role tidak dikenal, redirect ke unauthorized
       }
     } else {
       setError(result.error || "Login failed");

@@ -69,10 +69,9 @@ const HistoryPage: React.FC = () => {
       setSelectedIcon(emoji);
     }
   };
-
   return (
     <div className="w-full px-6 md:px-12 lg:px-20 xl:px-32">
-      <div className="text-center mt-12 mb-16">
+      <div className="text-center mt-32 mb-16">
         <h1 className="text-4xl font-bold text-gray-800 mb-6">
           Travel History
         </h1>
@@ -85,10 +84,10 @@ const HistoryPage: React.FC = () => {
         {trips.map((trip) => (
           <div
             key={trip.id}
-            className="p-4 border rounded-lg shadow-sm bg-white flex items-center justify-between w-full"
+            className="p-6 border rounded-lg shadow-sm bg-white flex items-center justify-between w-full"
           >
             {" "}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <div className="w-16 h-16 relative group">
                 <img
                   src={trip.photo}
@@ -119,9 +118,9 @@ const HistoryPage: React.FC = () => {
       </div>{" "}
       {selectedGuide && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-xl mx-4 shadow-lg">
-            <div className="flex items-center mb-4">
-              <div className="w-16 h-16 relative group mr-4">
+          <div className="bg-white p-8 rounded-xl w-full max-w-xl mx-4 shadow-lg">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 relative group mr-6">
                 <img
                   src={selectedGuide.photo}
                   alt={selectedGuide.name}
@@ -142,14 +141,14 @@ const HistoryPage: React.FC = () => {
               </div>
             </div>
             <textarea
-              className="w-full p-2 border rounded-md mb-3"
+              className="w-full p-4 border rounded-md mb-5"
               placeholder="Share your experience..."
               rows={4}
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
             />
-            <div className="mb-3">
-              <p className="mb-1 font-medium">Rating:</p>
+            <div className="mb-5">
+              <p className="mb-2 font-medium">Rating:</p>
               <div className="flex space-x-1">
                 {[1, 2, 3, 4, 5].map((num) => (
                   <Star
@@ -167,9 +166,9 @@ const HistoryPage: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="mb-4">
-              <p className="mb-1 font-medium">Satisfaction:</p>
-              <div className="flex space-x-4 text-2xl">
+            <div className="mb-6">
+              <p className="mb-2 font-medium">Satisfaction:</p>
+              <div className="flex space-x-6 text-2xl">
                 {satisfactionIcons.map((icon, idx) => (
                   <span
                     key={idx}
@@ -206,7 +205,7 @@ const HistoryPage: React.FC = () => {
       )}
       {notification && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white px-8 py-5 rounded-lg shadow-md text-center max-w-xs">
+          <div className="bg-white px-10 py-6 rounded-lg shadow-md text-center max-w-xs">
             <p className="text-lg font-semibold text-green-600">
               {notification}
             </p>

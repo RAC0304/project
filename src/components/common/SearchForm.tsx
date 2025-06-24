@@ -1,38 +1,25 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Users } from 'lucide-react';
-import './SearchForm.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, MapPin, Calendar, Users } from "lucide-react";
+import "./SearchForm.css";
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
-  const [destination, setDestination] = useState('');
-  const [dates, setDates] = useState('');
-  const [travelers, setTravelers] = useState('');
-  // Set default date input properties for cross-browser compatibility
-  React.useEffect(() => {
-    const dateInput = document.getElementById('dates') as HTMLInputElement;
-    if (dateInput) {
-      // Handle calendar icon visibility
-      const calendarIcon = document.querySelector('.date-input-container .lucide-calendar');
-      if (calendarIcon) {
-        (calendarIcon as HTMLElement).style.display = 'block';
+  const [destination, setDestination] = useState("");
+  const [dates, setDates] = useState("");
+  const [travelers, setTravelers] = useState(""); // Handle date input click to show picker
+  const handleDateInputClick = (e: React.MouseEvent) => {
+    const target = e.currentTarget as HTMLInputElement;
+    // Only call showPicker if it's available and this is a direct user interaction
+    try {
+      if (target.showPicker && typeof target.showPicker === "function") {
+        target.showPicker();
       }
-
-      // Make the entire input clickable to show the calendar
-      dateInput.onclick = () => {
-        // This ensures the calendar dropdown appears when clicking anywhere in the input
-        dateInput.showPicker?.();
-      };
-
-      // Also make the container handle the click event
-      const container = document.querySelector('.date-input-container');
-      if (container) {
-        container.addEventListener('click', () => {
-          dateInput.showPicker?.();
-        });
-      }
+    } catch {
+      // Fallback: just focus the input which will show the picker on most browsers
+      target.focus();
     }
-  }, []);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +30,10 @@ const SearchForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-4">
       <div className="flex-1">
-        <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="destination"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Destination
         </label>
         <div className="relative">
@@ -59,24 +49,34 @@ const SearchForm: React.FC = () => {
             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
           />
         </div>
-      </div>      <div className="flex-1">
-        <label htmlFor="dates" className="block text-sm font-medium text-gray-700 mb-1">
+      </div>{" "}
+      <div className="flex-1">
+        <label
+          htmlFor="dates"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Dates
-        </label>        <div className="relative date-input-container">
-          <Calendar className="h-5 w-5 text-gray-400" />
+        </label>{" "}
+        <div className="relative date-input-container">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Calendar className="h-5 w-5 text-gray-400" />
+          </div>
           <input
             type="date"
             id="dates"
             value={dates}
             onChange={(e) => setDates(e.target.value)}
+            onClick={handleDateInputClick}
             placeholder="dd/mm/yyyy"
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 date-input"
+            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 date-input cursor-pointer"
           />
         </div>
       </div>
-
       <div className="flex-1">
-        <label htmlFor="travelers" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="travelers"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           Travelers
         </label>
         <div className="relative">
@@ -97,7 +97,6 @@ const SearchForm: React.FC = () => {
           </select>
         </div>
       </div>
-
       <div className="flex items-end">
         <button
           type="submit"

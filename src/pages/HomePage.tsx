@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   MapPin,
@@ -16,9 +16,19 @@ import ItineraryCard from "../components/itineraries/ItineraryCard";
 import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 import SearchForm from "../components/common/SearchForm";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 
 const HomePage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const { user } = useEnhancedAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Proteksi akses: hanya customer yang boleh
+    if (user && user.role !== "customer") {
+      navigate("/unauthorized");
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     // Delay to ensure animation works after component mounts

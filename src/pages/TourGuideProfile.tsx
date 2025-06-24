@@ -16,12 +16,18 @@ const TourGuideProfile: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    console.log("🔍 Loading tour guide ID:", id); // Debug log
     getTourGuideById(Number(id))
       .then((data) => {
+        console.log("📦 Raw tour guide data:", data); // Debug log
+        console.log("🎯 Tours found:", data?.tours); // Debug log
         setGuide(data);
         setError(null);
       })
-      .catch(() => setError("Tour guide not found."))
+      .catch((err) => {
+        console.error("❌ Error loading tour guide:", err); // Debug log
+        setError("Tour guide not found.");
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -56,30 +62,53 @@ const TourGuideProfile: React.FC = () => {
       </div>
     );
   }
-
   // Mapping Supabase data ke bentuk TourGuide (mock)
-  const mapToTourGuide = (g: TourGuideData): import("../types").TourGuide => ({
-    id: String(g.id),
-    name:
-      `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
-    specialties: g.specialties ? (Object.keys(g.specialties) as any) : [],
-    location: g.location,
-    description: g.bio || g.short_bio || "",
-    shortBio: g.short_bio || g.bio || "",
-    imageUrl: g.users?.profile_picture || "/default-profile.png",
-    languages: g.tour_guide_languages?.map((l) => l.language) || [],
-    experience: g.experience || 0,
-    rating: g.rating || 0,
-    reviewCount: g.review_count || 0,
-    contactInfo: {
-      email: g.users?.email || "",
-      phone: g.users?.phone || undefined,
-    },
-    availability: g.availability || "",
-    tours: [], // Anda bisa fetch tours jika ingin
-    isVerified: g.is_verified,
-    reviews: [], // Anda bisa fetch reviews jika ingin
-  });
+  const mapToTourGuide = (g: TourGuideData): import("../types").TourGuide => {
+    console.log("🗺️ Mapping guide data:", g); // Debug log
+    console.log("🎪 Raw tours before mapping:", g.tours); // Debug log
+
+    const mappedTours =
+      g.tours
+        ?.filter((tour) => tour.is_active)
+        .map((tour) => ({
+          id: String(tour.id),
+          title: tour.title,
+          description: tour.description,
+          duration: tour.duration,
+          price: `$${Number(tour.price).toFixed(2)}`,
+          maxGroupSize: tour.max_group_size,
+        })) || [];
+
+    console.log("🎯 Mapped tours:", mappedTours); // Debug log
+
+    return {
+      id: String(g.id),
+      name:
+        `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() ||
+        "-",
+      specialties: g.specialties
+        ? (Object.keys(
+            g.specialties
+          ) as import("../types").TourGuideSpecialty[])
+        : [],
+      location: g.location,
+      description: g.bio || g.short_bio || "",
+      shortBio: g.short_bio || g.bio || "",
+      imageUrl: g.users?.profile_picture || "/default-profile.png",
+      languages: g.tour_guide_languages?.map((l) => l.language) || [],
+      experience: g.experience || 0,
+      rating: g.rating || 0,
+      reviewCount: g.review_count || 0,
+      contactInfo: {
+        email: g.users?.email || "",
+        phone: g.users?.phone || undefined,
+      },
+      availability: g.availability || "",
+      tours: mappedTours,
+      isVerified: g.is_verified,
+      reviews: [], // Anda bisa fetch reviews jika ingin
+    };
+  };
 
   const mappedGuide = mapToTourGuide(guide);
   const fullName = mappedGuide.name;
@@ -143,24 +172,28 @@ const TourGuideProfile: React.FC = () => {
               <span className="font-medium text-gray-800">Availability:</span>{" "}
               {mappedGuide.availability}
             </p>
-          </div>
+          </div>{" "}
           <div className="mt-6">
-            <button
-              onClick={handleBookNowClick}
-              className="inline-flex items-center bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              <span>Book Now</span>
-            </button>
+            {mappedGuide.tours && mappedGuide.tours.length > 0 ? (
+              <button
+                onClick={handleBookNowClick}
+                className="inline-flex items-center bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                <span>Book Now</span>
+              </button>
+            ) : (
+              <span className="text-orange-500 italic">
+                No tours available for booking
+              </span>
+            )}
           </div>
-
           {isBookingModalOpen && (
             <BookingModal
               guide={mappedGuide}
               onClose={() => setIsBookingModalOpen(false)}
             />
           )}
-
           {showWarningModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
               <div className="bg-white rounded-lg p-6 max-w-sm mx-4 animate-fadeIn">
