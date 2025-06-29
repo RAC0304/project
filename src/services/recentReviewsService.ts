@@ -4,7 +4,7 @@ export interface Review {
   id: number;
   clientName: string;
   rating: number;
-  comment: string;
+  content: string;
   tour: string;
   date: string;
 }
@@ -51,12 +51,11 @@ export async function getRecentReviewsByGuide(
             .single();
           if (tourData) tour = tourData.title;
         }
-      }
-      return {
+      } return {
         id: review.id,
         clientName,
         rating: review.rating,
-        comment: review.content,
+        content: review.content,
         tour,
         date: review.created_at?.split("T")[0] || "",
       };

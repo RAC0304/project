@@ -21,7 +21,7 @@ interface UseClientsReturn {
   sendMessage: (clientId: string, message: string) => Promise<void>;
 }
 
-export const useClients = (tourGuideId: string): UseClientsReturn => {
+export const useClients = (tourGuideUserId: string): UseClientsReturn => {
   const [clients, setClients] = useState<ClientData[]>([]);
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,16 +35,15 @@ export const useClients = (tourGuideId: string): UseClientsReturn => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-
   const fetchClients = useCallback(async () => {
-    if (!tourGuideId) return;
+    if (!tourGuideUserId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const result = await clientsService.getClientsByTourGuide(
-        tourGuideId,
+      const result = await clientsService.getClientsByTourGuideUserId(
+        tourGuideUserId,
         filters
       );
       setClients(result.clients || []);
@@ -57,19 +56,19 @@ export const useClients = (tourGuideId: string): UseClientsReturn => {
     } finally {
       setLoading(false);
     }
-  }, [tourGuideId, filters]);
+  }, [tourGuideUserId, filters]);
 
   const fetchStats = useCallback(async () => {
-    if (!tourGuideId) return;
+    if (!tourGuideUserId) return;
 
     try {
-      const clientStats = await clientsService.getClientStats(tourGuideId);
+      const clientStats = await clientsService.getClientStatsByUserId(tourGuideUserId);
       setStats(clientStats);
     } catch (err) {
       console.error("Failed to fetch client stats:", err);
       // Don't set error state for stats as it's not critical
     }
-  }, [tourGuideId]);
+  }, [tourGuideUserId]);
 
   useEffect(() => {
     fetchClients();
@@ -90,27 +89,25 @@ export const useClients = (tourGuideId: string): UseClientsReturn => {
       ...newFilters,
       page: newFilters.page || 1, // Reset to page 1 when filters change (except when explicitly setting page)
     }));
-  }, []);
-
-  const getClientDetails = useCallback(
+  }, []); const getClientDetails = useCallback(
     async (clientId: string) => {
       try {
-        return await clientsService.getClientDetails(clientId, tourGuideId);
+        return await clientsService.getClientDetailsByUserId(clientId, tourGuideUserId);
       } catch (err) {
         throw new Error(
           err instanceof Error ? err.message : "Failed to fetch client details"
         );
       }
     },
-    [tourGuideId]
+    [tourGuideUserId]
   );
 
   const sendMessage = useCallback(
     async (clientId: string, message: string) => {
       try {
-        await clientsService.sendMessageToClient(
+        await clientsService.sendMessageToClientByUserId(
           clientId,
-          tourGuideId,
+          tourGuideUserId,
           message
         );
         // In a real app, you might want to show a success notification here
@@ -120,7 +117,7 @@ export const useClients = (tourGuideId: string): UseClientsReturn => {
         );
       }
     },
-    [tourGuideId]
+    [tourGuideUserId]
   );
 
   return {

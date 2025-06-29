@@ -45,7 +45,7 @@ export interface Review {
     id: number;
     clientName: string;
     rating: number;
-    comment: string;
+    content: string;
     tour: string;
     date: string;
 }

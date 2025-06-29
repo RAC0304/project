@@ -19,7 +19,7 @@ export interface Review {
   clientName: string;
   rating: number;
   date: string;
-  comment: string;
+  content: string;
   tour: string;
 }
 

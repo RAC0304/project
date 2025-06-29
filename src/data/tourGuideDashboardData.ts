@@ -155,32 +155,30 @@ export const upcomingTours: UpcomingTour[] = [
   },
 ];
 
-export const recentReviews: Review[] = [
-  {
-    id: 1,
-    clientName: "Sarah Johnson",
-    rating: 5,
-    comment:
-      "Amazing tour! The guide was incredibly knowledgeable about Jakarta's history and made the city come alive.",
-    tour: "Historic Jakarta Walking Tour",
-    date: "2024-01-10",
-  },
-  {
-    id: 2,
-    clientName: "David Chen",
-    rating: 5,
-    comment: "Best guide ever! Highly recommend for anyone visiting Borobudur.",
-    tour: "Borobudur Sunrise Private Tour",
-    date: "2024-01-08",
-  },
-  {
-    id: 3,
-    clientName: "Emma Wilson",
-    rating: 4,
-    comment: "Great experience in Bali, very professional and friendly.",
-    tour: "Bali Cultural Experience",
-    date: "2024-01-05",
-  },
+export const recentReviews: Review[] = [{
+  id: 1,
+  clientName: "Sarah Johnson",
+  rating: 5,
+  content:
+    "Amazing tour! The guide was incredibly knowledgeable about Jakarta's history and made the city come alive.",
+  tour: "Historic Jakarta Walking Tour",
+  date: "2024-01-10",
+},
+{
+  id: 2,
+  clientName: "David Chen",
+  rating: 5,
+  content: "Best guide ever! Highly recommend for anyone visiting Borobudur.",
+  tour: "Borobudur Sunrise Private Tour",
+  date: "2024-01-08",
+}, {
+  id: 3,
+  clientName: "Emma Wilson",
+  rating: 4,
+  content: "Great experience in Bali, very professional and friendly.",
+  tour: "Bali Cultural Experience",
+  date: "2024-01-05",
+},
 ];
 
 export const tours: TourData[] = [

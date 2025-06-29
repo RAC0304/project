@@ -20,10 +20,10 @@ import { useClients } from "../../../hooks/useClients";
 import type { ClientData } from "../../../services/clientsService";
 
 interface ClientsContentProps {
-  tourGuideId: string;
+  tourGuideUserId: string;
 }
 
-const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
+const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideUserId }) => {
   const {
     clients,
     stats,
@@ -36,7 +36,7 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
     updateFilters,
     getClientDetails,
     sendMessage,
-  } = useClients(tourGuideId);
+  } = useClients(tourGuideUserId);// Pass user ID to the hook
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -138,11 +138,9 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
       </div>
     );
   }
-
   return (
     <>
-      {/* Header */}
-      <div className="mb-6">
+      {/* Header */}      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Clients</h1>
         <p className="text-gray-600">
           Manage your client relationships and booking history
@@ -201,11 +199,11 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                 {stats?.averageRating ||
                   (clients.length > 0
                     ? (
-                        clients.reduce(
-                          (sum, client) => sum + client.averageRating,
-                          0
-                        ) / clients.length
-                      ).toFixed(1)
+                      clients.reduce(
+                        (sum, client) => sum + client.averageRating,
+                        0
+                      ) / clients.length
+                    ).toFixed(1)
                     : "0.0")}
               </p>
             </div>
@@ -345,8 +343,8 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {client.lastBooking
                         ? new Date(client.lastBooking).toLocaleDateString(
-                            "id-ID"
-                          )
+                          "id-ID"
+                        )
                         : "No bookings"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -433,11 +431,10 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                       <button
                         key={number}
                         onClick={() => handlePageChange(number)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === number
-                            ? "z-10 bg-teal-50 border-teal-500 text-teal-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === number
+                          ? "z-10 bg-teal-50 border-teal-500 text-teal-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
                       >
                         {number}
                       </button>
@@ -566,8 +563,8 @@ const ClientsContent: React.FC<ClientsContentProps> = ({ tourGuideId }) => {
                       <span className="text-sm font-medium text-gray-900">
                         {selectedClient.lastBooking
                           ? new Date(
-                              selectedClient.lastBooking
-                            ).toLocaleDateString("id-ID")
+                            selectedClient.lastBooking
+                          ).toLocaleDateString("id-ID")
                           : "No bookings"}
                       </span>
                     </div>

@@ -144,7 +144,6 @@ export interface Review {
     avatar: string;
     specialty: string;
   };
-  comment: string; // User's comment for the review
 }
 
 // User Authentication Types

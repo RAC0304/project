@@ -51,7 +51,7 @@ interface Review {
   id: number;
   clientName: string;
   rating: number;
-  comment: string;
+  content: string;
   tour: string;
   date: string;
 }
@@ -77,7 +77,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   guideStats,
   upcomingTours = [],
   recentReviews = [],
-  setActivePage = () => {},
+  setActivePage = () => { },
   loading = false,
 }) => {
   const [selectedTour, setSelectedTour] = useState<UpcomingTour | null>(null);
@@ -328,19 +328,17 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={`${review.id}-${i}`}
-                            className={`w-3 h-3 ${
-                              i < review.rating
+                            className={`w-3 h-3 ${i < review.rating
                                 ? "text-yellow-400 fill-yellow-400"
                                 : "text-gray-300"
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>
                     </div>
                     <span className="text-xs text-gray-500">{review.date}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    "{review.comment}"
+                  </div>                  <p className="text-sm text-gray-600 mb-2">
+                    "{review.content}"
                   </p>
                   <p className="text-xs text-gray-500">Tour: {review.tour}</p>
                 </div>

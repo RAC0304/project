@@ -1,8 +1,10 @@
-import React, { useState, useRef } from "react";
-import { Booking } from "../../../types/tourguide";
+import React, { useState, useRef, useContext } from "react";
+import { BookingWithDetails } from "../../../services/bookingDetailsService";
+import { sendMessage } from "../../../services/messageService";
+import { AuthContext } from "../../../contexts/EnhancedAuthContext";
 
 interface MessageModalProps {
-  booking: Booking | null;
+  booking: BookingWithDetails | null;
   isOpen: boolean;
   onClose: () => void;
   onMessageSent?: (message: string) => void;
@@ -17,7 +19,12 @@ const MessageModal: React.FC<MessageModalProps> = ({
   const [message, setMessage] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get current user from AuthContext
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user;
 
   if (!isOpen || !booking) return null;
 
@@ -27,43 +34,59 @@ const MessageModal: React.FC<MessageModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleClose = () => {
+    setError(null);
+    setMessage("");
+    setFiles(null);
+    onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // TODO: Implement actual message sending with file upload
-    console.log("Sending message to:", booking.userName, "Message:", message);
-
-    if (files) {
-      console.log(
-        "Files to upload:",
-        Array.from(files).map((file) => file.name)
-      );
+    if (!currentUser) {
+      setError("You must be logged in to send messages");
+      return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setMessage("");
-      setFiles(null);
+    setIsSubmitting(true);
+    setError(null);
 
-      // Call the callback to show success notification in parent
-      if (onMessageSent) {
-        onMessageSent(message);
+    try {      // Send message using messageService
+      const result = await sendMessage(
+        Number(currentUser.id),
+        Number(booking.user_id), // customer user_id from booking
+        message,
+        // We'll need to get tour_guide_id from booking or user profile
+      );
+
+      if (result.success) {
+        // Reset form
+        setMessage("");
+        setFiles(null);
+
+        // Call the callback to show success notification in parent
+        if (onMessageSent) {
+          onMessageSent(message);
+        }        // Close modal
+        handleClose();
+      } else {
+        setError(result.error || "Failed to send message");
       }
-
-      // Close modal immediately
-      onClose();
-    }, 1000);
+    } catch (error) {
+      setError("An error occurred while sending the message");
+      console.error("Error sending message:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Send Message</h2>
-          <button
-            onClick={onClose}
+          <h2 className="text-xl font-semibold text-gray-900">Send Message</h2>          <button
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
             <svg
@@ -80,12 +103,16 @@ const MessageModal: React.FC<MessageModalProps> = ({
               />
             </svg>
           </button>
-        </div>
-
-        <div className="mb-4">
+        </div>        <div className="mb-4">
           <p className="text-gray-600">To: {booking.userName}</p>
           <p className="text-gray-600 text-sm">Booking: {booking.tourName}</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -151,15 +178,14 @@ const MessageModal: React.FC<MessageModalProps> = ({
             )}
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
+          <div className="flex justify-end space-x-2">            <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
             <button
               type="submit"
               className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center"

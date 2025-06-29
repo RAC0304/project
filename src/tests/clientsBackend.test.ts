@@ -212,13 +212,11 @@ describe("ClientsService", () => {
             duration: "8 hours",
           },
         },
-      ];
-
-      const mockReviewsData = [
+      ]; const mockReviewsData = [
         {
           id: "review-1",
           rating: 5,
-          comment: "Excellent tour!",
+          content: "Excellent tour!",
           created_at: "2024-06-16T00:00:00Z",
           tours: {
             id: "tour-1",

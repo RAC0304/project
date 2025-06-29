@@ -33,11 +33,40 @@ export interface ClientFilters {
   limit?: number;
 }
 
-class ClientsService {
+class ClientsService {  /**
+   * Get all clients for a specific tour guide by user ID
+   * This function takes a user ID and converts it to the tour guide profile ID
+   */  async getClientsByTourGuideUserId(
+  tourGuideUserId: string,
+  filters: ClientFilters = {}
+) {
+    try {
+      // First, get the tour guide profile ID from the user ID
+      const { data: tourGuides, error: tourGuideError } = await supabase
+        .from("tour_guides")
+        .select("id")
+        .eq("user_id", tourGuideUserId);
+
+      if (tourGuideError) {
+        throw new Error(`Error fetching tour guide profile: ${tourGuideError.message}`);
+      }
+
+      if (!tourGuides || tourGuides.length === 0) {
+        return { clients: [], total: 0, page: 1, totalPages: 0 };
+      }
+
+      const tourGuideId = tourGuides[0].id;
+
+      // Now use the existing function with the tour guide ID
+      return await this.getClientsByTourGuide(tourGuideId.toString(), filters);
+    } catch (error) {
+      console.error("Error in getClientsByTourGuideUserId:", error);
+      throw error;
+    }
+  }
   /**
-   * Get all clients for a specific tour guide
-   */
-  async getClientsByTourGuide(
+   * Get all clients for a specific tour guide (using tour guide profile ID)
+   */  async getClientsByTourGuide(
     tourGuideId: string,
     filters: ClientFilters = {}
   ) {
@@ -88,7 +117,7 @@ class ClientsService {
 
       if (!bookingsData) {
         return { clients: [], total: 0 };
-      } // Process the data to create client summaries
+      }// Process the data to create client summaries
       interface BookingData {
         id: string;
         user_id: string;
@@ -190,11 +219,10 @@ class ClientsService {
         (a, b) =>
           new Date(b.lastBooking || 0).getTime() -
           new Date(a.lastBooking || 0).getTime()
-      );
-
-      // Apply pagination
+      );      // Apply pagination
       const total = clients.length;
       const paginatedClients = clients.slice(offset, offset + limit);
+
       return {
         clients: paginatedClients as ClientData[],
         total,
@@ -206,9 +234,40 @@ class ClientsService {
       throw error;
     }
   }
+  /**
+   * Get client statistics for a tour guide by user ID
+   */
+  async getClientStatsByUserId(tourGuideUserId: string): Promise<ClientStats> {
+    try {
+      // First, get the tour guide profile ID from the user ID
+      const { data: tourGuides, error: tourGuideError } = await supabase
+        .from("tour_guides")
+        .select("id")
+        .eq("user_id", tourGuideUserId);
+
+      if (tourGuideError) {
+        throw new Error(`Error fetching tour guide profile: ${tourGuideError.message}`);
+      } if (!tourGuides || tourGuides.length === 0) {
+        return {
+          totalClients: 0,
+          activeClients: 0,
+          totalBookings: 0,
+          averageRating: 0,
+        };
+      }
+
+      const tourGuideId = tourGuides[0].id;
+
+      // Now use the existing function with the tour guide ID
+      return await this.getClientStats(tourGuideId.toString());
+    } catch (error) {
+      console.error("Error in getClientStatsByUserId:", error);
+      throw error;
+    }
+  }
 
   /**
-   * Get client statistics for a tour guide
+   * Get client statistics for a tour guide (using tour guide profile ID)
    */
   async getClientStats(tourGuideId: string): Promise<ClientStats> {
     try {
@@ -276,6 +335,36 @@ class ClientsService {
   /**
    * Get detailed client information including booking history
    */
+  /**
+   * Get detailed client information by user ID
+   */
+  async getClientDetailsByUserId(clientId: string, tourGuideUserId: string) {
+    try {
+      // First, get the tour guide profile ID from the user ID
+      const { data: tourGuides, error: tourGuideError } = await supabase
+        .from("tour_guides")
+        .select("id")
+        .eq("user_id", tourGuideUserId);
+
+      if (tourGuideError) {
+        throw new Error(`Error fetching tour guide profile: ${tourGuideError.message}`);
+      }
+
+      if (!tourGuides || tourGuides.length === 0) {
+        throw new Error(`No tour guide profile found for user ID: ${tourGuideUserId}`);
+      } const tourGuideId = tourGuides[0].id;
+
+      // Now use the existing function with the tour guide ID
+      return await this.getClientDetails(clientId, tourGuideId.toString());
+    } catch (error) {
+      console.error("Error in getClientDetailsByUserId:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed client information (using tour guide profile ID)
+   */
   async getClientDetails(clientId: string, tourGuideId: string) {
     try {
       // Get client basic info
@@ -332,25 +421,26 @@ class ClientsService {
         throw new Error(
           `Error fetching booking history: ${bookingsError.message}`
         );
-      }
-
-      // Get reviews from this client for this tour guide's tours
+      }      // Get reviews from this client for this tour guide's tours (via bookings -> tours)
       const { data: reviewsData, error: reviewsError } = await supabase
         .from("reviews")
-        .select(
-          `
+        .select(`
           id,
           rating,
-          comment,
+          content,
           created_at,
-          tours (
+          bookings(
             id,
-            title
+            tour_id,
+            tours(
+              id,
+              title,
+              tour_guide_id
+            )
           )
-        `
-        )
+        `)
         .eq("user_id", clientId)
-        .eq("tours.tour_guide_id", tourGuideId)
+        .eq("bookings.tours.tour_guide_id", tourGuideId)
         .order("created_at", { ascending: false });
 
       if (reviewsError) {
@@ -367,7 +457,7 @@ class ClientsService {
       const averageRating =
         reviewsData && reviewsData.length > 0
           ? reviewsData.reduce((sum, review) => sum + review.rating, 0) /
-            reviewsData.length
+          reviewsData.length
           : 0;
 
       const lastBooking =
@@ -406,6 +496,39 @@ class ClientsService {
 
   /**
    * Send message to client (placeholder for future implementation)
+   */  /**
+ * Send message to client by user ID
+ */
+  async sendMessageToClientByUserId(
+    clientId: string,
+    tourGuideUserId: string,
+    message: string
+  ) {
+    try {
+      // First, get the tour guide profile ID from the user ID
+      const { data: tourGuides, error: tourGuideError } = await supabase
+        .from("tour_guides")
+        .select("id")
+        .eq("user_id", tourGuideUserId);
+
+      if (tourGuideError) {
+        throw new Error(`Error fetching tour guide profile: ${tourGuideError.message}`);
+      }
+
+      if (!tourGuides || tourGuides.length === 0) {
+        throw new Error(`No tour guide profile found for user ID: ${tourGuideUserId}`);
+      } const tourGuideId = tourGuides[0].id;
+
+      // Now use the existing function with the tour guide ID
+      return await this.sendMessageToClient(clientId, tourGuideId.toString(), message);
+    } catch (error) {
+      console.error("Error in sendMessageToClientByUserId:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send message to client (using tour guide profile ID)
    */
   async sendMessageToClient(
     clientId: string,
