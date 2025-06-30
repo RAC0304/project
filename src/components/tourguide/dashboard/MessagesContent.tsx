@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "../../../utils/supabaseClient";
 
 interface Message {
   id: string;
   sender: {
+    id: string;
     name: string;
     initials: string;
     time: string;
   };
-  subject: string;
   preview: string;
   isUnread?: boolean;
   messages: {
@@ -26,60 +27,234 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  // Gunakan kembali prop tourGuideId agar dinamis
+  const effectiveTourGuideId = tourGuideId;
 
   useEffect(() => {
     const fetchMessages = async () => {
+      console.log(
+        "🔍 Fetching messages for tourGuideId:",
+        effectiveTourGuideId
+      );
       setIsLoading(true);
-      try {
-        const res = await fetch(`/api/messages/${tourGuideId}`);
-        const data = await res.json();
-        // Transform Supabase data to Message[]
-        const transformed: Message[] = (data || []).map((msg: any) => ({
-          id: msg.id.toString(),
-          sender: {
-            name:
-              msg.sender?.first_name + " " + msg.sender?.last_name || "Unknown",
-            initials:
-              (msg.sender?.first_name?.[0] || "") +
-              (msg.sender?.last_name?.[0] || ""),
-            time: new Date(msg.sent_at).toLocaleString(),
-          },
-          subject: msg.subject || "No Subject",
-          preview: msg.content?.slice(0, 60) + "...",
-          isUnread: !msg.is_read,
-          messages: [
-            {
-              content: msg.content,
-              timestamp: new Date(msg.sent_at).toLocaleString(),
-              isFromGuide: msg.sender_id === Number(tourGuideId),
-            },
-          ],
-        }));
-        setMessages(transformed);
-      } catch (e) {
+
+      // First get the user_id for this tour guide
+      const { data: tourGuideData, error: tourGuideError } = await supabase
+        .from("tour_guides")
+        .select("user_id")
+        .eq("id", effectiveTourGuideId)
+        .single();
+
+      if (tourGuideError || !tourGuideData) {
+        console.error("❌ Error fetching tour guide user_id:", tourGuideError);
         setMessages([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const tourGuideUserId = tourGuideData.user_id;
+      console.log("✅ Found tour guide user_id:", tourGuideUserId);
+
+      // Fetch all messages where the tour guide is either sender or receiver
+      // This will show complete conversations
+      const { data, error } = await supabase
+        .from("messages")
+        .select(
+          `
+          id,
+          sender_id,
+          receiver_id,
+          tour_guide_id,
+          content,
+          is_read,
+          sent_at,
+          sender:sender_id (id, first_name, last_name),
+          receiver:receiver_id (id, first_name, last_name),
+          tour_guide:tour_guide_id (
+            user_id,
+            user:user_id (
+              id,
+              first_name,
+              last_name
+            )
+          )
+        `
+        )
+        .or(`sender_id.eq.${tourGuideUserId},receiver_id.eq.${tourGuideUserId}`)
+        .order("sent_at", { ascending: false });
+
+      console.log("📊 Supabase query result:", { data, error });
+
+      if (error) {
+        console.error("❌ Error fetching messages:", error);
+        setMessages([]);
+      } else {
+        console.log("✅ Raw data from Supabase:", data);
+        console.log("📝 Data length:", data?.length || 0);
+
+        // Group by conversation partner (the other person in the conversation)
+        const grouped: { [key: string]: Message } = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((data as any[]) || []).forEach((msg, index) => {
+          console.log(`🔄 Processing message ${index + 1}:`, msg);
+
+          // Determine who the conversation partner is
+          const isFromTourGuide = msg.sender_id === tourGuideUserId;
+          const conversationPartner = isFromTourGuide
+            ? msg.receiver
+            : msg.sender;
+          const conversationPartnerId =
+            conversationPartner?.id?.toString() || "";
+
+          console.log("👤 Conversation partner:", conversationPartner);
+          console.log("🆔 Conversation partner ID:", conversationPartnerId);
+          console.log("📤 Is from tour guide:", isFromTourGuide);
+
+          if (!grouped[conversationPartnerId]) {
+            const messageGroup = {
+              id: msg.id.toString(),
+              sender: {
+                id: conversationPartnerId,
+                name:
+                  (conversationPartner?.first_name || "") +
+                  " " +
+                  (conversationPartner?.last_name || ""),
+                initials:
+                  (conversationPartner?.first_name?.[0] || "") +
+                  (conversationPartner?.last_name?.[0] || ""),
+                time:
+                  new Date(msg.sent_at).toLocaleString("id-ID", {
+                    timeZone: "Asia/Jakarta",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  }) + " WIB",
+              },
+              preview: msg.content?.slice(0, 60) + "...",
+              isUnread: !msg.is_read && !isFromTourGuide, // Only mark as unread if it's TO the tour guide
+              messages: [],
+            };
+            console.log(
+              "📁 Creating new group for partner:",
+              conversationPartnerId,
+              messageGroup
+            );
+            grouped[conversationPartnerId] = messageGroup;
+          }
+
+          const messageItem = {
+            content: msg.content,
+            timestamp:
+              new Date(msg.sent_at).toLocaleString("id-ID", {
+                timeZone: "Asia/Jakarta",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              }) + " WIB",
+            isFromGuide: isFromTourGuide,
+          };
+          console.log("➕ Adding message to group:", messageItem);
+          grouped[conversationPartnerId].messages.push(messageItem);
+        });
+
+        // Sort messages in each conversation by timestamp
+        Object.values(grouped).forEach((conversation) => {
+          conversation.messages.sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+        });
+
+        const finalMessages = Object.values(grouped);
+        console.log("🎯 Final grouped messages:", finalMessages);
+        console.log("📊 Final messages count:", finalMessages.length);
+
+        setMessages(finalMessages);
       }
       setIsLoading(false);
+      console.log("✅ Fetch messages completed");
     };
-    if (tourGuideId) fetchMessages();
-  }, [tourGuideId]);
+    if (effectiveTourGuideId) {
+      console.log(
+        "🚀 Starting fetch messages with tourGuideId:",
+        effectiveTourGuideId
+      );
+      fetchMessages();
+    } else {
+      console.log("⚠️ No tourGuideId provided");
+    }
+  }, [effectiveTourGuideId, refresh]);
 
-  const handleReply = () => {
-    if (!selectedMessage || !replyText.trim()) return;
+  // Action kirim pesan ke Supabase
+  const handleReply = async () => {
+    console.log("📤 Sending reply...");
+    console.log("Selected message:", selectedMessage);
+    console.log("Reply text:", replyText);
 
-    const updatedMessages = messages.length > 0 ? [...messages] : [];
-    const messageIndex = updatedMessages.findIndex(
-      (m) => m.id === selectedMessage.id
-    );
+    if (!selectedMessage || !replyText.trim()) {
+      console.log("⚠️ No selected message or empty reply text");
+      return;
+    }
 
-    if (messageIndex !== -1) {
-      updatedMessages[messageIndex].messages.push({
-        content: replyText,
-        timestamp: "Just now",
-        isFromGuide: true,
+    const receiverId = selectedMessage.sender.id;
+    console.log("👤 Receiver ID:", receiverId);
+
+    if (!receiverId) {
+      console.log("❌ No receiver ID found");
+      return;
+    }
+
+    // We need to get the user_id of the tour guide to use as sender_id
+    // The effectiveTourGuideId is the tour guide ID, but we need the user_id
+    console.log("🔍 Getting user_id for tour guide ID:", effectiveTourGuideId);
+
+    const { data: tourGuideData, error: tourGuideError } = await supabase
+      .from("tour_guides")
+      .select("user_id")
+      .eq("id", effectiveTourGuideId)
+      .single();
+
+    if (tourGuideError || !tourGuideData) {
+      console.error("❌ Error fetching tour guide user_id:", tourGuideError);
+      alert("Failed to send message: Could not find tour guide information");
+      return;
+    }
+
+    console.log("✅ Found tour guide user_id:", tourGuideData.user_id);
+
+    // Sesuai struktur tabel: sender_id, receiver_id, tour_guide_id, content, is_read, sent_at (auto)
+    const messageData = {
+      sender_id: Number(tourGuideData.user_id), // user_id from tour_guides table
+      receiver_id: Number(receiverId),
+      tour_guide_id: Number(effectiveTourGuideId), // tour guide ID
+      content: replyText,
+      is_read: false,
+    };
+    console.log("📨 Sending message data:", messageData);
+
+    const { error } = await supabase.from("messages").insert([messageData]);
+
+    if (error) {
+      console.error("❌ Error sending message:", error);
+      console.error("❌ Error details:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
       });
-      setSelectedMessage(updatedMessages[messageIndex]);
+      alert(`Failed to send message: ${error.message || "Unknown error"}`);
+    } else {
+      console.log("✅ Message sent successfully");
       setReplyText("");
+      setRefresh((r) => r + 1);
     }
   };
 
@@ -175,9 +350,6 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
                   )}
                 </div>
                 <div className="ml-13">
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>{message.subject}</strong>
-                  </p>
                   <p className="text-gray-700">{message.preview}</p>
                 </div>
               </div>
@@ -190,7 +362,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
               <>
                 <div className="p-6 border-b border-gray-200">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {selectedMessage.subject}
+                    Conversation
                   </h3>
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-medium">
@@ -264,3 +436,14 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
 };
 
 export default MessagesContent;
+
+/*
+  Penting:
+  - tourGuideId di sini HARUS user_id (dari tabel users),
+    karena messages.sender_id = users.id
+  - Jika parent mengambil dari tabel tour_guides,
+    ambil field user_id-nya, bukan id-nya
+  Contoh:
+    const tourGuideUserId = tourGuide.user_id;
+    <MessagesContent tourGuideId={tourGuideUserId} />
+*/

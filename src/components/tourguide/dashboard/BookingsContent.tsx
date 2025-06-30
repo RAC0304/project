@@ -4,9 +4,7 @@ import {
   getBookingsWithDetailsByGuideUserId,
   BookingWithDetails,
 } from "../../../services/bookingDetailsService";
-import {
-  updateBookingStatusSupabase,
-} from "../../../services/bookingService";
+import { updateBookingStatusSupabase } from "../../../services/bookingService";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import MessageModal from "../modals/MessageModal";
 import Toast from "../../common/Toast";
@@ -48,7 +46,8 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         setToast({
           isVisible: true,
           type: "info",
-          message: "No bookings found for your tours. You'll see them here when customers make reservations.",
+          message:
+            "No bookings found for your tours. You'll see them here when customers make reservations.",
         });
       }
     } catch (error) {
@@ -65,13 +64,14 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
 
   useEffect(() => {
     fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourGuideId]);
 
   // Toggle debug mode function
   const toggleDebugMode = () => {
     const newMode = !debugMode;
     setDebugMode(newMode);
-    console.log(`Debug mode ${newMode ? 'activated' : 'deactivated'}`);
+    console.log(`Debug mode ${newMode ? "activated" : "deactivated"}`);
     if (newMode) {
       fetchBookings(); // Automatically fetch with debug if turning on
     }
@@ -151,6 +151,21 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     setShowMessageModal(true);
   };
 
+  // Handler untuk menampilkan notifikasi setelah pesan berhasil dikirim
+  const handleMessageSent = async (_message: string, attachment?: File) => {
+    // Hanya menampilkan notifikasi sukses, pengiriman sudah dilakukan di MessageModal
+    setToast({
+      isVisible: true,
+      type: "success",
+      message: attachment
+        ? "Message with attachment sent successfully!"
+        : "Message sent successfully!",
+    });
+
+    // Tutup modal
+    setShowMessageModal(false);
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -191,15 +206,6 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         message: "Failed to update booking status.",
       });
     }
-  };
-
-  // Handle message sent
-  const handleMessageSent = (message: string) => {
-    setToast({
-      isVisible: true,
-      type: "success",
-      message: "Message sent successfully!",
-    });
   };
 
   // Function to get status color
@@ -281,7 +287,9 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                 disabled={isLoading}
                 className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                />
                 Refresh
               </button>
             </div>
@@ -293,10 +301,10 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                 {timeFilter === "today"
                   ? "Today"
                   : timeFilter === "tomorrow"
-                    ? "Tomorrow"
-                    : timeFilter === "week"
-                      ? "This Week"
-                      : "This Month"}
+                  ? "Tomorrow"
+                  : timeFilter === "week"
+                  ? "This Week"
+                  : "This Month"}
                 <button
                   onClick={() => handleRemoveFilter("time")}
                   className="ml-2 text-teal-500 hover:text-teal-700"
@@ -345,10 +353,11 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
           <div className="flex justify-end px-4 py-2 bg-gray-50">
             <button
               onClick={toggleDebugMode}
-              className={`text-xs px-2 py-1 rounded ${debugMode
-                ? "bg-red-100 text-red-700 hover:bg-red-200"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              className={`text-xs px-2 py-1 rounded ${
+                debugMode
+                  ? "bg-red-100 text-red-700 hover:bg-red-200"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
               {debugMode ? "Debug Mode: ON" : "Debug Mode"}
             </button>
@@ -467,7 +476,8 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                         colSpan={6}
                         className="px-6 py-10 text-center text-gray-500"
                       >
-                        No bookings found. New bookings will appear here once customers make reservations for your tours.
+                        No bookings found. New bookings will appear here once
+                        customers make reservations for your tours.
                       </td>
                     </tr>
                   )}
@@ -515,7 +525,8 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
             isOpen={showDetailsModal}
             onClose={() => setShowDetailsModal(false)}
             onStatusUpdate={handleStatusUpdate}
-          />          <MessageModal
+          />{" "}
+          <MessageModal
             booking={selectedBooking}
             isOpen={showMessageModal}
             onClose={() => setShowMessageModal(false)}

@@ -1,13 +1,15 @@
 import React, { useState, useRef, useContext } from "react";
-import { BookingWithDetails } from "../../../services/bookingDetailsService";
-import { sendMessage } from "../../../services/messageService";
+import {
+  BookingWithDetails,
+  sendMessageToCustomer,
+} from "../../../services/bookingDetailsService";
 import { AuthContext } from "../../../contexts/EnhancedAuthContext";
 
 interface MessageModalProps {
   booking: BookingWithDetails | null;
   isOpen: boolean;
   onClose: () => void;
-  onMessageSent?: (message: string) => void;
+  onMessageSent?: (message: string, attachment?: File) => void;
 }
 
 const MessageModal: React.FC<MessageModalProps> = ({
@@ -17,7 +19,7 @@ const MessageModal: React.FC<MessageModalProps> = ({
   onMessageSent,
 }) => {
   const [message, setMessage] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,14 +32,14 @@ const MessageModal: React.FC<MessageModalProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(e.target.files);
+      setFile(e.target.files[0]); // Only take the first file
     }
   };
 
   const handleClose = () => {
     setError(null);
     setMessage("");
-    setFiles(null);
+    setFile(null);
     onClose();
   };
 
@@ -52,26 +54,33 @@ const MessageModal: React.FC<MessageModalProps> = ({
     setIsSubmitting(true);
     setError(null);
 
-    try {      // Send message using messageService
-      const result = await sendMessage(
-        Number(currentUser.id),
-        Number(booking.user_id), // customer user_id from booking
-        message,
-        // We'll need to get tour_guide_id from booking or user profile
-      );
+    try {
+      // Send message using sendMessageToCustomer with optional file attachment
+      const result = await sendMessageToCustomer({
+        senderUserId: Number(currentUser.id),
+        receiverUserId: Number(booking.user_id), // customer user_id from booking
+        content: message,
+        attachment: file || undefined, // only send file if it exists
+      });
 
       if (result.success) {
         // Reset form
         setMessage("");
-        setFiles(null);
+        setFile(null);
 
-        // Call the callback to show success notification in parent
+        // Call the callback to notify parent about success (don't resend message)
         if (onMessageSent) {
-          onMessageSent(message);
-        }        // Close modal
+          onMessageSent(message, file || undefined);
+        }
+
+        // Close modal
         handleClose();
       } else {
-        setError(result.error || "Failed to send message");
+        setError(
+          typeof result.error === "string"
+            ? result.error
+            : result.error?.message || "Failed to send message"
+        );
       }
     } catch (error) {
       setError("An error occurred while sending the message");
@@ -85,7 +94,8 @@ const MessageModal: React.FC<MessageModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Send Message</h2>          <button
+          <h2 className="text-xl font-semibold text-gray-900">Send Message</h2>{" "}
+          <button
             onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -103,17 +113,16 @@ const MessageModal: React.FC<MessageModalProps> = ({
               />
             </svg>
           </button>
-        </div>        <div className="mb-4">
+        </div>{" "}
+        <div className="mb-4">
           <p className="text-gray-600">To: {booking.userName}</p>
           <p className="text-gray-600 text-sm">Booking: {booking.tourName}</p>
         </div>
-
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
-
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <textarea
@@ -138,7 +147,6 @@ const MessageModal: React.FC<MessageModalProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
-                multiple
                 disabled={isSubmitting}
               />
               <label
@@ -160,32 +168,28 @@ const MessageModal: React.FC<MessageModalProps> = ({
                 Choose Files
               </label>
               <span className="ml-3 text-sm text-gray-500">
-                {files
-                  ? `${files.length} file(s) selected`
-                  : "No files selected"}
+                {file ? `File selected: ${file.name}` : "No file selected"}
               </span>
             </div>
-            {files && files.length > 0 && (
+            {file && (
               <div className="mt-2">
-                <ul className="text-sm text-gray-600">
-                  {Array.from(files).map((file, index) => (
-                    <li key={index} className="truncate">
-                      {file.name}
-                    </li>
-                  ))}
-                </ul>
+                <div className="text-sm text-gray-600 truncate">
+                  {file.name} ({Math.round(file.size / 1024)} KB)
+                </div>
               </div>
             )}
           </div>
 
-          <div className="flex justify-end space-x-2">            <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
+          <div className="flex justify-end space-x-2">
+            {" "}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center"

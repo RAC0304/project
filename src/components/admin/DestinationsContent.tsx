@@ -15,7 +15,7 @@ const DestinationsContent: React.FC = () => {
 
   // Form states
   const [formData, setFormData] = useState<Partial<Destination>>({
-    id: "",
+    id: "", // Keep empty for new destinations
     name: "",
     location: "",
     description: "",
@@ -27,6 +27,7 @@ const DestinationsContent: React.FC = () => {
     bestTimeToVisit: "",
     travelTips: [],
     category: [],
+    googleMapsUrl: "",
   });
 
   // Temporary states for dynamic fields
@@ -268,7 +269,8 @@ const DestinationsContent: React.FC = () => {
 
   const handleAddAttraction = () => {
     if (newAttraction.name && newAttraction.description) {
-      const attractionId = `${formData.id}-attraction-${Date.now()}`;
+      // Use timestamp for temporary ID since this will be replaced when saved to database
+      const attractionId = `temp-attraction-${Date.now()}`;
       const attractionToAdd = {
         ...newAttraction,
         id: attractionId,
@@ -302,7 +304,8 @@ const DestinationsContent: React.FC = () => {
 
   const handleAddActivity = () => {
     if (newActivity.name && newActivity.description && newActivity.duration) {
-      const activityId = `${formData.id}-activity-${Date.now()}`;
+      // Use timestamp for temporary ID since this will be replaced when saved to database
+      const activityId = `temp-activity-${Date.now()}`;
       const activityToAdd = {
         ...newActivity,
         id: activityId,
@@ -334,17 +337,18 @@ const DestinationsContent: React.FC = () => {
   };
 
   const handleCategoryToggle = (category: DestinationCategory) => {
+    let updatedCategories;
+
     if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter((c) => c !== category));
+      updatedCategories = selectedCategories.filter((c) => c !== category);
     } else {
-      setSelectedCategories([...selectedCategories, category]);
+      updatedCategories = [...selectedCategories, category];
     }
 
+    setSelectedCategories(updatedCategories);
     setFormData({
       ...formData,
-      category: selectedCategories.includes(category)
-        ? selectedCategories.filter((c) => c !== category)
-        : [...selectedCategories, category],
+      category: updatedCategories,
     });
   };
 
@@ -493,17 +497,19 @@ const DestinationsContent: React.FC = () => {
         setIsLoading(false);
         return;
       }
-      // Generate slug from name if creating a new destination
-      const slug = !isEditing
-        ? (formData.name || "")
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^\w-]+/g, "")
-        : formData.id;
+
+      console.log(
+        "Form submission - isEditing:",
+        isEditing,
+        "formData.id:",
+        formData.id
+      );
+      console.log("Full formData:", formData);
 
       if (isEditing && formData.id) {
         // Update existing destination
         const destinationId = parseInt(formData.id);
+        console.log("Updating destination with ID:", destinationId);
 
         const { error: destError } = await supabase
           .from("destinations")
@@ -566,26 +572,40 @@ const DestinationsContent: React.FC = () => {
 
         showToast("success", "Destination updated successfully!");
       } else {
-        // Create new destination
+        // Create new destination - generate slug from name
+        console.log("Creating new destination");
+        const slug = (formData.name || "")
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "");
+
+        console.log("Generated slug:", slug);
+
         if (!slug) {
           throw new Error(
             "Could not create a valid slug from the destination name"
           );
         }
 
+        // Explicitly exclude 'id' field when creating new destination
+        const insertData = {
+          slug,
+          name: formData.name,
+          location: formData.location,
+          description: formData.description,
+          short_description: formData.shortDescription,
+          image_url: formData.imageUrl,
+          best_time_to_visit: formData.bestTimeToVisit,
+          google_maps_url: formData.googleMapsUrl,
+          created_at: new Date(),
+          // DO NOT include 'id' field - let database auto-generate it
+        };
+
+        console.log("Insert data:", insertData);
+
         const { data: newDestination, error: createError } = await supabase
           .from("destinations")
-          .insert({
-            slug,
-            name: formData.name,
-            location: formData.location,
-            description: formData.description,
-            short_description: formData.shortDescription,
-            image_url: formData.imageUrl,
-            best_time_to_visit: formData.bestTimeToVisit,
-            google_maps_url: formData.googleMapsUrl,
-            created_at: new Date(),
-          })
+          .insert(insertData)
           .select("id")
           .single();
 
@@ -723,6 +743,7 @@ const DestinationsContent: React.FC = () => {
       bestTimeToVisit: "",
       travelTips: [],
       category: [],
+      googleMapsUrl: "", // Add this field
     });
     setSelectedCategories([]);
     setCurrentDestination(null);
@@ -755,7 +776,6 @@ const DestinationsContent: React.FC = () => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        {" "}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold text-gray-900">
@@ -791,8 +811,16 @@ const DestinationsContent: React.FC = () => {
           </div>
           <button
             onClick={() => {
-              resetForm();
-              setShowForm(!showForm);
+              if (showForm) {
+                // If form is currently shown, just hide it
+                setShowForm(false);
+              } else {
+                // If showing form, reset everything first
+                resetForm();
+                setIsEditing(false);
+                setCurrentDestination(null);
+                setShowForm(true);
+              }
             }}
             disabled={isLoading}
             className={`px-4 py-2 rounded-md ${
@@ -825,11 +853,10 @@ const DestinationsContent: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {" "}
                 {isEditing && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ID{" "}
+                      ID
                       <span className="text-xs text-gray-500">
                         (auto-generated, cannot be changed)
                       </span>
@@ -926,6 +953,19 @@ const DestinationsContent: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Google Maps URL
+                  </label>
+                  <input
+                    type="url"
+                    name="googleMapsUrl"
+                    value={formData.googleMapsUrl}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="https://maps.google.com/..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Categories
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -981,7 +1021,7 @@ const DestinationsContent: React.FC = () => {
                           className="h-24 w-full object-cover rounded-md"
                           onError={(e) =>
                             (e.currentTarget.src =
-                              "https://via.placeholder.com/150?text=Image+Error")
+                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yPC90ZXh0Pjwvc3ZnPg==")
                           }
                         />
                         <button
@@ -1098,7 +1138,7 @@ const DestinationsContent: React.FC = () => {
                               className="h-10 w-10 object-cover rounded-md"
                               onError={(e) =>
                                 (e.currentTarget.src =
-                                  "https://via.placeholder.com/50?text=Image+Error")
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                               }
                             />
                           )}
@@ -1196,7 +1236,7 @@ const DestinationsContent: React.FC = () => {
                               className="h-10 w-10 object-cover rounded-md"
                               onError={(e) =>
                                 (e.currentTarget.src =
-                                  "https://via.placeholder.com/50?text=Image+Error")
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                               }
                             />
                           )}
@@ -1225,7 +1265,6 @@ const DestinationsContent: React.FC = () => {
 
               {/* Form Actions */}
               <div className="border-t pt-4 flex justify-end gap-3">
-                {" "}
                 <button
                   type="button"
                   onClick={() => {
@@ -1273,7 +1312,7 @@ const DestinationsContent: React.FC = () => {
               </div>
             </form>
           </div>
-        )}{" "}
+        )}
         {/* Destinations List */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -1359,7 +1398,7 @@ const DestinationsContent: React.FC = () => {
                                 alt={destination.name}
                                 onError={(e) =>
                                   (e.currentTarget.src =
-                                    "https://via.placeholder.com/40?text=Image+Error")
+                                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                                 }
                               />
                             </div>
@@ -1398,7 +1437,7 @@ const DestinationsContent: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {destination.activities?.length || 0}
-                        </td>{" "}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleEdit(destination)}
