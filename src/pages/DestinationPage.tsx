@@ -9,15 +9,98 @@ import {
   ChevronRight,
   ChevronLeft,
   Map,
+  ThumbsUp,
+  Flag,
 } from "lucide-react";
-import { getDestinationById } from "../data/destinations";
+import { getDestinationById } from "../services/destinationService";
+import { getDestinationReviews, getDestinationRating, markReviewHelpful, DestinationReview } from "../services/reviewService";
+import { Destination } from "../types";
 import NotFoundPage from "./NotFoundPage";
 
 const DestinationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const destination = id ? getDestinationById(id) : undefined;
+  const [destination, setDestination] = useState<Destination | null>(null);
+  const [reviews, setReviews] = useState<DestinationReview[]>([]);
+  const [rating, setRating] = useState<{ averageRating: number; totalReviews: number }>({ averageRating: 0, totalReviews: 0 });
+  const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeSection, setActiveSection] = useState("overview");
+
+  useEffect(() => {
+    const loadDestination = async () => {
+      if (!id) {
+        setError("No destination ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const destinationData = await getDestinationById(id);
+
+        if (destinationData) {
+          setDestination(destinationData);
+        } else {
+          setError("Destination not found");
+        }
+      } catch (err) {
+        console.error('Error loading destination:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load destination');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDestination();
+  }, [id]);
+
+  // Load reviews when destination is loaded or when reviews section is activated
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (!destination?.id) return;
+
+      try {
+        setReviewsLoading(true);
+
+        // Load reviews and rating in parallel
+        const [reviewsData, ratingData] = await Promise.all([
+          getDestinationReviews(destination.id),
+          getDestinationRating(destination.id)
+        ]);
+
+        setReviews(reviewsData);
+        setRating(ratingData);
+      } catch (err) {
+        console.error('Error loading reviews:', err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (destination && (activeSection === "reviews" || reviews.length === 0)) {
+      loadReviews();
+    }
+  }, [destination, activeSection]);
+
+  const handleMarkHelpful = async (reviewId: string) => {
+    try {
+      const success = await markReviewHelpful(reviewId);
+      if (success) {
+        // Update the review's helpful count locally
+        setReviews(prev => prev.map(review =>
+          review.id === reviewId
+            ? { ...review, helpfulCount: review.helpfulCount + 1 }
+            : review
+        ));
+      }
+    } catch (err) {
+      console.error('Error marking review helpful:', err);
+    }
+  };
 
   useEffect(() => {
     // Reset active image when destination changes
@@ -25,7 +108,42 @@ const DestinationPage: React.FC = () => {
 
     // Scroll to top when destination changes
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [destination]);
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat detail destinasi...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-24 pb-16 flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="bg-red-100 p-3 rounded-full w-16 h-16 mx-auto mb-4">
+              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-red-800 mb-2">Terjadi Kesalahan</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Muat Ulang
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!destination) {
     return <NotFoundPage />;
@@ -279,86 +397,141 @@ const DestinationPage: React.FC = () => {
             id="reviews"
             className={activeSection === "reviews" ? "block" : "hidden"}
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Reviews</h2>
-            <div className="space-y-6">
-              {destination.reviews && destination.reviews.length > 0 ? (
-                destination.reviews.map((review, index) => (
-                  <div
-                    key={index}
-                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <img
-                          src={review.userAvatar || '/default-avatar.png'}
-                          alt={review.userName}
-                          className="w-10 h-10 rounded-full mr-3"
-                        />
-                        <div>
-                          <div className="font-semibold text-gray-800">{review.userName}</div>
-                          <span className="text-sm text-gray-500">{review.date}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-yellow-500 font-bold mr-2">
-                          {"★".repeat(Math.floor(review.rating))}
-                        </span>
-                        <span className="text-gray-500">({review.rating})</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-700 mb-4">{review.content}</p>
-                    {review.images && review.images.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {review.images.map((image, idx) => (
-                          <img
-                            key={idx}
-                            src={image}
-                            alt={`Review image ${idx + 1}`}
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
-                        ))}
-                      </div>
-                    )}
-                    {review.tourGuide && (
-                      <div className="mt-4 p-4 bg-teal-50 rounded-lg">
-                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Tour Guide Details</h4>
-                        <div className="flex items-center">
-                          <img
-                            src={review.tourGuide.avatar || '/default-avatar.png'}
-                            alt={review.tourGuide.name}
-                            className="w-12 h-12 rounded-full mr-3"
-                          />
-                          <div>
-                            <div className="font-semibold text-gray-800">{review.tourGuide.name}</div>
-                            <span className="text-sm text-gray-500">{review.tourGuide.specialty}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="mt-4 flex items-center justify-between">
-                      <button className="text-teal-600 hover:text-teal-800 text-sm font-medium">
-                        Helpful ({review.helpfulCount})
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-800 text-sm font-medium">
-                        Report
-                      </button>
-                    </div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Reviews</h2>
+              {rating.totalReviews > 0 && (
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-800">
+                    {rating.averageRating.toFixed(1)}
                   </div>
-                ))
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-semibold text-gray-800">Bryan</div>
-                    <span className="text-sm text-gray-500">2025-06-01</span>
+                  <div className="text-sm text-gray-500">
+                    dari {rating.totalReviews} review{rating.totalReviews > 1 ? 's' : ''}
                   </div>
-                  <div className="flex items-center mb-2">
-                    <span className="text-yellow-500 font-bold mr-2">★★★★★</span>
-                    <span className="text-gray-500">(5)</span>
-                  </div>
-                  <p className="text-gray-700">The destination was amazing, and the experience was unforgettable!</p>
                 </div>
               )}
             </div>
+
+            {reviewsLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center gap-3 text-gray-600">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
+                  <span>Memuat reviews...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <img
+                            src={review.userAvatar || '/default-avatar.png'}
+                            alt={review.userName}
+                            className="w-12 h-12 rounded-full mr-3 object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-avatar.png';
+                            }}
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold text-gray-800">{review.userName}</div>
+                              {review.isVerified && (
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                  Verified
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm text-gray-500">{review.date}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-yellow-500 font-bold mr-2">
+                            {"★".repeat(Math.floor(review.rating))}
+                            {"☆".repeat(5 - Math.floor(review.rating))}
+                          </span>
+                          <span className="text-gray-500">({review.rating})</span>
+                        </div>
+                      </div>
+
+                      {review.title && (
+                        <h4 className="font-semibold text-gray-800 mb-2">{review.title}</h4>
+                      )}
+
+                      <p className="text-gray-700 mb-4 leading-relaxed">{review.content}</p>
+
+                      {review.images && review.images.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                          {review.images.map((image, idx) => (
+                            <img
+                              key={idx}
+                              src={image}
+                              alt={`Review image ${idx + 1}`}
+                              className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => window.open(image, '_blank')}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {review.tourGuide && (
+                        <div className="mt-4 p-4 bg-teal-50 rounded-lg">
+                          <h5 className="text-sm font-semibold text-gray-800 mb-2">Tour Guide</h5>
+                          <div className="flex items-center">
+                            <img
+                              src={review.tourGuide.avatar || '/default-avatar.png'}
+                              alt={review.tourGuide.name}
+                              className="w-10 h-10 rounded-full mr-3 object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/default-avatar.png';
+                              }}
+                            />
+                            <div>
+                              <div className="font-medium text-gray-800">{review.tourGuide.name}</div>
+                              <span className="text-sm text-gray-600">{review.tourGuide.specialty}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <button
+                          onClick={() => handleMarkHelpful(review.id)}
+                          className="flex items-center gap-1 text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                          Helpful ({review.helpfulCount})
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors">
+                          <Flag className="w-4 h-4" />
+                          Report
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="bg-gray-50 rounded-lg p-8">
+                      <div className="text-gray-400 mb-4">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8m10 0H7" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada review</h3>
+                      <p className="text-gray-600 mb-4">
+                        Jadilah yang pertama memberikan review untuk {destination.name}
+                      </p>
+                      <button className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Tulis Review
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

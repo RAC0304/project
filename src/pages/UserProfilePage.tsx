@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   User,
   Mail,
@@ -10,12 +10,17 @@ import {
   Phone,
   Users,
   Globe,
+  CreditCard,
 } from "lucide-react";
 import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 import RoleBadge from "../components/common/RoleBadge";
 import TimezoneInfo from "../components/common/TimezoneInfo";
 import { formatIndonesianDate } from "../utils/dateUtils";
 import { getUserAccountStats } from "../services/userStatsService";
+import { userActivityService, type ActivityItem } from "../services/userActivityService";
+import AllActivitiesModal from "../components/AllActivitiesModal";
+import PaymentModal from "../components/PaymentModal";
+import { chatService, ChatMessage } from "../services/chatService";
 
 const UserProfilePage: React.FC = () => {
   const { user, logout, updateProfile } = useEnhancedAuth();
@@ -38,9 +43,8 @@ const UserProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
     user?.profile?.avatar ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-        user?.username || "default"
-      }`
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || "default"
+    }`
   );
 
   // Ensure profile image loads properly from Supabase
@@ -65,6 +69,47 @@ const UserProfilePage: React.FC = () => {
     tours_booked: 0,
     places_visited: 0,
   });
+
+  // Recent activities state
+  const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+
+  // All activities modal state
+  const [showAllActivitiesModal, setShowAllActivitiesModal] = useState(false);
+  const [allActivities, setAllActivities] = useState<ActivityItem[]>([]);
+  const [allActivitiesLoading, setAllActivitiesLoading] = useState(false);
+
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<{
+    id: number;
+    title: string;
+    amount: number;
+    participants: number;
+  } | null>(null);
+
+  // Chat modal state
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatTourGuide, setChatTourGuide] = useState<{
+    tourGuideId: number;
+    tourGuideName: string;
+    bookingId: number;
+  } | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+
+  // Function to handle chat button click
+  const handleChatWithTourGuide = (activity: any) => {
+    setChatTourGuide({
+      tourGuideId: activity.details?.tourGuideId,
+      tourGuideName: activity.details?.tourGuideName || 'Tour Guide',
+      bookingId: activity.details?.bookingId,
+    });
+    setShowChatModal(true);
+  };
+
   useEffect(() => {
     if (user?.id) {
       getUserAccountStats(user.id)
@@ -78,6 +123,129 @@ const UserProfilePage: React.FC = () => {
         );
     }
   }, [user?.id]);
+
+  // Fetch recent activities
+  useEffect(() => {
+    if (user?.id) {
+      setActivitiesLoading(true);
+      userActivityService.getUserRecentActivities(user.id, 3)
+        .then(setRecentActivities)
+        .catch((error) => {
+          console.error('Error fetching recent activities:', error);
+          setRecentActivities([]);
+        })
+        .finally(() => setActivitiesLoading(false));
+    }
+  }, [user?.id]);
+
+  // Function to refresh activities
+  const refreshActivities = useCallback(async () => {
+    if (user?.id) {
+      setActivitiesLoading(true);
+      try {
+        const activities = await userActivityService.getUserRecentActivities(user.id, 3);
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error('Error refreshing activities:', error);
+        setRecentActivities([]);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    }
+  }, [user?.id]);
+
+  // Function to handle viewing all activities
+  const handleViewAllActivities = async () => {
+    if (!user?.id) return;
+
+    setShowAllActivitiesModal(true);
+    setAllActivitiesLoading(true);
+
+    try {
+      const activities = await userActivityService.getAllUserActivities(user.id);
+      setAllActivities(activities);
+    } catch (error) {
+      console.error('Error fetching all activities:', error);
+      setAllActivities([]);
+    } finally {
+      setAllActivitiesLoading(false);
+    }
+  };
+
+  // Function to handle payment for confirmed bookings
+  const handlePayNow = (booking: { id: number; title: string; amount: number; participants: number }) => {
+    setSelectedBookingForPayment(booking);
+    setShowPaymentModal(true);
+  };
+
+  // Function to handle successful payment
+  const handlePaymentSuccess = () => {
+    // Refresh activities to show updated payment status
+    refreshActivities();
+    setSelectedBookingForPayment(null);
+  };
+
+  // Fetch chat messages when modal opens or booking/tour guide changes
+  useEffect(() => {
+    const fetchChat = async () => {
+      if (showChatModal && chatTourGuide && user?.id && chatTourGuide.tourGuideId) {
+        setChatLoading(true);
+        setChatError(null);
+        try {
+          const messages = await chatService.getMessages({
+            userId: parseInt(user.id),
+            tourGuideId: chatTourGuide.tourGuideId,
+            bookingId: chatTourGuide.bookingId,
+          });
+          setChatMessages(messages);
+        } catch (err: any) {
+          console.error('Error fetching chat messages:', err);
+          setChatError("Gagal memuat pesan chat.");
+          setChatMessages([]);
+        } finally {
+          setChatLoading(false);
+        }
+      } else if (showChatModal && chatTourGuide && !chatTourGuide.tourGuideId) {
+        setChatError("Informasi tour guide tidak tersedia.");
+        setChatLoading(false);
+      }
+    };
+    fetchChat();
+  }, [showChatModal, chatTourGuide, user?.id]);
+
+  // Send message handler for chat modal
+  const handleSendChatMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !user?.id || !chatTourGuide || !chatTourGuide.tourGuideId) {
+      if (!chatTourGuide?.tourGuideId) {
+        setChatError("Informasi tour guide tidak tersedia.");
+      }
+      return;
+    }
+    setChatLoading(true);
+    setChatError(null);
+    try {
+      const res = await chatService.sendMessage({
+        senderId: parseInt(user.id),
+        receiverId: chatTourGuide.tourGuideId,
+        tourGuideId: chatTourGuide.tourGuideId,
+        bookingId: chatTourGuide.bookingId,
+        content: chatInput.trim(),
+      });
+      if (res.success && res.message) {
+        setChatMessages((prev) => [...prev, res.message!]);
+        setChatInput("");
+      } else {
+        console.error('Error sending message:', res.error);
+        setChatError(res.error || "Gagal mengirim pesan.");
+      }
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      setChatError("Gagal mengirim pesan.");
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   // If no user is logged in, this page should be protected by ProtectedRoute
   if (!user) {
@@ -127,8 +295,8 @@ const UserProfilePage: React.FC = () => {
         // Make sure gender is typed correctly
         const typedGender =
           editedUserFields.gender === "male" ||
-          editedUserFields.gender === "female" ||
-          editedUserFields.gender === "other"
+            editedUserFields.gender === "female" ||
+            editedUserFields.gender === "other"
             ? (editedUserFields.gender as "male" | "female" | "other")
             : undefined;
 
@@ -423,11 +591,10 @@ const UserProfilePage: React.FC = () => {
                 <div className="absolute bottom-0 right-0 flex space-x-1">
                   {" "}
                   <label
-                    className={`p-2 bg-teal-500 rounded-full text-white ${
-                      isLoading
-                        ? "opacity-70 cursor-not-allowed"
-                        : "hover:bg-teal-600 cursor-pointer"
-                    } transition-colors shadow-md`}
+                    className={`p-2 bg-teal-500 rounded-full text-white ${isLoading
+                      ? "opacity-70 cursor-not-allowed"
+                      : "hover:bg-teal-600 cursor-pointer"
+                      } transition-colors shadow-md`}
                   >
                     {isLoading ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -444,15 +611,14 @@ const UserProfilePage: React.FC = () => {
                   </label>
                   {profileImage &&
                     profileImage !==
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                       <button
                         onClick={handleRemoveImage}
                         disabled={isLoading}
-                        className={`p-2 bg-red-500 rounded-full text-white ${
-                          isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-red-600"
-                        } transition-colors shadow-md`}
+                        className={`p-2 bg-red-500 rounded-full text-white ${isLoading
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-red-600"
+                          } transition-colors shadow-md`}
                         title="Remove photo"
                       >
                         <span className="text-xs">×</span>
@@ -473,11 +639,10 @@ const UserProfilePage: React.FC = () => {
                   <button
                     onClick={testImageStorage}
                     disabled={isLoading}
-                    className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${
-                      isLoading
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-300"
-                    }`}
+                    className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${isLoading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-gray-300"
+                      }`}
                   >
                     Test Storage
                   </button>
@@ -504,22 +669,20 @@ const UserProfilePage: React.FC = () => {
                       <button
                         onClick={handleSaveChanges}
                         disabled={isLoading}
-                        className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${
-                          isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-teal-700"
-                        }`}
+                        className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${isLoading
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-teal-700"
+                          }`}
                       >
                         {isLoading ? "Saving..." : "Save Changes"}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         disabled={isLoading}
-                        className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${
-                          isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-gray-200"
-                        }`}
+                        className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${isLoading
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-gray-200"
+                          }`}
                       >
                         Cancel
                       </button>
@@ -528,11 +691,10 @@ const UserProfilePage: React.FC = () => {
                     <button
                       onClick={() => setIsEditing(true)}
                       disabled={isLoading}
-                      className={`flex items-center text-sm text-teal-600 ${
-                        isLoading
-                          ? "opacity-70 cursor-not-allowed"
-                          : "hover:text-teal-700"
-                      }`}
+                      className={`flex items-center text-sm text-teal-600 ${isLoading
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:text-teal-700"
+                        }`}
                     >
                       <Settings className="w-4 h-4 mr-1" />
                       Edit Profile
@@ -662,9 +824,9 @@ const UserProfilePage: React.FC = () => {
                           const value = e.target.value;
                           const typedValue =
                             value === "male" ||
-                            value === "female" ||
-                            value === "other" ||
-                            value === ""
+                              value === "female" ||
+                              value === "other" ||
+                              value === ""
                               ? (value as "" | "male" | "female" | "other")
                               : "";
                           setEditedUserFields({
@@ -683,7 +845,7 @@ const UserProfilePage: React.FC = () => {
                       <p className="text-gray-900">
                         {user.gender
                           ? user.gender.charAt(0).toUpperCase() +
-                            user.gender.slice(1)
+                          user.gender.slice(1)
                           : "Not specified"}
                       </p>
                     )}
@@ -722,11 +884,10 @@ const UserProfilePage: React.FC = () => {
                       {" "}
                       <div className="flex items-center space-x-3">
                         <label
-                          className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${
-                            isLoading
-                              ? "opacity-70 cursor-not-allowed"
-                              : "cursor-pointer hover:bg-teal-100"
-                          } transition-colors`}
+                          className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${isLoading
+                            ? "opacity-70 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-teal-100"
+                            } transition-colors`}
                         >
                           {isLoading ? (
                             <span className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></span>
@@ -746,15 +907,14 @@ const UserProfilePage: React.FC = () => {
                         </label>
                         {profileImage &&
                           profileImage !==
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                             <button
                               onClick={handleRemoveImage}
                               disabled={isLoading}
-                              className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${
-                                isLoading
-                                  ? "opacity-70 cursor-not-allowed"
-                                  : "hover:bg-red-100"
-                              } transition-colors`}
+                              className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${isLoading
+                                ? "opacity-70 cursor-not-allowed"
+                                : "hover:bg-red-100"
+                                } transition-colors`}
                             >
                               {isLoading ? "Removing..." : "Remove Photo"}
                             </button>
@@ -763,11 +923,10 @@ const UserProfilePage: React.FC = () => {
                           <button
                             onClick={testImageStorage}
                             disabled={isLoading}
-                            className={`px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 ${
-                              isLoading
-                                ? "opacity-70 cursor-not-allowed"
-                                : "hover:bg-blue-100"
-                            } transition-colors`}
+                            className={`px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 ${isLoading
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:bg-blue-100"
+                              } transition-colors`}
                             title="Test Supabase storage functionality"
                           >
                             <span className="flex items-center">
@@ -789,11 +948,10 @@ const UserProfilePage: React.FC = () => {
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
-                  className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${
-                    isLoading
-                      ? "opacity-70 cursor-not-allowed"
-                      : "hover:bg-red-600"
-                  } transition-colors duration-300`}
+                  className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${isLoading
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:bg-red-600"
+                    } transition-colors duration-300`}
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
@@ -831,16 +989,204 @@ const UserProfilePage: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Recent Activity
-              </h2>
-              <div className="text-gray-600 text-sm">
-                No recent activity to show
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Recent Activity
+                </h2>
+                <button
+                  onClick={refreshActivities}
+                  disabled={activitiesLoading}
+                  className={`p-2 rounded-lg transition-colors ${activitiesLoading
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-teal-50 text-teal-600 hover:bg-teal-100'
+                    }`}
+                  title="Refresh activities"
+                >
+                  <div className={`w-4 h-4 ${activitiesLoading ? 'animate-spin' : ''}`}>
+                    🔄
+                  </div>
+                </button>
               </div>
+              {activitiesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-gray-600">Loading activities...</span>
+                </div>
+              ) : recentActivities.length > 0 ? (
+                <div className="space-y-3">
+                  {recentActivities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100"
+                    >
+                      {/* Icon - Fixed width untuk alignment */}
+                      <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm border border-gray-200 text-lg">
+                        {activity.icon}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 ml-4">
+                        {/* Header: Title dan Date */}
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-gray-900 leading-5">
+                            {activity.title}
+                          </h4>
+                          <time className="text-xs text-gray-500 whitespace-nowrap ml-3 mt-0.5">
+                            {activity.formattedDate}
+                          </time>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 leading-5 mb-3"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                          {activity.description}
+                        </p>
+
+                        {/* Badge & Payment Status */}
+                        <div className="flex items-center space-x-2">
+                          {activity.details && (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.type === 'booking' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                activity.type === 'message' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                  activity.type === 'tour_request' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                                    'bg-gray-50 text-gray-700 border border-gray-200'
+                              }`}>
+                              {activity.type === 'booking' ? 'Booking' :
+                                activity.type === 'message' ? 'Message' :
+                                  activity.type === 'tour_request' ? 'Tour Request' :
+                                    activity.type}
+                            </span>
+                          )}
+                          {/* Payment status for bookings: if paid, show only 'Sudah dibayar' and chat button, else show status badge */}
+                          {activity.type === 'booking' && activity.details?.paymentStatus === 'paid' ? (
+                            <>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 ml-1">
+                                Sudah dibayar
+                              </span>
+                              <button
+                                className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                                onClick={() => handleChatWithTourGuide(activity)}
+                              >
+                                Chat dengan Tour Guide
+                              </button>
+                            </>
+                          ) : (
+                            activity.type === 'booking' && activity.details?.status && (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${
+                                activity.details.status === 'confirmed' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                activity.details.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                activity.details.status === 'cancelled' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                'bg-gray-50 text-gray-700 border border-gray-200'
+                              }`}>
+                                {activity.details.status}
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {recentActivities.length >= 3 && (
+                    <div className="text-center pt-4 border-t border-gray-200 mt-4">
+                      <button
+                        onClick={handleViewAllActivities}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+                      >
+                        <span>View all activities</span>
+                        <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-300 text-5xl mb-4">📝</div>
+                  <h3 className="text-gray-700 text-lg font-medium mb-2">No recent activity</h3>
+                  <p className="text-gray-500 text-sm max-w-sm mx-auto">
+                    Start exploring and booking tours to see your activity history here!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* All Activities Modal */}
+      <AllActivitiesModal
+        activities={allActivities}
+        isOpen={showAllActivitiesModal}
+        onClose={() => setShowAllActivitiesModal(false)}
+        isLoading={allActivitiesLoading}
+        onPayNow={handlePayNow}
+      />
+
+      {/* Payment Modal */}
+      {selectedBookingForPayment && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedBookingForPayment(null);
+          }}
+          booking={selectedBookingForPayment}
+          userDetails={{
+            name: `${user.profile?.firstName || ''} ${user.profile?.lastName || ''}`.trim(),
+            email: user.email || '',
+            phone: user.profile?.phone || ''
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Chat Modal (integrated) */}
+      {showChatModal && chatTourGuide && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowChatModal(false)}
+            >
+              ×
+            </button>
+            <h3 className="text-lg font-semibold mb-2">Chat dengan {chatTourGuide.tourGuideName}</h3>
+            <div className="h-48 overflow-y-auto border rounded mb-3 p-2 bg-gray-50 text-sm text-gray-700 flex flex-col">
+              {chatLoading ? (
+                <div className="text-center text-gray-400 mt-16">Memuat pesan...</div>
+              ) : chatMessages.length === 0 ? (
+                <div className="text-gray-400 text-center mt-16">Belum ada pesan.</div>
+              ) : (
+                chatMessages.map((msg) => (
+                  <div key={msg.id} className={`mb-2 flex ${msg.sender_id === parseInt(user.id) ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`px-3 py-1 rounded-lg ${msg.sender_id === parseInt(user.id) ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-800'} max-w-[70%]`}>
+                      <span>{msg.content}</span>
+                      <div className="text-xs text-gray-300 mt-1 text-right">{new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+              {chatError && <div className="text-red-500 text-xs text-center mt-2">{chatError}</div>}
+            </div>
+            <form className="flex gap-2" onSubmit={handleSendChatMessage}>
+              <input
+                type="text"
+                className="flex-1 border rounded px-2 py-1"
+                placeholder="Tulis pesan..."
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                disabled={chatLoading}
+              />
+              <button type="submit" className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700" disabled={chatLoading || !chatInput.trim()}>Kirim</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

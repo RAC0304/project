@@ -1,76 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Filter, X, Search } from "lucide-react";
-import { destinations } from "../data/destinations";
-import { Destination, DestinationCategory } from "../types";
 import DestinationCard from "../components/destinations/DestinationCard";
+import { useDestinations } from "../hooks/useDestinations";
 // import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet2.tsx";
 
 const DestinationsListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(
+  const [localSearchTerm, setLocalSearchTerm] = useState(
     searchParams.get("search") || ""
   );
-  const [filteredDestinations, setFilteredDestinations] =
-    useState<Destination[]>(destinations);
-  const [selectedCategories, setSelectedCategories] = useState<
-    DestinationCategory[]
-  >([]);
   const [showFilters, setShowFilters] = useState(false);
-  const categories: { label: string; value: DestinationCategory }[] = [
-    { label: "Pantai", value: "beach" },
-    { label: "Pegunungan", value: "mountain" },
-    { label: "Budaya", value: "cultural" },
-    { label: "Petualangan", value: "adventure" },
-    { label: "Sejarah", value: "historical" },
-    { label: "Alam", value: "nature" },
-    { label: "Kota", value: "city" },
-  ];
 
-  useEffect(() => {
-    const currentSearchTerm = searchParams.get("search")?.toLowerCase() || "";
-
-    const filtered = destinations.filter((destination) => {
-      const matchesSearch = currentSearchTerm
-        ? destination.name.toLowerCase().includes(currentSearchTerm) ||
-          destination.location.toLowerCase().includes(currentSearchTerm) ||
-          destination.description.toLowerCase().includes(currentSearchTerm)
-        : true;
-
-      const matchesCategories =
-        selectedCategories.length > 0
-          ? selectedCategories.some((cat) => destination.category.includes(cat))
-          : true;
-
-      return matchesSearch && matchesCategories;
-    });
-
-    setFilteredDestinations(filtered);
-  }, [searchParams, selectedCategories]);
-
-  const toggleCategory = (category: DestinationCategory) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedCategories([]);
-    setSearchTerm("");
-    setSearchParams({});
-  };
+  // Initialize the hook with search from URL params
+  const {
+    filteredDestinations,
+    categories,
+    loading,
+    error,
+    selectedCategories,
+    setSearchTerm,
+    toggleCategory,
+    clearFilters
+  } = useDestinations({
+    search: searchParams.get("search") || undefined
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      setSearchParams({ search: searchTerm.trim() });
+    if (localSearchTerm.trim()) {
+      setSearchParams({ search: localSearchTerm.trim() });
+      setSearchTerm(localSearchTerm.trim());
     } else {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("search");
       setSearchParams(newParams);
+      setSearchTerm("");
     }
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
+    setLocalSearchTerm("");
+    setSearchParams({});
   };
 
   return (
@@ -105,8 +77,8 @@ const DestinationsListPage: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={localSearchTerm}
+                  onChange={(e) => setLocalSearchTerm(e.target.value)}
                   placeholder="Temukan destinasi impianmu..."
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500"
                 />
@@ -125,7 +97,7 @@ const DestinationsListPage: React.FC = () => {
           {" "}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              {filteredDestinations.length} Destinasi Wisata
+              {loading ? "Memuat..." : `${filteredDestinations.length} Destinasi Wisata`}
             </h2>
             <button
               className="md:hidden flex items-center gap-2 text-teal-600 font-medium"
@@ -144,7 +116,7 @@ const DestinationsListPage: React.FC = () => {
                   {selectedCategories.length > 0 && (
                     <button
                       className="text-sm text-teal-600 hover:text-teal-800 flex items-center gap-1"
-                      onClick={clearFilters}
+                      onClick={handleClearFilters}
                     >
                       <X className="w-3 h-3" />
                       Hapus semua
@@ -156,11 +128,10 @@ const DestinationsListPage: React.FC = () => {
                     <button
                       key={category.value}
                       onClick={() => toggleCategory(category.value)}
-                      className={`px-3 py-1.5 rounded-full text-sm ${
-                        selectedCategories.includes(category.value)
+                      className={`px-3 py-1.5 rounded-full text-sm ${selectedCategories.includes(category.value)
                           ? "bg-teal-600 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      } transition-colors`}
+                        } transition-colors`}
                     >
                       {category.label}
                     </button>
@@ -170,20 +141,56 @@ const DestinationsListPage: React.FC = () => {
             </div>
           </div>
         </div>
+        {/* Error state */}
+        {error && (
+          <div className="text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-red-100 p-3 rounded-full">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg font-medium text-red-800 mb-2">Terjadi Kesalahan</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Muat Ulang
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && !error && (
+          <div className="text-center py-12">
+            <div className="inline-flex items-center gap-3 text-gray-600">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+              <span className="text-lg">Memuat destinasi...</span>
+            </div>
+          </div>
+        )}
+
         {/* Destinations grid */}
-        {filteredDestinations.length > 0 ? (
+        {!loading && !error && filteredDestinations.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredDestinations.map((destination) => (
               <DestinationCard key={destination.id} destination={destination} />
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* No results */}
+        {!loading && !error && filteredDestinations.length === 0 && (
           <div className="text-center py-12">
             <p className="text-lg text-gray-600 mb-4">
               Maaf, destinasi yang Anda cari belum tersedia saat ini.
             </p>
             <button
-              onClick={clearFilters}
+              onClick={handleClearFilters}
               className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors"
             >
               Hapus filter
