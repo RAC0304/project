@@ -3,10 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, MapPin, Globe, MessageCircle, Calendar } from "lucide-react";
 import BookingModal from "../components/tour-guides/BookingModal";
 import { getTourGuideById, TourGuideData } from "../services/tourGuideService";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 
 const TourGuideProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useEnhancedAuth();
   const [guide, setGuide] = useState<TourGuideData | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -32,8 +34,7 @@ const TourGuideProfile: React.FC = () => {
   }, [id]);
 
   const handleBookNowClick = () => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (isLoggedIn) {
+    if (user) {
       setIsBookingModalOpen(true);
     } else {
       setShowWarningModal(true);
@@ -62,6 +63,14 @@ const TourGuideProfile: React.FC = () => {
       </div>
     );
   }
+  // Default profile image generator (same as other components)
+  const getDefaultProfileImage = (g: TourGuideData) => {
+    const firstName = g.users?.first_name || "";
+    const lastName = g.users?.last_name || "";
+    const seed = firstName || lastName || "default";
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+  };
+
   // Mapping Supabase data ke bentuk TourGuide (mock)
   const mapToTourGuide = (g: TourGuideData): import("../types").TourGuide => {
     console.log("🗺️ Mapping guide data:", g); // Debug log
@@ -88,13 +97,13 @@ const TourGuideProfile: React.FC = () => {
         "-",
       specialties: g.specialties
         ? (Object.keys(
-            g.specialties
-          ) as import("../types").TourGuideSpecialty[])
+          g.specialties
+        ) as import("../types").TourGuideSpecialty[])
         : [],
       location: g.location,
       description: g.bio || g.short_bio || "",
       shortBio: g.short_bio || g.bio || "",
-      imageUrl: g.users?.profile_picture || "/default-profile.png",
+      imageUrl: g.users?.profile_picture || getDefaultProfileImage(g),
       languages: g.tour_guide_languages?.map((l) => l.language) || [],
       experience: g.experience || 0,
       rating: g.rating || 0,
@@ -139,11 +148,10 @@ const TourGuideProfile: React.FC = () => {
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(mappedGuide.rating)
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-300"
-                }`}
+                className={`w-5 h-5 ${i < Math.floor(mappedGuide.rating)
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-gray-300"
+                  }`}
               />
             ))}
             <span className="ml-2 text-gray-600">

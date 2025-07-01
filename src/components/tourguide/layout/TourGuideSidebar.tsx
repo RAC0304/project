@@ -17,7 +17,15 @@ import {
   Database,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PROFILE_IMAGE } from "../../../constants/images";
+// import { PROFILE_IMAGE } from "../../../constants/images";
+
+// Default profile image generator (same as ProfileContent)
+const DEFAULT_PROFILE_IMAGE = (user?: any) => {
+  const firstName = user?.profile?.firstName || "";
+  const lastName = user?.profile?.lastName || "";
+  const seed = firstName || lastName || "default";
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+};
 import SidebarLogo from "./SidebarLogo";
 
 interface TourGuideSidebarProps {
@@ -31,7 +39,7 @@ interface TourGuideSidebarProps {
 const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   activePage,
   onPageChange,
-  onLogout,
+  // onLogout,
   onMinimizeChange,
   isMinimized: externalIsMinimized = false,
 }) => {
@@ -43,15 +51,15 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   // Use external minimize state if provided, otherwise use internal state
   const isMinimized = externalIsMinimized || internalIsMinimized;
 
-  const handleToggleMinimize = () => {
-    if (onMinimizeChange) {
-      // If external handler is provided, use it
-      onMinimizeChange(!isMinimized);
-    } else {
-      // Otherwise use internal state
-      setInternalIsMinimized(!internalIsMinimized);
-    }
-  };
+  // const handleToggleMinimize = () => {
+  //   if (onMinimizeChange) {
+  //     // If external handler is provided, use it
+  //     onMinimizeChange(!isMinimized);
+  //   } else {
+  //     // Otherwise use internal state
+  //     setInternalIsMinimized(!internalIsMinimized);
+  //   }
+  // };
 
   const handleLogout = () => {
     logout(); // Call the logout function to destroy the session
@@ -134,13 +142,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
       </div>{" "}
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
       <div
-        className={`${
-          mobileMenuOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
-        } ${
-          isMinimized ? "w-20" : "w-72"
-        } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
+        className={`${mobileMenuOpen
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0"
+          } ${isMinimized ? "w-20" : "w-72"
+          } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
       >
         {" "}
         {/* Logo/Brand */}
@@ -161,14 +167,13 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
         {/* Profile Summary */}
         <div className="p-5 border-b border-gray-100 bg-white shadow-sm sticky top-20 z-20">
           <div
-            className={`flex ${
-              isMinimized ? "justify-center" : "items-center space-x-4"
-            }`}
+            className={`flex ${isMinimized ? "justify-center" : "items-center space-x-4"
+              }`}
           >
             {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <img
-                src={PROFILE_IMAGE}
+                src={(user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -201,15 +206,13 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
                       <button
                         onClick={() => onPageChange(item.id)}
                         title={item.label}
-                        className={`w-full ${
-                          isMinimized
-                            ? "flex justify-center"
-                            : "flex items-center justify-between"
-                        } p-3 rounded-lg transition-all duration-200 ${
-                          activePage === item.id
+                        className={`w-full ${isMinimized
+                          ? "flex justify-center"
+                          : "flex items-center justify-between"
+                          } p-3 rounded-lg transition-all duration-200 ${activePage === item.id
                             ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                             : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {isMinimized ? (
                           <div className="flex items-center justify-center">
@@ -236,15 +239,13 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               <button
                 onClick={() => onPageChange("profile")}
                 title="My Profile"
-                className={`w-full ${
-                  isMinimized
-                    ? "flex justify-center"
-                    : "flex items-center justify-between"
-                } p-3 rounded-lg transition-all duration-200 ${
-                  activePage === "profile"
+                className={`w-full ${isMinimized
+                  ? "flex justify-center"
+                  : "flex items-center justify-between"
+                  } p-3 rounded-lg transition-all duration-200 ${activePage === "profile"
                     ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 {isMinimized ? (
                   <div className="flex items-center justify-center">
@@ -269,11 +270,10 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className={`w-full ${
-                isMinimized
-                  ? "flex justify-center"
-                  : "flex items-center justify-center space-x-2"
-              } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
+              className={`w-full ${isMinimized
+                ? "flex justify-center"
+                : "flex items-center justify-center space-x-2"
+                } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
             >
               <LogOut className="w-5 h-5" />
               {!isMinimized && <span className="font-medium">Sign Out</span>}

@@ -34,31 +34,37 @@ const TourGuidesPage: React.FC = () => {
     getAllTourGuides()
       .then((data) => {
         // Mapping ke tipe TourGuide
-        const mapped = (data || []).map(
-          (g: TourGuideData): TourGuide => ({
-            id: String(g.id),
-            name:
-              `${g.users?.first_name || ""} ${
-                g.users?.last_name || ""
-              }`.trim() || "-",
-            specialties: g.specialties
-              ? (Object.keys(g.specialties) as TourGuideSpecialty[])
-              : [],
-            location: g.location,
-            description: g.bio || g.short_bio || "",
-            shortBio: g.short_bio || g.bio || "",
-            imageUrl: g.users?.profile_picture || "/default-profile.png",
-            languages: g.tour_guide_languages?.map((l) => l.language) || [],
-            experience: g.experience || 0,
-            rating: g.rating || 0,
-            reviewCount: g.review_count || 0,
-            contactInfo: {
-              email: g.users?.email || "",
-              phone: g.users?.phone || undefined,
-            },
-            availability: g.availability || "",
-            tours: g.tours
-              ? g.tours
+        const getDefaultProfileImage = (g: TourGuideData) => {
+          const firstName = g.users?.first_name || "";
+          const lastName = g.users?.last_name || "";
+          const seed = firstName || lastName || "default";
+          return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+        };
+        const mapped = (data || [])
+          .filter((g: TourGuideData) => g.is_verified)
+          .map(
+            (g: TourGuideData): TourGuide => ({
+              id: String(g.id),
+              name:
+                `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
+              specialties: g.specialties
+                ? (Object.keys(g.specialties) as TourGuideSpecialty[])
+                : [],
+              location: g.location,
+              description: g.bio || g.short_bio || "",
+              shortBio: g.short_bio || g.bio || "",
+              imageUrl: g.users?.profile_picture || getDefaultProfileImage(g),
+              languages: g.tour_guide_languages?.map((l) => l.language) || [],
+              experience: g.experience || 0,
+              rating: g.rating || 0,
+              reviewCount: g.review_count || 0,
+              contactInfo: {
+                email: g.users?.email || "",
+                phone: g.users?.phone || undefined,
+              },
+              availability: g.availability || "",
+              tours: g.tours
+                ? g.tours
                   .filter((tour) => tour.is_active)
                   .map((tour) => ({
                     id: String(tour.id),
@@ -68,11 +74,11 @@ const TourGuidesPage: React.FC = () => {
                     price: `$${Number(tour.price).toFixed(2)}`,
                     maxGroupSize: tour.max_group_size,
                   }))
-              : [],
-            isVerified: g.is_verified,
-            reviews: [], // Anda bisa fetch reviews jika ingin
-          })
-        );
+                : [],
+              isVerified: g.is_verified,
+              reviews: [], // Anda bisa fetch reviews jika ingin
+            })
+          );
         setAllGuides(mapped);
         setError(null);
       })
@@ -93,21 +99,21 @@ const TourGuidesPage: React.FC = () => {
     const filtered = allGuides.filter((guide) => {
       const matchesSearch = searchTerm
         ? guide.name.toLowerCase().includes(searchTerm) ||
-          guide.location.toLowerCase().includes(searchTerm) ||
-          guide.description.toLowerCase().includes(searchTerm) ||
-          guide.languages.some((lang) =>
-            lang.toLowerCase().includes(searchTerm)
-          ) ||
-          guide.tours.some((tour) =>
-            tour.title.toLowerCase().includes(searchTerm)
-          )
+        guide.location.toLowerCase().includes(searchTerm) ||
+        guide.description.toLowerCase().includes(searchTerm) ||
+        guide.languages.some((lang) =>
+          lang.toLowerCase().includes(searchTerm)
+        ) ||
+        guide.tours.some((tour) =>
+          tour.title.toLowerCase().includes(searchTerm)
+        )
         : true;
 
       const matchesSpecialties =
         selectedSpecialties.length > 0
           ? selectedSpecialties.some((specialty) =>
-              guide.specialties.includes(specialty)
-            )
+            guide.specialties.includes(specialty)
+          )
           : true;
 
       const matchesLocation = selectedLocation
@@ -252,7 +258,6 @@ const TourGuidesPage: React.FC = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-700 font-medium">Filter by:</span>
                   {(selectedSpecialties.length > 0 || selectedLocation) && (
                     <button
                       className="text-sm text-teal-600 hover:text-teal-800 flex items-center gap-1"
@@ -267,19 +272,15 @@ const TourGuidesPage: React.FC = () => {
                 <div className="space-y-4 md:space-y-0 md:flex md:flex-wrap md:gap-4">
                   {/* Specialties filter */}
                   <div className="md:flex md:flex-wrap gap-2">
-                    <span className="block md:inline text-sm text-gray-500 mb-2 md:mb-0">
-                      Specialty:
-                    </span>
                     <div className="flex flex-wrap gap-2">
                       {specialties.map((specialty) => (
                         <button
                           key={specialty.value}
                           onClick={() => toggleSpecialty(specialty.value)}
-                          className={`px-3 py-1.5 rounded-full text-sm ${
-                            selectedSpecialties.includes(specialty.value)
-                              ? "bg-teal-600 text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          } transition-colors`}
+                          className={`px-3 py-1.5 rounded-full text-sm ${selectedSpecialties.includes(specialty.value)
+                            ? "bg-teal-600 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            } transition-colors`}
                         >
                           {specialty.label}
                         </button>

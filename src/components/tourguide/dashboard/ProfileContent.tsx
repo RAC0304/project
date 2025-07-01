@@ -23,10 +23,12 @@ interface ProfileContentProps {
   user: User | null;
 }
 
-const DEFAULT_PROFILE_IMAGE = (user?: User | null) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-    user?.profile?.firstName || user?.profile?.lastName || "default"
-  }`;
+const DEFAULT_PROFILE_IMAGE = (user?: User | null) => {
+  const firstName = user?.profile?.firstName || "";
+  const lastName = user?.profile?.lastName || "";
+  const seed = firstName || lastName || "default";
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+};
 
 const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +39,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   });
   const [tourCount, setTourCount] = useState<number>(0);
   const [profileImage, setProfileImage] = useState<string>(
-    user?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
+    (user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
   );
   const [isImageLoading, setIsImageLoading] = useState(false);
 
@@ -302,11 +304,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         setToast({ isVisible: true, type: "success", message: "Profile image removed." });
       } else {
         setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
-        setProfileImage(user?.profile_picture || "");
+        setProfileImage((user as any)?.profile_picture || "");
       }
     } catch {
       setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
-      setProfileImage(user?.profile_picture || "");
+      setProfileImage((user as any)?.profile_picture || "");
     } finally {
       setIsImageLoading(false);
     }
@@ -368,10 +370,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                     </span>
                     {(user?.profile as { is_verified?: boolean })
                       ?.is_verified && (
-                      <span className="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full ml-2">
-                        Verified
-                      </span>
-                    )}
+                        <span className="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full ml-2">
+                          Verified
+                        </span>
+                      )}
                   </div>
                 </div>
 
@@ -603,10 +605,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                     <div
                       key={option}
                       className={`inline-flex items-center px-4 py-1 rounded-full select-none text-sm border transition-all duration-200 cursor-pointer
-                        ${
-                          isChecked
-                            ? "bg-teal-500 text-white border-teal-600 shadow-md transform scale-105"
-                            : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
+                        ${isChecked
+                          ? "bg-teal-500 text-white border-teal-600 shadow-md transform scale-105"
+                          : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
                         }
                         ${isEditing ? "cursor-pointer" : "cursor-default"}
                       `}
@@ -629,7 +630,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                         name="specialties"
                         value={option}
                         checked={isChecked}
-                        onChange={() => {}} // Handled by onClick above
+                        onChange={() => { }} // Handled by onClick above
                         className="sr-only" // Hide default checkbox
                         disabled={!isEditing}
                       />
@@ -704,9 +705,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                   {isEditing && (
                     <div className="flex flex-col space-y-2">
                       <label
-                        className={`inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-md cursor-pointer border border-teal-200 hover:bg-teal-100 transition-colors ${
-                          isImageLoading ? "opacity-70 cursor-not-allowed" : ""
-                        }`}
+                        className={`inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-md cursor-pointer border border-teal-200 hover:bg-teal-100 transition-colors ${isImageLoading ? "opacity-70 cursor-not-allowed" : ""
+                          }`}
                       >
                         <svg
                           className="w-5 h-5 mr-2"
