@@ -271,7 +271,10 @@ const TourGuidesPage: React.FC = () => {
 
                 <div className="space-y-4 md:space-y-0 md:flex md:flex-wrap md:gap-4">
                   {/* Specialties filter */}
-                  <div className="md:flex md:flex-wrap gap-2">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <span className="text-sm text-gray-500 mr-2">
+                      Filter by:
+                    </span>
                     <div className="flex flex-wrap gap-2">
                       {specialties.map((specialty) => (
                         <button
