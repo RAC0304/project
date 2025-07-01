@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../utils/supabaseClient";
 
 interface Message {
@@ -28,6 +28,19 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyText, setReplyText] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Scroll to bottom when messages change or selectedMessage changes
+  useEffect(() => {
+    if (selectedMessage) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [selectedMessage, selectedMessage?.messages]);
 
   // Gunakan kembali prop tourGuideId agar dinamis
   const effectiveTourGuideId = tourGuideId;
@@ -165,7 +178,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
           grouped[conversationPartnerId].messages.push(messageItem);
         });
 
-        // Sort messages in each conversation by timestamp
+        // Sort messages in each conversation by timestamp (newest at bottom)
         Object.values(grouped).forEach((conversation) => {
           conversation.messages.sort(
             (a, b) =>
@@ -255,6 +268,8 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
       console.log("✅ Message sent successfully");
       setReplyText("");
       setRefresh((r) => r + 1);
+      // Scroll to bottom after sending message
+      setTimeout(scrollToBottom, 200);
     }
   };
 
@@ -404,6 +419,8 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
                       </div>
                     </div>
                   ))}
+                  {/* Invisible div to scroll to */}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className="p-4 border-t border-gray-200">
                   <div className="flex space-x-4">
