@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { culturalInsights } from "../data/culturalInsights";
 import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 
 const AboutPage: React.FC = () => {
+  const [selectedInsight, setSelectedInsight] = useState<
+    | null
+    | {
+        id: number;
+        title: string;
+        content: string;
+        imageUrl: string;
+        category: string;
+      }
+  >(null);
+
   return (
     <div className="pt-14 pb-16 bg-gradient-to-br from-teal-50 via-white to-gray-50 min-h-screen">
       <div className="container mx-auto px-4">
@@ -136,7 +147,10 @@ const AboutPage: React.FC = () => {
                 className="transform hover:scale-105 transition-all duration-300"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <CulturalInsightCard insight={insight} />
+                <CulturalInsightCard
+                  insight={insight}
+                  onReadMore={(insight) => setSelectedInsight(insight)}
+                />
               </div>
             ))}
           </div>
@@ -591,7 +605,8 @@ const AboutPage: React.FC = () => {
                 <p className="text-gray-700 leading-relaxed pl-11">
                   The Indonesian Rupiah (IDR) is the official currency. Credit
                   cards are widely accepted in tourist areas and major cities,
-                  but carry cash for smaller establishments and rural areas.
+                  but carry cash for smaller establishments and rural area
+                  s.
                   ATMs are readily available in urban centers and tourist
                   destinations.
                 </p>
@@ -646,6 +661,49 @@ const AboutPage: React.FC = () => {
         {/* Call to Action Section */}
         <div className="mt-20 mb-16"> </div>
       </div>
+
+      {/* Fullscreen Popup for Cultural Insight */}
+      {selectedInsight && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-4xl rounded-lg relative">
+              <div className="h-80 sm:h-96 overflow-hidden relative">
+                <img
+                  src={selectedInsight.imageUrl}
+                  alt={selectedInsight.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h2 className="text-3xl font-bold mb-2">
+                    {selectedInsight.title}
+                  </h2>
+                  <span className="inline-block px-3 py-1 bg-teal-500 bg-opacity-70 text-white text-sm rounded-full capitalize">
+                    {selectedInsight.category}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-10">
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                    {selectedInsight.content}
+                  </p>
+                </div>
+
+                <div className="mt-10 border-t border-gray-200 pt-6 flex justify-center">
+                  <button
+                    onClick={() => setSelectedInsight(null)}
+                    className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    Back to Cultural Insights
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

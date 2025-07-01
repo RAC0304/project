@@ -17,11 +17,29 @@ import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 import SearchForm from "../components/common/SearchForm";
 import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
+import { CulturalInsight } from "../types";
 
 const HomePage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const { user } = useEnhancedAuth();
   const navigate = useNavigate();
+  // State untuk menyimpan insight yang dipilih untuk ditampilkan di popup
+  const [selectedInsight, setSelectedInsight] = useState<
+    | null
+    | {
+        id: number;
+        title: string;
+        content: string;
+        imageUrl: string;
+        category: string;
+      }
+  >(null);
+
+  // Fungsi untuk menangani klik pada tombol Read More
+  const handleReadMore = (insight: CulturalInsight) => {
+    // Langsung tampilkan popup insight tanpa navigasi
+    setSelectedInsight(insight);
+  };
 
   useEffect(() => {
     // Proteksi akses: hanya customer yang boleh
@@ -266,7 +284,11 @@ const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {featuredInsights.map((insight) => (
-            <CulturalInsightCard key={insight.id} insight={insight} />
+            <CulturalInsightCard
+              key={insight.id}
+              insight={insight}
+              onReadMore={handleReadMore}
+            />
           ))}
         </div>
       </section>
@@ -298,6 +320,49 @@ const HomePage: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Fullscreen Popup for Cultural Insight */}
+      {selectedInsight && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-4xl rounded-lg relative">
+              <div className="h-80 sm:h-96 overflow-hidden relative">
+                <img
+                  src={selectedInsight.imageUrl}
+                  alt={selectedInsight.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h2 className="text-3xl font-bold mb-2">
+                    {selectedInsight.title}
+                  </h2>
+                  <span className="inline-block px-3 py-1 bg-teal-500 bg-opacity-70 text-white text-sm rounded-full capitalize">
+                    {selectedInsight.category}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-10">
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                    {selectedInsight.content}
+                  </p>
+                </div>
+
+                <div className="mt-10 border-t border-gray-200 pt-6 flex justify-center">
+                  <button
+                    onClick={() => setSelectedInsight(null)}
+                    className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    Back to Home
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

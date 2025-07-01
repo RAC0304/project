@@ -3,9 +3,10 @@ import { CulturalInsight } from '../../types';
 
 interface CulturalInsightCardProps {
   insight: CulturalInsight;
+  onReadMore: (insight: CulturalInsight) => void;
 }
 
-const CulturalInsightCard: React.FC<CulturalInsightCardProps> = ({ insight }) => {
+const CulturalInsightCard: React.FC<CulturalInsightCardProps> = ({ insight, onReadMore }) => {
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow group">
       <div className="h-48 overflow-hidden">
@@ -23,7 +24,10 @@ const CulturalInsightCard: React.FC<CulturalInsightCardProps> = ({ insight }) =>
         </div>
         <h3 className="text-lg font-bold text-gray-800 mb-2">{insight.title}</h3>
         <p className="text-gray-600 text-sm line-clamp-3 mb-4">{insight.description}</p>
-        <button className="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors">
+        <button 
+          onClick={() => onReadMore(insight)} 
+          className="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
+        >
           Read more
         </button>
       </div>

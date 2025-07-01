@@ -1266,64 +1266,150 @@ const UserProfilePage: React.FC = () => {
 
                         {/* Badge & Payment Status */}
                         <div className="flex items-center space-x-2">
-                          {/* Booking: jika sudah dibayar, label Booking disembunyikan */}
-                          {activity.type === "booking" &&
-                          activity.details?.paymentStatus === "paid" ? (
+                          {/* Handle different booking activity types */}
+                          {activity.type === "booking" && (
                             <>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 ml-1">
-                                Sudah dibayar
-                              </span>
-                              <button
-                                className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
-                                onClick={() =>
-                                  handleChatWithTourGuide(activity)
-                                }
-                              >
-                                Chat dengan Tour Guide
-                              </button>
-                            </>
-                          ) : (
-                            // Jika belum dibayar, tampilkan label Booking dan status
-                            <>
-                              {activity.details && (
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    activity.type === "booking"
-                                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                      : activity.type === "message"
-                                      ? "bg-green-50 text-green-700 border border-green-200"
-                                      : activity.type === "tour_request"
-                                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                      : "bg-gray-50 text-gray-700 border border-gray-200"
-                                  }`}
-                                >
-                                  {activity.type === "booking"
-                                    ? "Booking"
-                                    : activity.type === "message"
-                                    ? "Message"
-                                    : activity.type === "tour_request"
-                                    ? "Tour Request"
-                                    : activity.type}
+                              {/* Show different badges based on activity type */}
+                              {activity.details?.activityType ===
+                                "creation" && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                  Booking Created
                                 </span>
                               )}
-                              {activity.type === "booking" &&
-                                activity.details?.status && (
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${
-                                      activity.details.status === "confirmed"
-                                        ? "bg-green-50 text-green-700 border border-green-200"
-                                        : activity.details.status === "pending"
-                                        ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                        : activity.details.status ===
-                                          "cancelled"
-                                        ? "bg-red-50 text-red-700 border border-red-200"
-                                        : "bg-gray-50 text-gray-700 border border-gray-200"
-                                    }`}
-                                  >
-                                    {activity.details.status}
+
+                              {activity.details?.activityType ===
+                                "confirmation" && (
+                                <>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                    Confirmed
                                   </span>
-                                )}
+                                  {/* Show Pay Now button for confirmed bookings with pending payment */}
+                                  {activity.details?.paymentStatus ===
+                                    "pending" && (
+                                    <button
+                                      onClick={() =>
+                                        handlePayNow({
+                                          id: activity.details!.bookingId || 0,
+                                          title:
+                                            activity.details!.tourTitle ||
+                                            "Unknown Tour",
+                                          amount: activity.details!.amount || 0,
+                                          participants:
+                                            activity.details!.participants || 1,
+                                        })
+                                      }
+                                      className="ml-2 inline-flex items-center px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium rounded transition-colors"
+                                    >
+                                      💳 Pay Now
+                                    </button>
+                                  )}
+                                </>
+                              )}
+
+                              {activity.details?.activityType === "payment" && (
+                                <>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                                    Paid
+                                  </span>
+                                  <button
+                                    className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                                    onClick={() =>
+                                      handleChatWithTourGuide(activity)
+                                    }
+                                  >
+                                    Chat dengan Tour Guide
+                                  </button>
+                                </>
+                              )}
+
+                              {activity.details?.activityType ===
+                                "cancellation" && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                                  Cancelled
+                                </span>
+                              )}
+
+                              {/* Fallback for legacy booking activities without activityType */}
+                              {!activity.details?.activityType && (
+                                <>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                    Booking
+                                  </span>
+                                  {activity.details?.status && (
+                                    <span
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${
+                                        activity.details.status === "confirmed"
+                                          ? "bg-green-50 text-green-700 border border-green-200"
+                                          : activity.details.status ===
+                                            "pending"
+                                          ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                          : activity.details.status ===
+                                            "cancelled"
+                                          ? "bg-red-50 text-red-700 border border-red-200"
+                                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                                      }`}
+                                    >
+                                      {activity.details.status}
+                                    </span>
+                                  )}
+                                  {/* Pay Now button for legacy confirmed bookings with pending payment */}
+                                  {activity.details?.status === "confirmed" &&
+                                    activity.details?.paymentStatus ===
+                                      "pending" && (
+                                      <button
+                                        onClick={() =>
+                                          handlePayNow({
+                                            id:
+                                              activity.details!.bookingId || 0,
+                                            title:
+                                              activity.details!.tourTitle ||
+                                              "Unknown Tour",
+                                            amount:
+                                              activity.details!.amount || 0,
+                                            participants:
+                                              activity.details!.participants ||
+                                              1,
+                                          })
+                                        }
+                                        className="ml-2 inline-flex items-center px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium rounded transition-colors"
+                                      >
+                                        💳 Pay Now
+                                      </button>
+                                    )}
+                                  {/* Chat button for legacy paid bookings */}
+                                  {activity.details?.paymentStatus ===
+                                    "paid" && (
+                                    <button
+                                      className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                                      onClick={() =>
+                                        handleChatWithTourGuide(activity)
+                                      }
+                                    >
+                                      Chat dengan Tour Guide
+                                    </button>
+                                  )}
+                                </>
+                              )}
                             </>
+                          )}
+
+                          {/* Handle other activity types */}
+                          {activity.type !== "booking" && activity.details && (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                activity.type === "message"
+                                  ? "bg-green-50 text-green-700 border border-green-200"
+                                  : activity.type === "tour_request"
+                                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                  : "bg-gray-50 text-gray-700 border border-gray-200"
+                              }`}
+                            >
+                              {activity.type === "message"
+                                ? "Message"
+                                : activity.type === "tour_request"
+                                ? "Tour Request"
+                                : activity.type}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1377,6 +1463,7 @@ const UserProfilePage: React.FC = () => {
         onClose={() => setShowAllActivitiesModal(false)}
         isLoading={allActivitiesLoading}
         onPayNow={handlePayNow}
+        onChatWithTourGuide={handleChatWithTourGuide}
       />
 
       {/* Payment Modal */}
