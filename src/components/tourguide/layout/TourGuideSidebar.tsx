@@ -173,7 +173,7 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
               <img
-                src={(user?.profile as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)}
+                src={(user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />

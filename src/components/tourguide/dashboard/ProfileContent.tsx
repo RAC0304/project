@@ -39,7 +39,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   });
   const [tourCount, setTourCount] = useState<number>(0);
   const [profileImage, setProfileImage] = useState<string>(
-    (user?.profile as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
+    (user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
   );
   const [isImageLoading, setIsImageLoading] = useState(false);
 
@@ -304,11 +304,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         setToast({ isVisible: true, type: "success", message: "Profile image removed." });
       } else {
         setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
-        setProfileImage((user?.profile as any)?.profile_picture || "");
+        setProfileImage((user as any)?.profile_picture || "");
       }
     } catch {
       setToast({ isVisible: true, type: "error", message: "Failed to remove profile image." });
-      setProfileImage((user?.profile as any)?.profile_picture || "");
+      setProfileImage((user as any)?.profile_picture || "");
     } finally {
       setIsImageLoading(false);
     }
