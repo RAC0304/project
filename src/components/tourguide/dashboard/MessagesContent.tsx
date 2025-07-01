@@ -96,7 +96,7 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
         `
         )
         .or(`sender_id.eq.${tourGuideUserId},receiver_id.eq.${tourGuideUserId}`)
-        .order("sent_at", { ascending: false });
+        .order("sent_at", { ascending: true }); // Urutkan dari lama ke baru
 
       console.log("📊 Supabase query result:", { data, error });
 
@@ -178,13 +178,8 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
           grouped[conversationPartnerId].messages.push(messageItem);
         });
 
-        // Sort messages in each conversation by timestamp (newest at bottom)
-        Object.values(grouped).forEach((conversation) => {
-          conversation.messages.sort(
-            (a, b) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
-        });
+        // Messages are already sorted by sent_at ascending from database query
+        // So newest messages will be at the bottom of each conversation
 
         const finalMessages = Object.values(grouped);
         console.log("🎯 Final grouped messages:", finalMessages);
@@ -337,9 +332,8 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
             {displayMessages.map((message) => (
               <div
                 key={message.id}
-                className={`p-6 hover:bg-gray-50 cursor-pointer ${
-                  selectedMessage?.id === message.id ? "bg-gray-50" : ""
-                }`}
+                className={`p-6 hover:bg-gray-50 cursor-pointer ${selectedMessage?.id === message.id ? "bg-gray-50" : ""
+                  }`}
                 onClick={() => setSelectedMessage(message)}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -397,22 +391,19 @@ const MessagesContent: React.FC<MessagesContentProps> = ({ tourGuideId }) => {
                   {selectedMessage.messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`flex ${
-                        msg.isFromGuide ? "justify-end" : "justify-start"
-                      }`}
+                      className={`flex ${msg.isFromGuide ? "justify-end" : "justify-start"
+                        }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-4 ${
-                          msg.isFromGuide
+                        className={`max-w-[80%] rounded-lg p-4 ${msg.isFromGuide
                             ? "bg-teal-500 text-white"
                             : "bg-gray-100 text-gray-900"
-                        }`}
+                          }`}
                       >
                         <p className="text-sm">{msg.content}</p>
                         <p
-                          className={`text-xs mt-1 ${
-                            msg.isFromGuide ? "text-teal-100" : "text-gray-500"
-                          }`}
+                          className={`text-xs mt-1 ${msg.isFromGuide ? "text-teal-100" : "text-gray-500"
+                            }`}
                         >
                           {msg.timestamp}
                         </p>
