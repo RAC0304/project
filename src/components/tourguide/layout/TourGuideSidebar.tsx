@@ -20,9 +20,12 @@ import { useNavigate } from "react-router-dom";
 // import { PROFILE_IMAGE } from "../../../constants/images";
 
 // Default profile image generator (same as ProfileContent)
-const DEFAULT_PROFILE_IMAGE = (user?: any) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.profile?.firstName || user?.profile?.lastName || "default"
-  }`;
+const DEFAULT_PROFILE_IMAGE = (user?: any) => {
+  const firstName = user?.profile?.firstName || "";
+  const lastName = user?.profile?.lastName || "";
+  const seed = firstName || lastName || "default";
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+};
 import SidebarLogo from "./SidebarLogo";
 
 interface TourGuideSidebarProps {
@@ -140,8 +143,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
       <div
         className={`${mobileMenuOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0"
           } ${isMinimized ? "w-20" : "w-72"
           } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
       >
@@ -204,8 +207,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
                         onClick={() => onPageChange(item.id)}
                         title={item.label}
                         className={`w-full ${isMinimized
-                            ? "flex justify-center"
-                            : "flex items-center justify-between"
+                          ? "flex justify-center"
+                          : "flex items-center justify-between"
                           } p-3 rounded-lg transition-all duration-200 ${activePage === item.id
                             ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                             : "text-gray-700 hover:bg-gray-100"
@@ -237,8 +240,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
                 onClick={() => onPageChange("profile")}
                 title="My Profile"
                 className={`w-full ${isMinimized
-                    ? "flex justify-center"
-                    : "flex items-center justify-between"
+                  ? "flex justify-center"
+                  : "flex items-center justify-between"
                   } p-3 rounded-lg transition-all duration-200 ${activePage === "profile"
                     ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
@@ -268,8 +271,8 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               onClick={handleLogout}
               title="Sign Out"
               className={`w-full ${isMinimized
-                  ? "flex justify-center"
-                  : "flex items-center justify-center space-x-2"
+                ? "flex justify-center"
+                : "flex items-center justify-center space-x-2"
                 } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
             >
               <LogOut className="w-5 h-5" />
