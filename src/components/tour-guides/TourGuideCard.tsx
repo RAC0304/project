@@ -9,7 +9,6 @@ import {
   Users,
   Clock,
   Award,
-  CheckCircle,
 } from "lucide-react";
 import { TourGuide } from "../../types";
 import BookingModal from "./BookingModal";
@@ -62,11 +61,10 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`w-4 h-4 ${
-                i < Math.floor(guide.rating)
+              className={`w-4 h-4 ${i < Math.floor(guide.rating)
                   ? "text-yellow-400 fill-yellow-400"
                   : "text-gray-300"
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -99,14 +97,6 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
   return (
     <>
       <div className="bg-white rounded-xl overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl border border-gray-100">
-        {/* Badge for verified guides */}
-        {guide.isVerified && (
-          <div className="absolute top-3 left-3 z-10 bg-teal-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Verified
-          </div>
-        )}
-
         <div className="relative h-60">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
           <img
@@ -124,13 +114,6 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
             <h3 className="text-xl font-semibold text-gray-800 mb-1">
               {guide.name}
             </h3>
-
-            {guide.isVerified && (
-              <span className="inline-flex items-center text-xs text-teal-600 font-medium">
-                <Award className="w-3 h-3 mr-1" />
-                Top Guide
-              </span>
-            )}
           </div>
 
           <div className="flex items-center text-gray-600 mb-3">

@@ -3,10 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, MapPin, Globe, MessageCircle, Calendar } from "lucide-react";
 import BookingModal from "../components/tour-guides/BookingModal";
 import { getTourGuideById, TourGuideData } from "../services/tourGuideService";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 
 const TourGuideProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useEnhancedAuth();
   const [guide, setGuide] = useState<TourGuideData | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -32,8 +34,7 @@ const TourGuideProfile: React.FC = () => {
   }, [id]);
 
   const handleBookNowClick = () => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (isLoggedIn) {
+    if (user) {
       setIsBookingModalOpen(true);
     } else {
       setShowWarningModal(true);
@@ -148,8 +149,8 @@ const TourGuideProfile: React.FC = () => {
               <Star
                 key={i}
                 className={`w-5 h-5 ${i < Math.floor(mappedGuide.rating)
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-300"
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-gray-300"
                   }`}
               />
             ))}
