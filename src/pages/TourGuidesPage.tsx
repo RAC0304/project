@@ -40,43 +40,45 @@ const TourGuidesPage: React.FC = () => {
           const seed = firstName || lastName || "default";
           return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
         };
-        const mapped = (data || []).map(
-          (g: TourGuideData): TourGuide => ({
-            id: String(g.id),
-            name:
-              `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
-            specialties: g.specialties
-              ? (Object.keys(g.specialties) as TourGuideSpecialty[])
-              : [],
-            location: g.location,
-            description: g.bio || g.short_bio || "",
-            shortBio: g.short_bio || g.bio || "",
-            imageUrl: g.users?.profile_picture || getDefaultProfileImage(g),
-            languages: g.tour_guide_languages?.map((l) => l.language) || [],
-            experience: g.experience || 0,
-            rating: g.rating || 0,
-            reviewCount: g.review_count || 0,
-            contactInfo: {
-              email: g.users?.email || "",
-              phone: g.users?.phone || undefined,
-            },
-            availability: g.availability || "",
-            tours: g.tours
-              ? g.tours
-                .filter((tour) => tour.is_active)
-                .map((tour) => ({
-                  id: String(tour.id),
-                  title: tour.title,
-                  description: tour.description,
-                  duration: tour.duration,
-                  price: `$${Number(tour.price).toFixed(2)}`,
-                  maxGroupSize: tour.max_group_size,
-                }))
-              : [],
-            isVerified: g.is_verified,
-            reviews: [], // Anda bisa fetch reviews jika ingin
-          })
-        );
+        const mapped = (data || [])
+          .filter((g: TourGuideData) => g.is_verified)
+          .map(
+            (g: TourGuideData): TourGuide => ({
+              id: String(g.id),
+              name:
+                `${g.users?.first_name || ""} ${g.users?.last_name || ""}`.trim() || "-",
+              specialties: g.specialties
+                ? (Object.keys(g.specialties) as TourGuideSpecialty[])
+                : [],
+              location: g.location,
+              description: g.bio || g.short_bio || "",
+              shortBio: g.short_bio || g.bio || "",
+              imageUrl: g.users?.profile_picture || getDefaultProfileImage(g),
+              languages: g.tour_guide_languages?.map((l) => l.language) || [],
+              experience: g.experience || 0,
+              rating: g.rating || 0,
+              reviewCount: g.review_count || 0,
+              contactInfo: {
+                email: g.users?.email || "",
+                phone: g.users?.phone || undefined,
+              },
+              availability: g.availability || "",
+              tours: g.tours
+                ? g.tours
+                  .filter((tour) => tour.is_active)
+                  .map((tour) => ({
+                    id: String(tour.id),
+                    title: tour.title,
+                    description: tour.description,
+                    duration: tour.duration,
+                    price: `$${Number(tour.price).toFixed(2)}`,
+                    maxGroupSize: tour.max_group_size,
+                  }))
+                : [],
+              isVerified: g.is_verified,
+              reviews: [], // Anda bisa fetch reviews jika ingin
+            })
+          );
         setAllGuides(mapped);
         setError(null);
       })
