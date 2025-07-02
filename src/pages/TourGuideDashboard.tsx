@@ -254,8 +254,9 @@ const TourGuideDashboard: React.FC = () => {
         isMinimized={sidebarMinimized}
       />
       <main
-        className={`flex-1 overflow-auto ${sidebarMinimized ? "lg:pl-28" : "lg:pl-80"
-          } transition-all duration-300`}
+        className={`flex-1 overflow-auto ${
+          sidebarMinimized ? "lg:pl-28" : "lg:pl-80"
+        } transition-all duration-300`}
       >
         <div className="sticky top-0 z-10  px-4 py-3 flex items-center justify-between">
           <div className="hidden lg:block">
@@ -289,8 +290,12 @@ const TourGuideDashboard: React.FC = () => {
           {activePage === "bookings" && (
             <BookingsContent tourGuideId={Number(user.id)} />
           )}{" "}
-          {activePage === "clients" && <ClientsContent tourGuideUserId={user.id} />}
-          {activePage === "reviews" && tourGuideId && <ReviewsContent tourGuideId={tourGuideId.toString()} />}
+          {activePage === "clients" && (
+            <ClientsContent tourGuideUserId={user.id} />
+          )}
+          {activePage === "reviews" && tourGuideId && (
+            <ReviewsContent tourGuideId={tourGuideId.toString()} />
+          )}
           {activePage === "tour-guides" && (
             <TourGuidesListContent loading={isLoading} />
           )}

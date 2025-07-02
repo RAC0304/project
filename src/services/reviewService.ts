@@ -611,13 +611,16 @@ export interface TourGuideReview {
 /**
  * Get reviews for a specific tour guide
  */
-export const getTourGuideReviews = async (tourGuideId: number): Promise<TourGuideReview[]> => {
+export const getTourGuideReviews = async (
+  tourGuideId: number
+): Promise<TourGuideReview[]> => {
   try {
-    console.log('Fetching reviews for tour guide ID:', tourGuideId);
-    
+    console.log("Fetching reviews for tour guide ID:", tourGuideId);
+
     const { data, error } = await supabase
-      .from('reviews')
-      .select(`
+      .from("reviews")
+      .select(
+        `
         *,
         users!reviews_user_id_fkey (
           username,
@@ -641,39 +644,43 @@ export const getTourGuideReviews = async (tourGuideId: number): Promise<TourGuid
           response,
           created_at
         )
-      `)
-      .eq('tour_guide_id', tourGuideId)
-      .order('created_at', { ascending: false });
+      `
+      )
+      .eq("tour_guide_id", tourGuideId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Error fetching tour guide reviews:', error);
+      console.error("Error fetching tour guide reviews:", error);
       throw error;
     }
 
-    console.log('Raw data from Supabase:', data);
+    console.log("Raw data from Supabase:", data);
 
     // Transform data to match TourGuideReview interface
-    return (data || []).map((review: any): TourGuideReview => ({
-      id: review.id.toString(),
-      tourId: review.bookings?.tours?.id?.toString() || '',
-      tourName: review.bookings?.tours?.title || 'Unknown Tour',
-      clientName: review.users 
-        ? `${review.users.first_name || ''} ${review.users.last_name || ''}`.trim() || review.users.username
-        : 'Anonymous User',
-      clientEmail: review.users?.email || '',
-      rating: review.rating,
-      title: review.title,
-      content: review.content,
-      date: review.created_at,
-      tourDate: review.bookings?.tour_date || review.created_at,
-      verified: review.is_verified || false,
-      helpful: review.helpful_count || 0,
-      response: review.review_responses?.[0]?.response,
-      responseDate: review.review_responses?.[0]?.created_at,
-    }));
-
+    return (data || []).map(
+      (review: any): TourGuideReview => ({
+        id: review.id.toString(),
+        tourId: review.bookings?.tours?.id?.toString() || "",
+        tourName: review.bookings?.tours?.title || "Unknown Tour",
+        clientName: review.users
+          ? `${review.users.first_name || ""} ${
+              review.users.last_name || ""
+            }`.trim() || review.users.username
+          : "Anonymous User",
+        clientEmail: review.users?.email || "",
+        rating: review.rating,
+        title: review.title,
+        content: review.content,
+        date: review.created_at,
+        tourDate: review.bookings?.tour_date || review.created_at,
+        verified: review.is_verified || false,
+        helpful: review.helpful_count || 0,
+        response: review.review_responses?.[0]?.response,
+        responseDate: review.review_responses?.[0]?.created_at,
+      })
+    );
   } catch (error) {
-    console.error('Error in getTourGuideReviews:', error);
+    console.error("Error in getTourGuideReviews:", error);
     throw error;
   }
 };
@@ -681,11 +688,14 @@ export const getTourGuideReviews = async (tourGuideId: number): Promise<TourGuid
 /**
  * Get a single review for tour guide with detailed information
  */
-export const getTourGuideReviewById = async (reviewId: number): Promise<TourGuideReview | null> => {
+export const getTourGuideReviewById = async (
+  reviewId: number
+): Promise<TourGuideReview | null> => {
   try {
     const { data, error } = await supabase
-      .from('reviews')
-      .select(`
+      .from("reviews")
+      .select(
+        `
         *,
         users!reviews_user_id_fkey (
           username,
@@ -710,15 +720,16 @@ export const getTourGuideReviewById = async (reviewId: number): Promise<TourGuid
           created_at,
           user_id
         )
-      `)
-      .eq('id', reviewId)
+      `
+      )
+      .eq("id", reviewId)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      if (error.code === "PGRST116") {
         return null;
       }
-      console.error('Error fetching review:', error);
+      console.error("Error fetching review:", error);
       throw error;
     }
 
@@ -727,12 +738,14 @@ export const getTourGuideReviewById = async (reviewId: number): Promise<TourGuid
     // Transform data
     return {
       id: data.id.toString(),
-      tourId: data.bookings?.tours?.id?.toString() || '',
-      tourName: data.bookings?.tours?.title || 'Unknown Tour',
-      clientName: data.users 
-        ? `${data.users.first_name || ''} ${data.users.last_name || ''}`.trim() || data.users.username
-        : 'Anonymous User',
-      clientEmail: data.users?.email || '',
+      tourId: data.bookings?.tours?.id?.toString() || "",
+      tourName: data.bookings?.tours?.title || "Unknown Tour",
+      clientName: data.users
+        ? `${data.users.first_name || ""} ${
+            data.users.last_name || ""
+          }`.trim() || data.users.username
+        : "Anonymous User",
+      clientEmail: data.users?.email || "",
       rating: data.rating,
       title: data.title,
       content: data.content,
@@ -743,9 +756,8 @@ export const getTourGuideReviewById = async (reviewId: number): Promise<TourGuid
       response: data.review_responses?.[0]?.response,
       responseDate: data.review_responses?.[0]?.created_at,
     };
-
   } catch (error) {
-    console.error('Error in getTourGuideReviewById:', error);
+    console.error("Error in getTourGuideReviewById:", error);
     throw error;
   }
 };
@@ -761,51 +773,50 @@ export const createOrUpdateTourGuideResponse = async (
   try {
     // First, check if a response already exists
     const { data: existingResponse, error: checkError } = await supabase
-      .from('review_responses')
-      .select('*')
-      .eq('review_id', reviewId)
-      .eq('user_id', userId)
+      .from("review_responses")
+      .select("*")
+      .eq("review_id", reviewId)
+      .eq("user_id", userId)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Error checking existing response:', checkError);
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking existing response:", checkError);
       throw checkError;
     }
 
     if (existingResponse) {
       // Update existing response
       const { error } = await supabase
-        .from('review_responses')
+        .from("review_responses")
         .update({
           response: responseText,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', existingResponse.id);
+        .eq("id", existingResponse.id);
 
       if (error) {
-        console.error('Error updating review response:', error);
+        console.error("Error updating review response:", error);
         throw error;
       }
     } else {
       // Create new response
-      const { error } = await supabase
-        .from('review_responses')
-        .insert([{
+      const { error } = await supabase.from("review_responses").insert([
+        {
           review_id: reviewId,
           user_id: userId,
-          response: responseText
-        }]);
+          response: responseText,
+        },
+      ]);
 
       if (error) {
-        console.error('Error creating review response:', error);
+        console.error("Error creating review response:", error);
         throw error;
       }
     }
 
     return true;
-
   } catch (error) {
-    console.error('Error in createOrUpdateTourGuideResponse:', error);
+    console.error("Error in createOrUpdateTourGuideResponse:", error);
     throw error;
   }
 };
@@ -813,14 +824,17 @@ export const createOrUpdateTourGuideResponse = async (
 /**
  * Get reviews for a specific tour guide (simplified query for testing)
  */
-export const getTourGuideReviewsSimple = async (tourGuideId: number): Promise<TourGuideReview[]> => {
+export const getTourGuideReviewsSimple = async (
+  tourGuideId: number
+): Promise<TourGuideReview[]> => {
   try {
-    console.log('Fetching reviews for tour guide ID (simple):', tourGuideId);
-    
+    console.log("Fetching reviews for tour guide ID (simple):", tourGuideId);
+
     // Get reviews data with customer information
     const { data, error } = await supabase
-      .from('reviews')
-      .select(`
+      .from("reviews")
+      .select(
+        `
         *,
         users!reviews_user_id_fkey (
           id,
@@ -829,44 +843,50 @@ export const getTourGuideReviewsSimple = async (tourGuideId: number): Promise<To
           username,
           email
         )
-      `)
-      .eq('tour_guide_id', tourGuideId)
-      .order('created_at', { ascending: false });
+      `
+      )
+      .eq("tour_guide_id", tourGuideId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Error fetching tour guide reviews (simple):', error);
+      console.error("Error fetching tour guide reviews (simple):", error);
       throw error;
     }
 
-    console.log('Raw reviews data with customer info:', data);
+    console.log("Raw reviews data with customer info:", data);
 
     if (!data || data.length === 0) {
-      console.log('No reviews found for tour guide ID:', tourGuideId);
+      console.log("No reviews found for tour guide ID:", tourGuideId);
       return [];
     }
 
     // Transform data with actual customer names
-    return data.map((review): TourGuideReview => ({
-      id: review.id.toString(),
-      tourId: '', // Will be filled later if needed
-      tourName: 'Review Tour', // Default tour name
-      clientName: review.users 
-        ? `${review.users.first_name || ''} ${review.users.last_name || ''}`.trim() || review.users.username || 'Customer'
-        : 'Anonymous User',
-      clientEmail: review.users?.email || '',
-      rating: review.rating,
-      title: review.title,
-      content: review.content,
-      date: review.created_at,
-      tourDate: review.created_at,
-      verified: review.is_verified || false,
-      helpful: review.helpful_count || 0,
-      response: undefined, // Will be filled later if needed
-      responseDate: undefined,
-    }));
-
+    return data.map(
+      (review): TourGuideReview => ({
+        id: review.id.toString(),
+        tourId: "", // Will be filled later if needed
+        tourName: "Review Tour", // Default tour name
+        clientName: review.users
+          ? `${review.users.first_name || ""} ${
+              review.users.last_name || ""
+            }`.trim() ||
+            review.users.username ||
+            "Customer"
+          : "Anonymous User",
+        clientEmail: review.users?.email || "",
+        rating: review.rating,
+        title: review.title,
+        content: review.content,
+        date: review.created_at,
+        tourDate: review.created_at,
+        verified: review.is_verified || false,
+        helpful: review.helpful_count || 0,
+        response: undefined, // Will be filled later if needed
+        responseDate: undefined,
+      })
+    );
   } catch (error) {
-    console.error('Error in getTourGuideReviewsSimple:', error);
+    console.error("Error in getTourGuideReviewsSimple:", error);
     throw error;
   }
 };
@@ -875,56 +895,59 @@ export const getTourGuideReviewsSimple = async (tourGuideId: number): Promise<To
  * Debug function to check reviews data directly
  */
 export const debugTourGuideReviews = async (tourGuideId: number) => {
-  console.log('=== DEBUG: Checking reviews for tour guide ID:', tourGuideId, '===');
-  
+  console.log(
+    "=== DEBUG: Checking reviews for tour guide ID:",
+    tourGuideId,
+    "==="
+  );
+
   try {
     // 1. Check if tour guide exists
     const { data: tourGuide, error: tgError } = await supabase
-      .from('tour_guides')
-      .select('*')
-      .eq('id', tourGuideId)
+      .from("tour_guides")
+      .select("*")
+      .eq("id", tourGuideId)
       .single();
-    
-    console.log('Tour guide found:', tourGuide);
-    if (tgError) console.error('Tour guide error:', tgError);
-    
+
+    console.log("Tour guide found:", tourGuide);
+    if (tgError) console.error("Tour guide error:", tgError);
+
     // 2. Check total reviews in database
     const { data: allReviews, error: allError } = await supabase
-      .from('reviews')
-      .select('id, tour_guide_id, title, rating')
+      .from("reviews")
+      .select("id, tour_guide_id, title, rating")
       .limit(10);
-    
-    console.log('All reviews in database (sample):', allReviews);
-    if (allError) console.error('All reviews error:', allError);
-    
+
+    console.log("All reviews in database (sample):", allReviews);
+    if (allError) console.error("All reviews error:", allError);
+
     // 3. Check reviews specifically for this tour guide
     const { data: specificReviews, error: specificError } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('tour_guide_id', tourGuideId);
-    
-    console.log('Reviews for tour guide ID', tourGuideId, ':', specificReviews);
-    if (specificError) console.error('Specific reviews error:', specificError);
-    
+      .from("reviews")
+      .select("*")
+      .eq("tour_guide_id", tourGuideId);
+
+    console.log("Reviews for tour guide ID", tourGuideId, ":", specificReviews);
+    if (specificError) console.error("Specific reviews error:", specificError);
+
     // 4. Check if there are ANY reviews with tour_guide_id (fix invalid count query)
     const { data: anyTGReviews, error: anyError } = await supabase
-      .from('reviews')
-      .select('tour_guide_id, rating')
-      .not('tour_guide_id', 'is', null)
+      .from("reviews")
+      .select("tour_guide_id, rating")
+      .not("tour_guide_id", "is", null)
       .limit(5);
-    
-    console.log('Reviews with tour_guide_id (sample):', anyTGReviews);
-    if (anyError) console.error('Any tour guide reviews error:', anyError);
-    
+
+    console.log("Reviews with tour_guide_id (sample):", anyTGReviews);
+    if (anyError) console.error("Any tour guide reviews error:", anyError);
+
     return {
       tourGuideExists: !!tourGuide,
       totalReviews: allReviews?.length || 0,
       reviewsForTourGuide: specificReviews?.length || 0,
-      data: specificReviews
+      data: specificReviews,
     };
-    
   } catch (error) {
-    console.error('Debug error:', error);
+    console.error("Debug error:", error);
     return null;
   }
 };

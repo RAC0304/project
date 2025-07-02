@@ -33,7 +33,9 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
     "all" | "5" | "4" | "3" | "2" | "1"
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedReview, setSelectedReview] = useState<TourGuideReview | null>(null);
+  const [selectedReview, setSelectedReview] = useState<TourGuideReview | null>(
+    null
+  );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [responseText, setResponseText] = useState("");
   const [loading, setLoading] = useState(false); // Loading state for fetch
@@ -44,22 +46,22 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        console.log('Starting to fetch reviews for tour guide:', tourGuideId);
-        
+        console.log("Starting to fetch reviews for tour guide:", tourGuideId);
+
         // First run debug to understand the data
         const debugResult = await debugTourGuideReviews(parseInt(tourGuideId));
-        console.log('Debug result:', debugResult);
-        
+        console.log("Debug result:", debugResult);
+
         // Try simple version first
         let reviewsData;
         try {
           reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
-          console.log('Simple query succeeded, got reviews:', reviewsData);
+          console.log("Simple query succeeded, got reviews:", reviewsData);
         } catch (simpleError) {
-          console.log('Simple query failed, trying full query:', simpleError);
+          console.log("Simple query failed, trying full query:", simpleError);
           reviewsData = await getTourGuideReviews(parseInt(tourGuideId));
         }
-        
+
         setReviews(reviewsData);
         setFilteredReviews(reviewsData);
       } catch (error) {
@@ -70,13 +72,23 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
         setLoading(false);
       }
     };
-    
+
     if (tourGuideId) {
-      console.log('TourGuideId received:', tourGuideId, 'Type:', typeof tourGuideId, 'Parsed:', parseInt(tourGuideId));
-      console.log('Starting fetch reviews for tour guide ID:', parseInt(tourGuideId));
+      console.log(
+        "TourGuideId received:",
+        tourGuideId,
+        "Type:",
+        typeof tourGuideId,
+        "Parsed:",
+        parseInt(tourGuideId)
+      );
+      console.log(
+        "Starting fetch reviews for tour guide ID:",
+        parseInt(tourGuideId)
+      );
       fetchReviews();
     } else {
-      console.log('No tourGuideId provided');
+      console.log("No tourGuideId provided");
       setLoading(false);
     }
   }, [tourGuideId]);
@@ -147,12 +159,19 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
         setIsDetailModalOpen(false);
         // Refresh reviews after response
         try {
-          const reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
+          const reviewsData = await getTourGuideReviewsSimple(
+            parseInt(tourGuideId)
+          );
           setReviews(reviewsData);
           setFilteredReviews(reviewsData);
         } catch (refreshError) {
-          console.log('Simple refresh failed, trying full query:', refreshError);
-          const reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
+          console.log(
+            "Simple refresh failed, trying full query:",
+            refreshError
+          );
+          const reviewsData = await getTourGuideReviewsSimple(
+            parseInt(tourGuideId)
+          );
           setReviews(reviewsData);
           setFilteredReviews(reviewsData);
         }
