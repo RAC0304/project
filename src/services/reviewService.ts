@@ -321,7 +321,7 @@ export const submitBookingReview = async (
 };
 
 /**
- * Create review from booking (new function for booking system)
+ * Create review from booking (main function for booking system)
  */
 export const createBookingReview = async (reviewData: BookingReviewData) => {
   const {
@@ -358,7 +358,10 @@ export const createBookingReview = async (reviewData: BookingReviewData) => {
     .select()
     .single();
 
-  if (reviewError) throw reviewError;
+  if (reviewError) {
+    console.error("Error creating booking review:", reviewError);
+    throw new Error(`Failed to create review: ${reviewError.message}`);
+  }
 
   // Insert review tags
   if (tags.length > 0) {
@@ -371,7 +374,10 @@ export const createBookingReview = async (reviewData: BookingReviewData) => {
       .from("review_tags")
       .insert(tagInserts);
 
-    if (tagsError) throw tagsError;
+    if (tagsError) {
+      console.error("Error inserting review tags:", tagsError);
+      // Don't throw error, tags are optional
+    }
   }
 
   // Insert review images
@@ -385,7 +391,10 @@ export const createBookingReview = async (reviewData: BookingReviewData) => {
       .from("review_images")
       .insert(imageInserts);
 
-    if (imagesError) throw imagesError;
+    if (imagesError) {
+      console.error("Error inserting review images:", imagesError);
+      // Don't throw error, images are optional
+    }
   }
 
   return review;

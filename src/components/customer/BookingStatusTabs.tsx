@@ -6,9 +6,13 @@ import ReviewModal from "./ReviewModal";
 
 interface BookingStatusTabsProps {
   userId: number;
+  hideReviewNeeded?: boolean;
 }
 
-const BookingStatusTabs: React.FC<BookingStatusTabsProps> = ({ userId }) => {
+const BookingStatusTabs: React.FC<BookingStatusTabsProps> = ({
+  userId,
+  hideReviewNeeded = false,
+}) => {
   const {
     upcomingTours,
     todayTours,
@@ -24,7 +28,7 @@ const BookingStatusTabs: React.FC<BookingStatusTabsProps> = ({ userId }) => {
     useState<BookingWithDetails | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  const tabs = [
+  const allTabs = [
     {
       id: "upcoming",
       label: "Upcoming Tours",
@@ -45,6 +49,11 @@ const BookingStatusTabs: React.FC<BookingStatusTabsProps> = ({ userId }) => {
       icon: Star,
     },
   ];
+
+  // Filter tabs based on hideReviewNeeded prop
+  const tabs = hideReviewNeeded
+    ? allTabs.filter((tab) => tab.id !== "review")
+    : allTabs;
 
   const handleWriteReview = (booking: BookingWithDetails) => {
     setSelectedBooking(booking);

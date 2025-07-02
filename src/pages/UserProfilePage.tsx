@@ -1462,7 +1462,10 @@ const UserProfilePage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-800 mb-6">
               My Bookings
             </h2>
-            <BookingStatusTabs userId={parseInt(user.id)} />
+            <BookingStatusTabs
+              userId={parseInt(user.id)}
+              hideReviewNeeded={true}
+            />
           </div>
         )}
       </div>

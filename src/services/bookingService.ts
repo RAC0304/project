@@ -153,29 +153,17 @@ export async function getBookingsByUserId(userId: string): Promise<Booking[]> {
 }
 
 export async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  // For custom auth system (not using Supabase Auth)
+  try {
+    const savedUser = localStorage.getItem("user");
+    if (!savedUser) {
+      return null;
+    }
 
-  if (error || !user) {
+    const user = JSON.parse(savedUser);
+    return user;
+  } catch (error) {
+    console.error("Error getting current user:", error);
     return null;
   }
-
-  // Get user details from users table
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (userError) {
-    console.error("Error fetching user data:", userError);
-    return null;
-  }
-
-  return {
-    ...user,
-    ...userData,
-  };
 }

@@ -39,8 +39,8 @@ CREATE TABLE public.bookings (
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   amount integer,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
-  CONSTRAINT bookings_tour_id_fkey FOREIGN KEY (tour_id) REFERENCES public.tours(id),
-  CONSTRAINT bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_tour_id_fkey FOREIGN KEY (tour_id) REFERENCES public.tours(id)
 );
 CREATE TABLE public.cultural_insights (
   id bigint NOT NULL DEFAULT nextval('cultural_insights_id_seq'::regclass),
@@ -155,10 +155,27 @@ CREATE TABLE public.messages (
   content text NOT NULL,
   is_read boolean DEFAULT false,
   sent_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  attachment_url text,
+  attachment_name text,
+  attachment_size integer,
+  attachment_type text,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
   CONSTRAINT messages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
   CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
   CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.payments (
+  id bigint NOT NULL DEFAULT nextval('payments_id_seq'::regclass),
+  booking_id bigint NOT NULL,
+  amount numeric NOT NULL CHECK (amount > 0::numeric),
+  payment_method USER-DEFINED NOT NULL,
+  transaction_id character varying NOT NULL UNIQUE,
+  status USER-DEFINED NOT NULL DEFAULT 'pending'::payment_status_enum,
+  gateway_response jsonb,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT payments_pkey PRIMARY KEY (id),
+  CONSTRAINT payments_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
 CREATE TABLE public.review_images (
   id bigint NOT NULL DEFAULT nextval('review_images_id_seq'::regclass),
@@ -175,8 +192,8 @@ CREATE TABLE public.review_responses (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT review_responses_pkey PRIMARY KEY (id),
-  CONSTRAINT review_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT review_responses_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.reviews(id)
+  CONSTRAINT review_responses_review_id_fkey FOREIGN KEY (review_id) REFERENCES public.reviews(id),
+  CONSTRAINT review_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.review_tags (
   id bigint NOT NULL DEFAULT nextval('review_tags_id_seq'::regclass),
@@ -200,9 +217,9 @@ CREATE TABLE public.reviews (
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT reviews_pkey PRIMARY KEY (id),
   CONSTRAINT reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
   CONSTRAINT reviews_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id),
-  CONSTRAINT reviews_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
-  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
+  CONSTRAINT reviews_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
 CREATE TABLE public.security_logs (
   id bigint NOT NULL DEFAULT nextval('security_logs_id_seq'::regclass),

@@ -202,14 +202,14 @@ export class BookingStatusService {
     const eligibleBookings = [];
 
     for (const booking of completedBookings || []) {
-      const { data: existingReview } = await supabase
+      const { data: existingReviews, error: reviewError } = await supabase
         .from("reviews")
         .select("id")
         .eq("user_id", userId)
-        .eq("booking_id", booking.id)
-        .single();
+        .eq("booking_id", booking.id);
 
-      if (!existingReview) {
+      // Jika tidak ada error dan tidak ada review, maka booking ini eligible
+      if (!reviewError && (!existingReviews || existingReviews.length === 0)) {
         eligibleBookings.push(booking);
       }
     }
