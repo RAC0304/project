@@ -290,7 +290,7 @@ const TourGuideDashboard: React.FC = () => {
             <BookingsContent tourGuideId={Number(user.id)} />
           )}{" "}
           {activePage === "clients" && <ClientsContent tourGuideUserId={user.id} />}
-          {activePage === "reviews" && <ReviewsContent tourGuideId={user.id} />}
+          {activePage === "reviews" && tourGuideId && <ReviewsContent tourGuideId={tourGuideId.toString()} />}
           {activePage === "tour-guides" && (
             <TourGuidesListContent loading={isLoading} />
           )}

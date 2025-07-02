@@ -3,6 +3,8 @@ import { supabase } from "../config/supabaseClient";
 export interface Tour {
   id?: number; // Made id optional to align with creation logic
   tour_guide_id: number;
+  destination_id: number; // Make destination_id required
+  destination_name?: string; // Add destination name for display
   title: string;
   description: string;
   location: string;
@@ -19,10 +21,22 @@ const TABLE_NAME = "tours";
 export async function getTours(): Promise<Tour[]> {
   const { data, error } = await supabase
     .from(TABLE_NAME)
-    .select("*")
-    .order("date", { ascending: false });
+    .select(
+      `
+      *,
+      destinations:destination_id (
+        name
+      )
+    `
+    )
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Tour[];
+
+  // Transform data to include destination_name
+  return (data || []).map((tour) => ({
+    ...tour,
+    destination_name: tour.destinations?.name || null,
+  })) as Tour[];
 }
 
 export async function getToursByGuide(tour_guide_id: number): Promise<Tour[]> {
@@ -41,7 +55,7 @@ export async function createTour(
   console.log("tourService - createTour received:", tour);
   // Remove id if present
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, ...tourData } = tour as any;
+  const { id, ...tourData } = tour as Tour;
   console.log("tourService - createTour sending to Supabase:", tourData);
   const { data, error } = await supabase
     .from(TABLE_NAME)
@@ -64,7 +78,7 @@ export async function updateTour(
   console.log("tourService - updateTour received tour:", tour);
   // Remove id if present in update object
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id: _id, ...tourData } = tour as any;
+  const { id: _id, ...tourData } = tour as Tour;
   console.log("tourService - updateTour sending to Supabase:", tourData);
   const { data, error } = await supabase
     .from(TABLE_NAME)

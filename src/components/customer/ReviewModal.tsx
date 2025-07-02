@@ -58,6 +58,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         userId: booking.user_id,
         bookingId: booking.id,
         tourGuideId: booking.tours?.tour_guides?.id || 0,
+        destinationId: booking.tours?.destination_id,
         rating,
         title: title.trim(),
         content: content.trim(),

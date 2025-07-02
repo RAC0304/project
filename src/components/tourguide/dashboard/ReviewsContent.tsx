@@ -12,37 +12,28 @@ import {
   Eye,
   X,
 } from "lucide-react";
-
-interface Review {
-  id: string;
-  tourId: string;
-  tourName: string;
-  clientName: string;
-  clientEmail: string;
-  rating: number;
-  title: string;
-  content: string;
-  date: string;
-  tourDate: string;
-  verified: boolean;
-  helpful: number;
-  response?: string;
-  responseDate?: string;
-}
+import {
+  getTourGuideReviews,
+  getTourGuideReviewById,
+  createOrUpdateTourGuideResponse,
+  getTourGuideReviewsSimple,
+  debugTourGuideReviews,
+  TourGuideReview,
+} from "../../../services/reviewService";
 
 interface ReviewsContentProps {
   tourGuideId: string;
 }
 
 const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<TourGuideReview[]>([]);
+  const [filteredReviews, setFilteredReviews] = useState<TourGuideReview[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingFilter, setRatingFilter] = useState<
     "all" | "5" | "4" | "3" | "2" | "1"
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [selectedReview, setSelectedReview] = useState<TourGuideReview | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [responseText, setResponseText] = useState("");
   const [loading, setLoading] = useState(false); // Loading state for fetch
@@ -53,35 +44,41 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/reviews?tour_guide_id=${tourGuideId}`);
-        const data: any[] = await res.json();
-        // Map Supabase data to Review type
-        const mapped: Review[] = data.map((item) => ({
-          id: item.id.toString(),
-          tourId: item.tour_id ? item.tour_id.toString() : "",
-          tourName: item.tour_name || "",
-          clientName: item.user_name || "Client",
-          clientEmail: "",
-          rating: item.rating,
-          title: item.title,
-          content: item.content,
-          date: item.created_at,
-          tourDate: "",
-          verified: item.is_verified,
-          helpful: item.helpful_count || 0,
-          response: undefined,
-          responseDate: undefined,
-        }));
-        setReviews(mapped);
-        setFilteredReviews(mapped);
-      } catch {
+        console.log('Starting to fetch reviews for tour guide:', tourGuideId);
+        
+        // First run debug to understand the data
+        const debugResult = await debugTourGuideReviews(parseInt(tourGuideId));
+        console.log('Debug result:', debugResult);
+        
+        // Try simple version first
+        let reviewsData;
+        try {
+          reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
+          console.log('Simple query succeeded, got reviews:', reviewsData);
+        } catch (simpleError) {
+          console.log('Simple query failed, trying full query:', simpleError);
+          reviewsData = await getTourGuideReviews(parseInt(tourGuideId));
+        }
+        
+        setReviews(reviewsData);
+        setFilteredReviews(reviewsData);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
         setReviews([]);
         setFilteredReviews([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchReviews();
+    
+    if (tourGuideId) {
+      console.log('TourGuideId received:', tourGuideId, 'Type:', typeof tourGuideId, 'Parsed:', parseInt(tourGuideId));
+      console.log('Starting fetch reviews for tour guide ID:', parseInt(tourGuideId));
+      fetchReviews();
+    } else {
+      console.log('No tourGuideId provided');
+      setLoading(false);
+    }
   }, [tourGuideId]);
 
   // Filter reviews based on search and rating
@@ -119,27 +116,20 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const handleViewDetails = async (review: Review) => {
+  const handleViewDetails = async (review: TourGuideReview) => {
     // Fetch detail (with responses) from backend
     try {
-      const res = await fetch(`/api/reviews/${review.id}`);
-      const data = await res.json();
-      setSelectedReview({
-        ...review,
-        response:
-          data.responses && data.responses[0]
-            ? data.responses[0].response
-            : undefined,
-        responseDate:
-          data.responses && data.responses[0]
-            ? data.responses[0].created_at
-            : undefined,
-      });
-      setResponseText(
-        data.responses && data.responses[0] ? data.responses[0].response : ""
-      );
+      const detailedReview = await getTourGuideReviewById(parseInt(review.id));
+      if (detailedReview) {
+        setSelectedReview(detailedReview);
+        setResponseText(detailedReview.response || "");
+      } else {
+        setSelectedReview(review);
+        setResponseText(review.response || "");
+      }
       setIsDetailModalOpen(true);
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch review details:", error);
       setSelectedReview(review);
       setResponseText(review.response || "");
       setIsDetailModalOpen(true);
@@ -149,38 +139,26 @@ const ReviewsContent: React.FC<ReviewsContentProps> = ({ tourGuideId }) => {
   const handleSaveResponse = async () => {
     if (selectedReview && responseText.trim()) {
       try {
-        await fetch(`/api/reviews/${selectedReview.id}/responses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: tourGuideId,
-            response: responseText,
-          }),
-        });
+        await createOrUpdateTourGuideResponse(
+          parseInt(selectedReview.id),
+          parseInt(tourGuideId),
+          responseText
+        );
         setIsDetailModalOpen(false);
         // Refresh reviews after response
-        const res = await fetch(`/api/reviews?tour_guide_id=${tourGuideId}`);
-        const data: any[] = await res.json();
-        const mapped: Review[] = data.map((item) => ({
-          id: item.id.toString(),
-          tourId: item.tour_id ? item.tour_id.toString() : "",
-          tourName: item.tour_name || "",
-          clientName: item.user_name || "Client",
-          clientEmail: "",
-          rating: item.rating,
-          title: item.title,
-          content: item.content,
-          date: item.created_at,
-          tourDate: "",
-          verified: item.is_verified,
-          helpful: item.helpful_count || 0,
-          response: undefined,
-          responseDate: undefined,
-        }));
-        setReviews(mapped);
-        setFilteredReviews(mapped);
-      } catch {
-        // error handling
+        try {
+          const reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
+          setReviews(reviewsData);
+          setFilteredReviews(reviewsData);
+        } catch (refreshError) {
+          console.log('Simple refresh failed, trying full query:', refreshError);
+          const reviewsData = await getTourGuideReviewsSimple(parseInt(tourGuideId));
+          setReviews(reviewsData);
+          setFilteredReviews(reviewsData);
+        }
+      } catch (error) {
+        console.error("Failed to save response:", error);
+        alert("Failed to save response. Please try again.");
       }
     }
   };

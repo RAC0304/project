@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Tour } from "../../../services/tourService";
+import { getDestinationsForDropdown } from "../../../services/destinationService";
 
 interface EditTourModalProps {
   isOpen: boolean;
@@ -15,6 +16,9 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const [destinations, setDestinations] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [tourData, setTourData] = useState<Tour>({
     id: 0,
     tour_guide_id: 0,
@@ -25,6 +29,7 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
     price: 0,
     max_group_size: 1,
     is_active: true,
+    destination_id: 0, // Set default value instead of undefined
   });
 
   useEffect(() => {
@@ -41,9 +46,25 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
         price: 0,
         max_group_size: 1,
         is_active: true,
+        destination_id: 0, // Set default value instead of undefined
       });
     }
   }, [initialTourData, isOpen]);
+
+  // Load destinations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const loadDestinations = async () => {
+        try {
+          const destinationData = await getDestinationsForDropdown();
+          setDestinations(destinationData);
+        } catch (error) {
+          console.error("Error loading destinations:", error);
+        }
+      };
+      loadDestinations();
+    }
+  }, [isOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -61,7 +82,9 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
       [name]:
         type === "checkbox"
           ? checked
-          : name === "price" || name === "max_group_size"
+          : name === "price" ||
+            name === "max_group_size" ||
+            name === "destination_id"
           ? Number(value)
           : value,
     }));
@@ -74,9 +97,13 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
       !tourData.location.trim() ||
       !tourData.duration.trim() ||
       tourData.price <= 0 ||
-      tourData.max_group_size <= 0
+      tourData.max_group_size <= 0 ||
+      !tourData.destination_id ||
+      tourData.destination_id <= 0
     ) {
-      alert("Please fill all required fields with valid values.");
+      alert(
+        "Please fill all required fields with valid values, including selecting a destination."
+      );
       return;
     }
 
@@ -145,6 +172,25 @@ const EditTourModal: React.FC<EditTourModalProps> = ({
                 placeholder="Describe your tour in detail"
                 required
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destination *
+              </label>
+              <select
+                name="destination_id"
+                value={tourData.destination_id || 0}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                required
+              >
+                <option value={0}>Select a destination</option>
+                {destinations.map((destination) => (
+                  <option key={destination.id} value={destination.id}>
+                    {destination.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

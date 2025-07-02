@@ -18,6 +18,7 @@ export interface BookingWithDetails {
     description: string;
     location: string;
     duration: string;
+    destination_id?: number;
     tour_guides?: {
       id: number;
       user_id: number;
@@ -73,7 +74,7 @@ export class BookingStatusService {
       .eq("user_id", userId)
       .eq("status", "confirmed")
       .eq("payment_status", "paid")
-      .gte("date", new Date().toISOString().split("T")[0])
+      .gt("date", new Date().toISOString().split("T")[0]) // Changed from gte to gt (greater than today)
       .order("date", { ascending: true });
 
     if (error) throw error;
@@ -133,6 +134,7 @@ export class BookingStatusService {
           description,
           location,
           duration,
+          destination_id,
           tour_guides (
             id,
             user_id,
@@ -181,6 +183,7 @@ export class BookingStatusService {
         tours (
           id,
           title,
+          destination_id,
           tour_guides (
             id,
             users (

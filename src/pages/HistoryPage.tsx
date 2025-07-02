@@ -22,6 +22,7 @@ interface CompletedBooking {
     id: number;
     title: string;
     location: string;
+    destination_id?: number;
     tour_guides?: {
       id: number;
       users?: {
@@ -159,6 +160,7 @@ const HistoryPage: React.FC = () => {
         userId: currentUserId,
         bookingId: selectedBooking.id,
         tourGuideId: selectedBooking.tours?.tour_guides?.id || 0,
+        destinationId: selectedBooking.tours?.destination_id,
         rating,
         title: reviewTitle.trim(),
         content: reviewText.trim(),

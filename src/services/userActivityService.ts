@@ -160,7 +160,7 @@ class UserActivityService {
         )
         .eq("user_id", userId)
         .order("updated_at", { ascending: false })
-        .limit(limit * 2); // Fetch more to account for multiple activities per booking
+        .limit(limit); // Changed: Removed multiplier since we're only creating 1 activity per booking
 
       if (error) throw error;
 
@@ -171,67 +171,11 @@ class UserActivityService {
           ? booking.tours[0]
           : booking.tours;
 
-        // Create separate activities based on status and payment
+        // Create only ONE activity per booking based on current status
+        // Priority: paid > confirmed > cancelled > pending
 
-        // 1. Activity for pending bookings (just created, waiting for confirmation)
-        if (booking.status === "pending") {
-          activities.push({
-            id: `booking-pending-${booking.id}`,
-            type: "booking" as const,
-            title: "Booking Created",
-            description: `Booked "${tour?.title || "Unknown Tour"}" in ${
-              tour?.location || "Unknown Location"
-            } for ${
-              booking.participants
-            } participants - waiting for confirmation`,
-            timestamp: booking.created_at,
-            formattedDate: formatIndonesianDate(booking.created_at),
-            icon: "⏳",
-            details: {
-              bookingId: booking.id,
-              status: booking.status,
-              paymentStatus: booking.payment_status,
-              amount: booking.total_amount,
-              participants: booking.participants,
-              tourTitle: tour?.title,
-              tourLocation: tour?.location,
-              activityType: "creation",
-            },
-          });
-        }
-
-        // 2. Activity for confirmed bookings (confirmed but not paid yet)
-        if (
-          booking.status === "confirmed" &&
-          booking.payment_status === "pending"
-        ) {
-          activities.push({
-            id: `booking-confirmed-${booking.id}`,
-            type: "booking" as const,
-            title: "Booking Confirmed - Payment Required",
-            description: `Tour guide confirmed your booking for "${
-              tour?.title || "Unknown Tour"
-            }" - please complete payment`,
-            timestamp: booking.updated_at || booking.created_at,
-            formattedDate: formatIndonesianDate(
-              booking.updated_at || booking.created_at
-            ),
-            icon: "✅",
-            details: {
-              bookingId: booking.id,
-              status: booking.status,
-              paymentStatus: booking.payment_status,
-              amount: booking.total_amount,
-              participants: booking.participants,
-              tourTitle: tour?.title,
-              tourLocation: tour?.location,
-              activityType: "confirmation",
-            },
-          });
-        }
-
-        // 3. Activity for paid bookings (payment completed - can chat with tour guide)
         if (booking.payment_status === "paid") {
+          // Highest priority: Payment completed
           activities.push({
             id: `booking-paid-${booking.id}`,
             type: "booking" as const,
@@ -255,10 +199,36 @@ class UserActivityService {
               activityType: "payment",
             },
           });
-        }
-
-        // Create activity for cancelled bookings
-        if (booking.status === "cancelled") {
+        } else if (
+          booking.status === "confirmed" &&
+          booking.payment_status === "pending"
+        ) {
+          // Second priority: Confirmed but not paid yet
+          activities.push({
+            id: `booking-confirmed-${booking.id}`,
+            type: "booking" as const,
+            title: "Booking Confirmed - Payment Required",
+            description: `Tour guide confirmed your booking for "${
+              tour?.title || "Unknown Tour"
+            }" - please complete payment`,
+            timestamp: booking.updated_at || booking.created_at,
+            formattedDate: formatIndonesianDate(
+              booking.updated_at || booking.created_at
+            ),
+            icon: "✅",
+            details: {
+              bookingId: booking.id,
+              status: booking.status,
+              paymentStatus: booking.payment_status,
+              amount: booking.total_amount,
+              participants: booking.participants,
+              tourTitle: tour?.title,
+              tourLocation: tour?.location,
+              activityType: "confirmation",
+            },
+          });
+        } else if (booking.status === "cancelled") {
+          // Third priority: Cancelled bookings
           activities.push({
             id: `booking-cancelled-${booking.id}`,
             type: "booking" as const,
@@ -280,6 +250,31 @@ class UserActivityService {
               tourTitle: tour?.title,
               tourLocation: tour?.location,
               activityType: "cancellation",
+            },
+          });
+        } else if (booking.status === "pending") {
+          // Lowest priority: Just created, waiting for confirmation
+          activities.push({
+            id: `booking-pending-${booking.id}`,
+            type: "booking" as const,
+            title: "Booking Created",
+            description: `Booked "${tour?.title || "Unknown Tour"}" in ${
+              tour?.location || "Unknown Location"
+            } for ${
+              booking.participants
+            } participants - waiting for confirmation`,
+            timestamp: booking.created_at,
+            formattedDate: formatIndonesianDate(booking.created_at),
+            icon: "⏳",
+            details: {
+              bookingId: booking.id,
+              status: booking.status,
+              paymentStatus: booking.payment_status,
+              amount: booking.total_amount,
+              participants: booking.participants,
+              tourTitle: tour?.title,
+              tourLocation: tour?.location,
+              activityType: "creation",
             },
           });
         }
@@ -332,67 +327,11 @@ class UserActivityService {
           ? booking.tours[0]
           : booking.tours;
 
-        // Create separate activities based on status and payment
+        // Create only ONE activity per booking based on current status
+        // Priority: paid > confirmed > cancelled > pending
 
-        // 1. Activity for pending bookings (just created, waiting for confirmation)
-        if (booking.status === "pending") {
-          activities.push({
-            id: `booking-pending-${booking.id}`,
-            type: "booking" as const,
-            title: "Booking Created",
-            description: `Booked "${tour?.title || "Unknown Tour"}" in ${
-              tour?.location || "Unknown Location"
-            } for ${
-              booking.participants
-            } participants - waiting for confirmation`,
-            timestamp: booking.created_at,
-            formattedDate: formatIndonesianDate(booking.created_at),
-            icon: "⏳",
-            details: {
-              bookingId: booking.id,
-              status: booking.status,
-              paymentStatus: booking.payment_status,
-              amount: booking.total_amount,
-              participants: booking.participants,
-              tourTitle: tour?.title,
-              tourLocation: tour?.location,
-              activityType: "creation",
-            },
-          });
-        }
-
-        // 2. Activity for confirmed bookings (confirmed but not paid yet)
-        if (
-          booking.status === "confirmed" &&
-          booking.payment_status === "pending"
-        ) {
-          activities.push({
-            id: `booking-confirmed-${booking.id}`,
-            type: "booking" as const,
-            title: "Booking Confirmed - Payment Required",
-            description: `Tour guide confirmed your booking for "${
-              tour?.title || "Unknown Tour"
-            }" - please complete payment`,
-            timestamp: booking.updated_at || booking.created_at,
-            formattedDate: formatIndonesianDate(
-              booking.updated_at || booking.created_at
-            ),
-            icon: "✅",
-            details: {
-              bookingId: booking.id,
-              status: booking.status,
-              paymentStatus: booking.payment_status,
-              amount: booking.total_amount,
-              participants: booking.participants,
-              tourTitle: tour?.title,
-              tourLocation: tour?.location,
-              activityType: "confirmation",
-            },
-          });
-        }
-
-        // 3. Activity for paid bookings (payment completed - can chat with tour guide)
         if (booking.payment_status === "paid") {
+          // Highest priority: Payment completed
           activities.push({
             id: `booking-paid-${booking.id}`,
             type: "booking" as const,
@@ -416,10 +355,36 @@ class UserActivityService {
               activityType: "payment",
             },
           });
-        }
-
-        // Create activity for cancelled bookings
-        if (booking.status === "cancelled") {
+        } else if (
+          booking.status === "confirmed" &&
+          booking.payment_status === "pending"
+        ) {
+          // Second priority: Confirmed but not paid yet
+          activities.push({
+            id: `booking-confirmed-${booking.id}`,
+            type: "booking" as const,
+            title: "Booking Confirmed - Payment Required",
+            description: `Tour guide confirmed your booking for "${
+              tour?.title || "Unknown Tour"
+            }" - please complete payment`,
+            timestamp: booking.updated_at || booking.created_at,
+            formattedDate: formatIndonesianDate(
+              booking.updated_at || booking.created_at
+            ),
+            icon: "✅",
+            details: {
+              bookingId: booking.id,
+              status: booking.status,
+              paymentStatus: booking.payment_status,
+              amount: booking.total_amount,
+              participants: booking.participants,
+              tourTitle: tour?.title,
+              tourLocation: tour?.location,
+              activityType: "confirmation",
+            },
+          });
+        } else if (booking.status === "cancelled") {
+          // Third priority: Cancelled bookings
           activities.push({
             id: `booking-cancelled-${booking.id}`,
             type: "booking" as const,
@@ -441,6 +406,31 @@ class UserActivityService {
               tourTitle: tour?.title,
               tourLocation: tour?.location,
               activityType: "cancellation",
+            },
+          });
+        } else if (booking.status === "pending") {
+          // Lowest priority: Just created, waiting for confirmation
+          activities.push({
+            id: `booking-pending-${booking.id}`,
+            type: "booking" as const,
+            title: "Booking Created",
+            description: `Booked "${tour?.title || "Unknown Tour"}" in ${
+              tour?.location || "Unknown Location"
+            } for ${
+              booking.participants
+            } participants - waiting for confirmation`,
+            timestamp: booking.created_at,
+            formattedDate: formatIndonesianDate(booking.created_at),
+            icon: "⏳",
+            details: {
+              bookingId: booking.id,
+              status: booking.status,
+              paymentStatus: booking.payment_status,
+              amount: booking.total_amount,
+              participants: booking.participants,
+              tourTitle: tour?.title,
+              tourLocation: tour?.location,
+              activityType: "creation",
             },
           });
         }

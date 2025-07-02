@@ -24,16 +24,13 @@ const HomePage: React.FC = () => {
   const { user } = useEnhancedAuth();
   const navigate = useNavigate();
   // State untuk menyimpan insight yang dipilih untuk ditampilkan di popup
-  const [selectedInsight, setSelectedInsight] = useState<
-    | null
-    | {
-        id: number;
-        title: string;
-        content: string;
-        imageUrl: string;
-        category: string;
-      }
-  >(null);
+  const [selectedInsight, setSelectedInsight] = useState<null | {
+    id: number;
+    title: string;
+    content: string;
+    imageUrl: string;
+    category: string;
+  }>(null);
 
   // Fungsi untuk menangani klik pada tombol Read More
   const handleReadMore = (insight: CulturalInsight) => {
@@ -320,7 +317,6 @@ const HomePage: React.FC = () => {
           </Link>
         </div>
       </section>
-
       {/* Fullscreen Popup for Cultural Insight */}
       {selectedInsight && (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-y-auto">

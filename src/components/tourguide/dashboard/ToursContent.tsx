@@ -93,6 +93,12 @@ const ToursContent: React.FC<ToursContentProps> = ({
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
+                DESTINATION
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 LOCATION
               </th>
               <th
@@ -128,6 +134,9 @@ const ToursContent: React.FC<ToursContentProps> = ({
                   <div className="text-sm font-medium text-gray-900">
                     {tour.title}
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {tour.destination_name || "No destination selected"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {tour.location}
@@ -172,7 +181,7 @@ const ToursContent: React.FC<ToursContentProps> = ({
             {tours.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   <div className="flex flex-col items-center justify-center">
