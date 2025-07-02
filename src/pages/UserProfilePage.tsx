@@ -16,6 +16,7 @@ import RoleBadge from "../components/common/RoleBadge";
 import TimezoneInfo from "../components/common/TimezoneInfo";
 import { formatIndonesianDate } from "../utils/dateUtils";
 import { getUserAccountStats } from "../services/userStatsService";
+import BookingStatusTabs from "../components/customer/BookingStatusTabs";
 import {
   userActivityService,
   type ActivityItem,
@@ -1454,6 +1455,16 @@ const UserProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Booking Status Section - Full width for customers */}
+        {user.role === "customer" && (
+          <div className="bg-white rounded-xl shadow-md p-6 mt-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+              My Bookings
+            </h2>
+            <BookingStatusTabs userId={parseInt(user.id)} />
+          </div>
+        )}
       </div>
 
       {/* All Activities Modal */}

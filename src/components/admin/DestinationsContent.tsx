@@ -221,6 +221,39 @@ const DestinationsContent: React.FC = () => {
     });
   };
 
+  // Helper function to check field length and show warnings
+  const getFieldWarning = (
+    fieldName: string,
+    value: string | undefined,
+    maxLength: number
+  ) => {
+    if (!value) return null;
+
+    const length = value.length;
+    if (length > maxLength) {
+      return `Peringatan: ${fieldName} melebihi batas ${maxLength} karakter (saat ini: ${length} karakter). Data akan dipotong saat disimpan.`;
+    } else if (length > maxLength * 0.9) {
+      return `Peringatan: ${fieldName} mendekati batas ${maxLength} karakter (saat ini: ${length} karakter).`;
+    }
+    return null;
+  };
+
+  // Helper function to get character count display
+  const getCharacterCount = (
+    value: string | undefined,
+    maxLength: number
+  ): { count: string; className: string } => {
+    if (!value) return { count: `0/${maxLength}`, className: "text-gray-500" };
+    const length = value.length;
+    const className =
+      length > maxLength
+        ? "text-red-600 font-medium"
+        : length > maxLength * 0.9
+        ? "text-amber-600"
+        : "text-gray-500";
+    return { count: `${length}/${maxLength}`, className };
+  };
+
   const handleAddImage = () => {
     if (newImage && !formData.images?.includes(newImage)) {
       setFormData({
@@ -352,31 +385,67 @@ const DestinationsContent: React.FC = () => {
     });
   };
 
+  // Helper function to truncate string to max length
+  const truncateString = (
+    str: string | undefined,
+    maxLength: number
+  ): string => {
+    if (!str) return "";
+    const trimmed = str.trim();
+    return trimmed.length > maxLength
+      ? trimmed.substring(0, maxLength).trim()
+      : trimmed;
+  };
+
   // Helper functions for handling related entities in Supabase
   const handleUpdateRelatedEntities = async (destinationId: number) => {
     try {
+      console.log(
+        "Updating related entities for destination ID:",
+        destinationId
+      );
+
       // Handle attractions - first delete existing
       const { error: deleteAttractionsError } = await supabase
         .from("attractions")
         .delete()
         .eq("destination_id", destinationId);
 
-      if (deleteAttractionsError) throw deleteAttractionsError;
+      if (deleteAttractionsError) {
+        console.error(
+          "Error deleting existing attractions:",
+          deleteAttractionsError
+        );
+        throw deleteAttractionsError;
+      }
 
       // Add new attractions
       if (formData.attractions && formData.attractions.length > 0) {
-        const attractionsToInsert = formData.attractions.map((attraction) => ({
-          destination_id: destinationId,
-          name: attraction.name,
-          description: attraction.description,
-          image_url: attraction.imageUrl,
-        }));
+        const attractionsToInsert = formData.attractions
+          .filter((attraction) => attraction.name && attraction.description) // Filter out invalid attractions
+          .map((attraction) => ({
+            destination_id: destinationId,
+            name: truncateString(attraction.name, 255),
+            description: truncateString(attraction.description, 255),
+            image_url: attraction.imageUrl
+              ? truncateString(attraction.imageUrl, 255)
+              : null,
+          }));
 
-        const { error: insertAttractionsError } = await supabase
-          .from("attractions")
-          .insert(attractionsToInsert);
+        if (attractionsToInsert.length > 0) {
+          console.log("Inserting attractions:", attractionsToInsert);
+          const { error: insertAttractionsError } = await supabase
+            .from("attractions")
+            .insert(attractionsToInsert);
 
-        if (insertAttractionsError) throw insertAttractionsError;
+          if (insertAttractionsError) {
+            console.error(
+              "Error inserting attractions:",
+              insertAttractionsError
+            );
+            throw insertAttractionsError;
+          }
+        }
       }
 
       // Handle activities - first delete existing
@@ -385,24 +454,43 @@ const DestinationsContent: React.FC = () => {
         .delete()
         .eq("destination_id", destinationId);
 
-      if (deleteActivitiesError) throw deleteActivitiesError;
+      if (deleteActivitiesError) {
+        console.error(
+          "Error deleting existing activities:",
+          deleteActivitiesError
+        );
+        throw deleteActivitiesError;
+      }
 
       // Add new activities
       if (formData.activities && formData.activities.length > 0) {
-        const activitiesToInsert = formData.activities.map((activity) => ({
-          destination_id: destinationId,
-          name: activity.name,
-          description: activity.description,
-          duration: activity.duration,
-          price: activity.price,
-          image_url: activity.imageUrl,
-        }));
+        const activitiesToInsert = formData.activities
+          .filter(
+            (activity) =>
+              activity.name && activity.description && activity.duration
+          ) // Filter out invalid activities
+          .map((activity) => ({
+            destination_id: destinationId,
+            name: truncateString(activity.name, 255),
+            description: truncateString(activity.description, 255),
+            duration: truncateString(activity.duration, 255),
+            price: activity.price ? truncateString(activity.price, 255) : null,
+            image_url: activity.imageUrl
+              ? truncateString(activity.imageUrl, 255)
+              : null,
+          }));
 
-        const { error: insertActivitiesError } = await supabase
-          .from("activities")
-          .insert(activitiesToInsert);
+        if (activitiesToInsert.length > 0) {
+          console.log("Inserting activities:", activitiesToInsert);
+          const { error: insertActivitiesError } = await supabase
+            .from("activities")
+            .insert(activitiesToInsert);
 
-        if (insertActivitiesError) throw insertActivitiesError;
+          if (insertActivitiesError) {
+            console.error("Error inserting activities:", insertActivitiesError);
+            throw insertActivitiesError;
+          }
+        }
       }
 
       // Handle categories - first delete existing
@@ -411,21 +499,37 @@ const DestinationsContent: React.FC = () => {
         .delete()
         .eq("destination_id", destinationId);
 
-      if (deleteCategoriesError) throw deleteCategoriesError;
+      if (deleteCategoriesError) {
+        console.error(
+          "Error deleting existing categories:",
+          deleteCategoriesError
+        );
+        throw deleteCategoriesError;
+      }
 
       // Add new categories
       if (selectedCategories && selectedCategories.length > 0) {
-        const categoriesToInsert = selectedCategories.map((category) => ({
-          destination_id: destinationId,
-          category: category,
-        }));
+        const categoriesToInsert = selectedCategories
+          .filter((category) => category && category.trim().length > 0) // Filter out invalid categories
+          .map((category) => ({
+            destination_id: destinationId,
+            category: truncateString(category, 255),
+          }));
 
-        const { error: insertCategoriesError } = await supabase
-          .from("destination_categories")
-          .insert(categoriesToInsert);
+        if (categoriesToInsert.length > 0) {
+          console.log("Inserting categories:", categoriesToInsert);
+          const { error: insertCategoriesError } = await supabase
+            .from("destination_categories")
+            .insert(categoriesToInsert);
 
-        if (insertCategoriesError) throw insertCategoriesError;
+          if (insertCategoriesError) {
+            console.error("Error inserting categories:", insertCategoriesError);
+            throw insertCategoriesError;
+          }
+        }
       }
+
+      console.log("Successfully updated all related entities");
     } catch (error) {
       console.error("Error updating related entities:", error);
       throw error;
@@ -434,53 +538,94 @@ const DestinationsContent: React.FC = () => {
 
   const handleCreateRelatedEntities = async (destinationId: number) => {
     try {
+      console.log(
+        "Creating related entities for destination ID:",
+        destinationId
+      );
+
       // Add attractions
       if (formData.attractions && formData.attractions.length > 0) {
-        const attractionsToInsert = formData.attractions.map((attraction) => ({
-          destination_id: destinationId,
-          name: attraction.name,
-          description: attraction.description,
-          image_url: attraction.imageUrl,
-        }));
+        const attractionsToInsert = formData.attractions
+          .filter((attraction) => attraction.name && attraction.description) // Filter out invalid attractions
+          .map((attraction) => ({
+            destination_id: destinationId,
+            name: truncateString(attraction.name, 255),
+            description: truncateString(attraction.description, 255),
+            image_url: attraction.imageUrl
+              ? truncateString(attraction.imageUrl, 255)
+              : null,
+          }));
 
-        const { error: insertAttractionsError } = await supabase
-          .from("attractions")
-          .insert(attractionsToInsert);
+        if (attractionsToInsert.length > 0) {
+          console.log("Creating attractions:", attractionsToInsert);
+          const { error: insertAttractionsError } = await supabase
+            .from("attractions")
+            .insert(attractionsToInsert);
 
-        if (insertAttractionsError) throw insertAttractionsError;
+          if (insertAttractionsError) {
+            console.error(
+              "Error creating attractions:",
+              insertAttractionsError
+            );
+            throw insertAttractionsError;
+          }
+        }
       }
 
       // Add activities
       if (formData.activities && formData.activities.length > 0) {
-        const activitiesToInsert = formData.activities.map((activity) => ({
-          destination_id: destinationId,
-          name: activity.name,
-          description: activity.description,
-          duration: activity.duration,
-          price: activity.price,
-          image_url: activity.imageUrl,
-        }));
+        const activitiesToInsert = formData.activities
+          .filter(
+            (activity) =>
+              activity.name && activity.description && activity.duration
+          ) // Filter out invalid activities
+          .map((activity) => ({
+            destination_id: destinationId,
+            name: truncateString(activity.name, 255),
+            description: truncateString(activity.description, 255),
+            duration: truncateString(activity.duration, 255),
+            price: activity.price ? truncateString(activity.price, 255) : null,
+            image_url: activity.imageUrl
+              ? truncateString(activity.imageUrl, 255)
+              : null,
+          }));
 
-        const { error: insertActivitiesError } = await supabase
-          .from("activities")
-          .insert(activitiesToInsert);
+        if (activitiesToInsert.length > 0) {
+          console.log("Creating activities:", activitiesToInsert);
+          const { error: insertActivitiesError } = await supabase
+            .from("activities")
+            .insert(activitiesToInsert);
 
-        if (insertActivitiesError) throw insertActivitiesError;
+          if (insertActivitiesError) {
+            console.error("Error creating activities:", insertActivitiesError);
+            throw insertActivitiesError;
+          }
+        }
       }
 
       // Add categories
       if (selectedCategories && selectedCategories.length > 0) {
-        const categoriesToInsert = selectedCategories.map((category) => ({
-          destination_id: destinationId,
-          category: category,
-        }));
+        const categoriesToInsert = selectedCategories
+          .filter((category) => category && category.trim().length > 0) // Filter out invalid categories
+          .map((category) => ({
+            destination_id: destinationId,
+            category: truncateString(category, 255),
+          }));
 
-        const { error: insertCategoriesError } = await supabase
-          .from("destination_categories")
-          .insert(categoriesToInsert);
+        if (categoriesToInsert.length > 0) {
+          console.log("Creating categories:", categoriesToInsert);
+          const { error: insertCategoriesError } = await supabase
+            .from("destination_categories")
+            .insert(categoriesToInsert);
 
-        if (insertCategoriesError) throw insertCategoriesError;
+          if (insertCategoriesError) {
+            console.error("Error creating categories:", insertCategoriesError);
+            throw insertCategoriesError;
+          }
+        }
       }
+
+      console.log("Successfully created all related entities");
     } catch (error) {
       console.error("Error creating related entities:", error);
       throw error;
@@ -498,6 +643,79 @@ const DestinationsContent: React.FC = () => {
         return;
       }
 
+      // Additional validations for data integrity
+      if (formData.name && formData.name.trim().length === 0) {
+        showToast("error", "Name cannot be empty or just whitespace");
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.location && formData.location.trim().length === 0) {
+        showToast("error", "Location cannot be empty or just whitespace");
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.description && formData.description.trim().length === 0) {
+        showToast("error", "Description cannot be empty or just whitespace");
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate URLs if provided
+      if (formData.imageUrl && formData.imageUrl.trim() !== "") {
+        try {
+          new URL(formData.imageUrl.trim());
+        } catch {
+          showToast("error", "Please enter a valid Image URL");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (formData.googleMapsUrl && formData.googleMapsUrl.trim() !== "") {
+        try {
+          new URL(formData.googleMapsUrl.trim());
+        } catch {
+          showToast("error", "Please enter a valid Google Maps URL");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Check for field length warnings and show confirmation
+      const warnings = [];
+      if (formData.name && formData.name.length > 255) {
+        warnings.push(
+          `Name (${formData.name.length} characters, akan dipotong menjadi 255)`
+        );
+      }
+      if (formData.location && formData.location.length > 255) {
+        warnings.push(
+          `Location (${formData.location.length} characters, akan dipotong menjadi 255)`
+        );
+      }
+      if (formData.imageUrl && formData.imageUrl.length > 255) {
+        warnings.push(
+          `Image URL (${formData.imageUrl.length} characters, akan dipotong menjadi 255)`
+        );
+      }
+      if (formData.bestTimeToVisit && formData.bestTimeToVisit.length > 255) {
+        warnings.push(
+          `Best Time to Visit (${formData.bestTimeToVisit.length} characters, akan dipotong menjadi 255)`
+        );
+      }
+
+      if (warnings.length > 0) {
+        const confirmMessage = `Peringatan: Field berikut melebihi batas 255 karakter:\n\n${warnings.join(
+          "\n"
+        )}\n\nData akan dipotong secara otomatis. Lanjutkan simpan?`;
+        if (!window.confirm(confirmMessage)) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       console.log(
         "Form submission - isEditing:",
         isEditing,
@@ -511,18 +729,42 @@ const DestinationsContent: React.FC = () => {
         const destinationId = parseInt(formData.id);
         console.log("Updating destination with ID:", destinationId);
 
+        // Helper function to truncate string to max length
+        const truncateString = (
+          str: string | undefined,
+          maxLength: number
+        ): string => {
+          if (!str) return "";
+          const trimmed = str.trim();
+          return trimmed.length > maxLength
+            ? trimmed.substring(0, maxLength).trim()
+            : trimmed;
+        };
+
+        // Validate and prepare update data
+        const updateData = {
+          name: truncateString(formData.name, 255),
+          location: truncateString(formData.location, 255),
+          description: formData.description?.trim() || "", // TEXT field, no limit
+          short_description: formData.shortDescription?.trim() || null, // TEXT field, no limit
+          image_url: truncateString(formData.imageUrl, 255),
+          best_time_to_visit: truncateString(formData.bestTimeToVisit, 255),
+          google_maps_url: formData.googleMapsUrl?.trim() || null, // TEXT field, no limit
+          updated_at: new Date().toISOString(),
+        };
+
+        // Final validation - ensure required fields are not empty after processing
+        if (
+          !updateData.name ||
+          !updateData.location ||
+          !updateData.description
+        ) {
+          throw new Error("Required fields cannot be empty after processing");
+        }
+
         const { error: destError } = await supabase
           .from("destinations")
-          .update({
-            name: formData.name,
-            location: formData.location,
-            description: formData.description,
-            short_description: formData.shortDescription,
-            image_url: formData.imageUrl,
-            best_time_to_visit: formData.bestTimeToVisit,
-            google_maps_url: formData.googleMapsUrl,
-            updated_at: new Date(),
-          })
+          .update(updateData)
           .eq("id", destinationId);
 
         if (destError) throw destError; // Handle images - first remove existing
@@ -535,16 +777,20 @@ const DestinationsContent: React.FC = () => {
 
         // Add new images
         if (formData.images && formData.images.length > 0) {
-          const imagesToInsert = formData.images.map((imageUrl) => ({
-            destination_id: destinationId,
-            image_url: imageUrl,
-          }));
+          const imagesToInsert = formData.images
+            .filter((imageUrl) => imageUrl && imageUrl.trim().length > 0) // Filter out empty URLs
+            .map((imageUrl) => ({
+              destination_id: destinationId,
+              image_url: imageUrl.trim(),
+            }));
 
-          const { error: insertImagesError } = await supabase
-            .from("destination_images")
-            .insert(imagesToInsert);
+          if (imagesToInsert.length > 0) {
+            const { error: insertImagesError } = await supabase
+              .from("destination_images")
+              .insert(imagesToInsert);
 
-          if (insertImagesError) throw insertImagesError;
+            if (insertImagesError) throw insertImagesError;
+          }
         } // Handle travel tips - first delete existing
         const { error: deleteTipsError } = await supabase
           .from("travel_tips")
@@ -555,51 +801,100 @@ const DestinationsContent: React.FC = () => {
 
         // Add new travel tips
         if (formData.travelTips && formData.travelTips.length > 0) {
-          const tipsToInsert = formData.travelTips.map((tip) => ({
-            destination_id: destinationId,
-            tip,
-          }));
+          const tipsToInsert = formData.travelTips
+            .filter((tip) => tip && tip.trim().length > 0) // Filter out empty tips
+            .map((tip) => ({
+              destination_id: destinationId,
+              tip: tip.trim(),
+            }));
 
-          const { error: insertTipsError } = await supabase
-            .from("travel_tips")
-            .insert(tipsToInsert);
+          if (tipsToInsert.length > 0) {
+            const { error: insertTipsError } = await supabase
+              .from("travel_tips")
+              .insert(tipsToInsert);
 
-          if (insertTipsError) throw insertTipsError;
+            if (insertTipsError) throw insertTipsError;
+          }
         }
 
         // Similar logic for attractions, activities, categories
-        await handleUpdateRelatedEntities(destinationId);
-
-        showToast("success", "Destination updated successfully!");
+        try {
+          await handleUpdateRelatedEntities(destinationId);
+          showToast("success", "Destination updated successfully!");
+        } catch (relatedEntitiesError) {
+          console.error(
+            "Error updating related entities:",
+            relatedEntitiesError
+          );
+          // Even if related entities failed, the main destination was updated
+          showToast(
+            "warning",
+            "Destination updated, but some related data (attractions/activities/categories) could not be saved. Please try editing again."
+          );
+        }
       } else {
         // Create new destination - generate slug from name
         console.log("Creating new destination");
         const slug = (formData.name || "")
           .toLowerCase()
+          .trim()
           .replace(/\s+/g, "-")
-          .replace(/[^\w-]+/g, "");
+          .replace(/[^\w-]+/g, "")
+          .replace(/-+/g, "-") // Replace multiple dashes with single dash
+          .replace(/^-+|-+$/g, ""); // Remove leading/trailing dashes
 
         console.log("Generated slug:", slug);
 
-        if (!slug) {
+        if (!slug || slug.length === 0) {
           throw new Error(
-            "Could not create a valid slug from the destination name"
+            "Could not create a valid slug from the destination name. Please use alphanumeric characters."
           );
         }
 
-        // Explicitly exclude 'id' field when creating new destination
-        const insertData = {
-          slug,
-          name: formData.name,
-          location: formData.location,
-          description: formData.description,
-          short_description: formData.shortDescription,
-          image_url: formData.imageUrl,
-          best_time_to_visit: formData.bestTimeToVisit,
-          google_maps_url: formData.googleMapsUrl,
-          created_at: new Date(),
-          // DO NOT include 'id' field - let database auto-generate it
+        // Check if slug is too long (database limit is 100 characters)
+        if (slug.length > 100) {
+          throw new Error(
+            `Generated slug is too long (${slug.length} characters). Please use a shorter destination name.`
+          );
+        }
+
+        // Helper function to truncate string to max length
+        const truncateString = (
+          str: string | undefined,
+          maxLength: number
+        ): string => {
+          if (!str) return "";
+          const trimmed = str.trim();
+          return trimmed.length > maxLength
+            ? trimmed.substring(0, maxLength).trim()
+            : trimmed;
         };
+
+        // Validate and prepare data
+        const processedData = {
+          slug: truncateString(slug, 100), // slug has VARCHAR(100) limit
+          name: truncateString(formData.name, 255),
+          location: truncateString(formData.location, 255),
+          description: formData.description?.trim() || "", // TEXT field, no limit
+          short_description: formData.shortDescription?.trim() || null, // TEXT field, no limit
+          image_url: truncateString(formData.imageUrl, 255),
+          best_time_to_visit: truncateString(formData.bestTimeToVisit, 255),
+          google_maps_url: formData.googleMapsUrl?.trim() || null, // TEXT field, no limit
+          created_at: new Date().toISOString(),
+        };
+
+        // Final validation - ensure required fields are not empty after processing
+        if (
+          !processedData.name ||
+          !processedData.location ||
+          !processedData.description
+        ) {
+          throw new Error("Required fields cannot be empty after processing");
+        }
+
+        // Explicitly exclude 'id' field when creating new destination
+        // Truncate fields that have 255 character limits in the database
+        const insertData = processedData;
 
         console.log("Insert data:", insertData);
 
@@ -616,43 +911,81 @@ const DestinationsContent: React.FC = () => {
 
         // Handle images
         if (formData.images && formData.images.length > 0) {
-          const imagesToInsert = formData.images.map((imageUrl) => ({
-            destination_id: newId,
-            image_url: imageUrl,
-          }));
+          const imagesToInsert = formData.images
+            .filter((imageUrl) => imageUrl && imageUrl.trim().length > 0) // Filter out empty URLs
+            .map((imageUrl) => ({
+              destination_id: newId,
+              image_url: imageUrl.trim(),
+            }));
 
-          const { error: insertImagesError } = await supabase
-            .from("destination_images")
-            .insert(imagesToInsert);
+          if (imagesToInsert.length > 0) {
+            const { error: insertImagesError } = await supabase
+              .from("destination_images")
+              .insert(imagesToInsert);
 
-          if (insertImagesError) throw insertImagesError;
+            if (insertImagesError) throw insertImagesError;
+          }
         }
 
         // Handle travel tips
         if (formData.travelTips && formData.travelTips.length > 0) {
-          const tipsToInsert = formData.travelTips.map((tip) => ({
-            destination_id: newId,
-            tip,
-          }));
+          const tipsToInsert = formData.travelTips
+            .filter((tip) => tip && tip.trim().length > 0) // Filter out empty tips
+            .map((tip) => ({
+              destination_id: newId,
+              tip: tip.trim(),
+            }));
 
-          const { error: insertTipsError } = await supabase
-            .from("travel_tips")
-            .insert(tipsToInsert);
+          if (tipsToInsert.length > 0) {
+            const { error: insertTipsError } = await supabase
+              .from("travel_tips")
+              .insert(tipsToInsert);
 
-          if (insertTipsError) throw insertTipsError;
+            if (insertTipsError) throw insertTipsError;
+          }
         }
 
         // Handle categories, attractions, activities
-        await handleCreateRelatedEntities(newId);
-
-        showToast("success", "New destination added successfully!");
+        try {
+          await handleCreateRelatedEntities(newId);
+          showToast("success", "New destination added successfully!");
+        } catch (relatedEntitiesError) {
+          console.error(
+            "Error creating related entities:",
+            relatedEntitiesError
+          );
+          // Even if related entities failed, the main destination was created
+          showToast(
+            "warning",
+            "Destination created, but some related data (attractions/activities/categories) could not be saved. Please try editing to add them."
+          );
+        }
       }
 
       // Refresh destinations list
       fetchDestinations();
     } catch (err) {
       console.error("Error saving destination:", err);
-      showToast("error", "Failed to save destination. Please try again.");
+
+      // More detailed error handling
+      let errorMessage = "Failed to save destination. Please try again.";
+
+      if (err && typeof err === "object") {
+        if ("message" in err) {
+          errorMessage = `Error: ${err.message}`;
+        }
+        if ("details" in err && err.details) {
+          errorMessage += ` Details: ${err.details}`;
+        }
+        if ("hint" in err && err.hint) {
+          errorMessage += ` Hint: ${err.hint}`;
+        }
+        if ("code" in err && err.code) {
+          errorMessage += ` (Code: ${err.code})`;
+        }
+      }
+
+      showToast("error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -871,9 +1204,18 @@ const DestinationsContent: React.FC = () => {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name*
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Name*
+                    </label>
+                    <span
+                      className={`text-xs ${
+                        getCharacterCount(formData.name, 255).className
+                      }`}
+                    >
+                      {getCharacterCount(formData.name, 255).count}
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="name"
@@ -883,11 +1225,25 @@ const DestinationsContent: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="e.g., Bali"
                   />
+                  {getFieldWarning("Name", formData.name, 255) && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      {getFieldWarning("Name", formData.name, 255)}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Location*
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Location*
+                    </label>
+                    <span
+                      className={`text-xs ${
+                        getCharacterCount(formData.location, 255).className
+                      }`}
+                    >
+                      {getCharacterCount(formData.location, 255).count}
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="location"
@@ -897,11 +1253,25 @@ const DestinationsContent: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="e.g., Bali, Indonesia"
                   />
+                  {getFieldWarning("Location", formData.location, 255) && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      {getFieldWarning("Location", formData.location, 255)}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Main Image URL
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Main Image URL
+                    </label>
+                    <span
+                      className={`text-xs ${
+                        getCharacterCount(formData.imageUrl, 255).className
+                      }`}
+                    >
+                      {getCharacterCount(formData.imageUrl, 255).count}
+                    </span>
+                  </div>
                   <input
                     type="url"
                     name="imageUrl"
@@ -910,6 +1280,11 @@ const DestinationsContent: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="https://example.com/image.jpg"
                   />
+                  {getFieldWarning("Image URL", formData.imageUrl, 255) && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      {getFieldWarning("Image URL", formData.imageUrl, 255)}
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -939,9 +1314,19 @@ const DestinationsContent: React.FC = () => {
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Best Time to Visit
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Best Time to Visit
+                    </label>
+                    <span
+                      className={`text-xs ${
+                        getCharacterCount(formData.bestTimeToVisit, 255)
+                          .className
+                      }`}
+                    >
+                      {getCharacterCount(formData.bestTimeToVisit, 255).count}
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="bestTimeToVisit"
@@ -950,6 +1335,19 @@ const DestinationsContent: React.FC = () => {
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="e.g., April to October"
                   />
+                  {getFieldWarning(
+                    "Best Time to Visit",
+                    formData.bestTimeToVisit,
+                    255
+                  ) && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      {getFieldWarning(
+                        "Best Time to Visit",
+                        formData.bestTimeToVisit,
+                        255
+                      )}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
