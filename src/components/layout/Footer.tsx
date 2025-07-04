@@ -95,6 +95,22 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <Link
+                  to="/about"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/about#culture"
+                  className="text-teal-100 hover:text-white transition-colors"
+                >
+                  Cultural Insight
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/about#travel-tips"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
@@ -103,26 +119,10 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  to="/about#visa"
+                  to="/about#facts"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
-                  Visa Requirements
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about#transportation"
-                  className="text-teal-100 hover:text-white transition-colors"
-                >
-                  Transportation
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about#accommodation"
-                  className="text-teal-100 hover:text-white transition-colors"
-                >
-                  Accommodation
+                  Fact About Indonesia
                 </Link>
               </li>
               <li>
@@ -146,19 +146,10 @@ const Footer: React.FC = () => {
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-teal-300 mr-2" />
                 <a
-                  href="mailto:info@wanderwise.com"
+                  href="mailto:wanderwise@gmail.com"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
-                  info@wanderwise.com
-                </a>
-              </li>
-              <li className="flex items-center">
-                <Phone className="w-5 h-5 text-teal-300 mr-2" />
-                <a
-                  href="tel:+6281234567890"
-                  className="text-teal-100 hover:text-white transition-colors"
-                >
-                  +62 812 3456 7890
+                  wanderwise@gmail.com
                 </a>
               </li>
             </ul>
@@ -169,17 +160,6 @@ const Footer: React.FC = () => {
           <p>
             &copy; {new Date().getFullYear()} WanderWise. All rights reserved.
           </p>
-          <div className="mt-2 flex justify-center space-x-6 text-sm">
-            <Link to="/privacy" className="hover:text-white transition-colors">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="hover:text-white transition-colors">
-              Terms of Service
-            </Link>
-            <Link to="/sitemap" className="hover:text-white transition-colors">
-              Sitemap
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

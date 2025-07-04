@@ -6,12 +6,12 @@ const AboutPage: React.FC = () => {
   const [selectedInsight, setSelectedInsight] = useState<
     | null
     | {
-        id: number;
-        title: string;
-        content: string;
-        imageUrl: string;
-        category: string;
-      }
+      id: number;
+      title: string;
+      content: string;
+      imageUrl: string;
+      category: string;
+    }
   >(null);
 
   return (
@@ -36,7 +36,7 @@ const AboutPage: React.FC = () => {
                 />
               </svg>
             </div>{" "}
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-6">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-6" id="about">
               About Indonesia
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -453,7 +453,7 @@ const AboutPage: React.FC = () => {
           </div>
         </div>{" "}
         {/* Fun Facts Section */}
-        <div className="mb-20">
+        <div className="mb-20" id="facts">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-400 to-teal-500 rounded-full mb-4">
               <svg
