@@ -21,24 +21,7 @@ const Footer: React.FC = () => {
               trusted guide to unforgettable experiences.
             </p>
             <div className="flex space-x-4 pt-2">
-              <a
-                href="https://instagram.com"
-                className="text-white hover:text-teal-300 transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="https://facebook.com"
-                className="text-white hover:text-teal-300 transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                className="text-white hover:text-teal-300 transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
+
             </div>
           </div>
 
@@ -79,7 +62,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  to="/about"
+                  to="/about#about"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
                   About Indonesia

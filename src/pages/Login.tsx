@@ -285,8 +285,14 @@ const LoginPage: React.FC = () => {
                       {user.description}
                     </p>
                     <div className="text-xs text-gray-500">
-                      <div>Email: {user.email}</div>
-                      <div>Password: {user.password}</div>
+                      {user.role === "Administrator" ? (
+                        <div>Email dan password admin ada di manual book</div>
+                      ) : (
+                        <>
+                          <div>Email: {user.email}</div>
+                          <div>Password: {user.password}</div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 );
