@@ -286,7 +286,7 @@ const LoginPage: React.FC = () => {
                     </p>
                     <div className="text-xs text-gray-500">
                       {user.role === "Administrator" ? (
-                        <div>Email dan password admin ada di manual book</div>
+                        <div>Check the <b>manual book</b> for email and password details</div>
                       ) : (
                         <>
                           <div>Email: {user.email}</div>
