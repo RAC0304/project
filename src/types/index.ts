@@ -49,15 +49,23 @@ export type DestinationCategory =
 
 export interface Itinerary {
   id: string;
+  slug?: string;
   title: string;
   duration: string;
   description: string;
   imageUrl: string;
+  images?: string[];
   destinations: string[];
   days: ItineraryDay[];
   difficulty: "easy" | "moderate" | "challenging";
   bestSeason: string;
   estimatedBudget: string;
+  category?: string;
+  featured?: boolean;
+  minParticipants?: number;
+  maxParticipants?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ItineraryDay {
@@ -75,6 +83,8 @@ export interface ItineraryActivity {
   title: string;
   description: string;
   location?: string;
+  duration?: string;
+  optional?: boolean;
 }
 
 export interface CulturalInsight {
