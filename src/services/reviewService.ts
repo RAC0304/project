@@ -153,9 +153,23 @@ export const getDestinationReviews = async (
               ? `${review.tour_guides.users.first_name} ${review.tour_guides.users.last_name}`
               : "Tour Guide",
             avatar: review.tour_guides.profile_picture || undefined,
-            specialty: Array.isArray(review.tour_guides.specialties)
-              ? review.tour_guides.specialties.join(", ")
-              : review.tour_guides.specialties || "Tour Guide",
+            specialty: (() => {
+              const specialties = review.tour_guides.specialties;
+              if (Array.isArray(specialties)) {
+                return specialties.join(", ");
+              }
+              if (typeof specialties === "object" && specialties !== null) {
+                // Handle case where specialties is an object like {nature: true, culture: true}
+                const keys = Object.keys(specialties).filter(
+                  (key) => specialties[key as keyof typeof specialties] === true || specialties[key as keyof typeof specialties] === 1
+                );
+                return keys.length > 0 ? keys.join(", ") : "Tour Guide";
+              }
+              if (typeof specialties === "string") {
+                return specialties;
+              }
+              return "Tour Guide";
+            })(),
           }
         : undefined,
     }));
