@@ -256,7 +256,7 @@ const DestinationPage: React.FC = () => {
   };
 
   return (
-    <div className="pb-16" style={{ paddingTop: "0" }}>
+    <div className="pb-16">
       {/* Hero Section */}
       <div className="relative h-[65vh]">
         <div className="absolute inset-0">

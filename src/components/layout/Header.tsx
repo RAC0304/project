@@ -114,9 +114,9 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 w-full z-50">
+    <header className="fixed top-0 w-full z-50" style={{ marginTop: "-5px" }}>
       <div className={`relative transition-all duration-300 ${headerClass}`}>
-        <div className="container mx-auto px-4 py-2.5 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link to="/home" className="flex items-center">
             <Logo
               className={

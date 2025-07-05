@@ -189,7 +189,7 @@ const TourGuideProfile: React.FC = () => {
   const specialties = mappedGuide.specialties;
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 pt-24 pb-16">
       <div className="flex flex-col md:flex-row items-center md:items-start bg-white shadow-lg rounded-lg overflow-hidden border border-gray-300">
         <img
           src={mappedGuide.imageUrl}
