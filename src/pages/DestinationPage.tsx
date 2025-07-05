@@ -58,26 +58,33 @@ const DestinationPage: React.FC = () => {
             !Array.isArray(destinationData.category)
           ) {
             // Handle case where category is an object with boolean values
-            const categoryObj = destinationData.category as Record<string, unknown>;
+            const categoryObj = destinationData.category as Record<
+              string,
+              unknown
+            >;
             const categoryKeys = Object.keys(categoryObj);
-            const categoryValues = categoryKeys.filter(key => 
-              categoryObj[key] === true ||
-              categoryObj[key] === 1 ||
-              categoryObj[key] === "true"
-            ).filter(key =>
-              [
-                "beach",
-                "mountain",
-                "cultural",
-                "adventure",
-                "historical",
-                "nature",
-                "city",
-              ].includes(key)
-            ) as DestinationCategory[];
-            
+            const categoryValues = categoryKeys
+              .filter(
+                (key) =>
+                  categoryObj[key] === true ||
+                  categoryObj[key] === 1 ||
+                  categoryObj[key] === "true"
+              )
+              .filter((key) =>
+                [
+                  "beach",
+                  "mountain",
+                  "cultural",
+                  "adventure",
+                  "historical",
+                  "nature",
+                  "city",
+                ].includes(key)
+              ) as DestinationCategory[];
+
             // Set to filtered values or empty array
-            destinationData.category = categoryValues.length > 0 ? categoryValues : [];
+            destinationData.category =
+              categoryValues.length > 0 ? categoryValues : [];
           } else if (
             destinationData.category &&
             typeof destinationData.category === "string"
@@ -128,14 +135,20 @@ const DestinationPage: React.FC = () => {
 
         // Load reviews and rating in parallel
         const [reviewsData, ratingData] = await Promise.all([
-          getDestinationReviews(destination.id),
-          getDestinationRating(destination.id),
+          getDestinationReviews(destination.id).catch(() => []),
+          getDestinationRating(destination.id).catch(() => ({
+            averageRating: 0,
+            totalReviews: 0,
+          })),
         ]);
 
-        setReviews(reviewsData);
-        setRating(ratingData);
+        setReviews(reviewsData || []);
+        setRating(ratingData || { averageRating: 0, totalReviews: 0 });
       } catch (err) {
         console.error("Error loading reviews:", err);
+        // Set empty values in case of error
+        setReviews([]);
+        setRating({ averageRating: 0, totalReviews: 0 });
       } finally {
         setReviewsLoading(false);
       }
@@ -299,7 +312,7 @@ const DestinationPage: React.FC = () => {
                     key={category}
                     className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm"
                   >
-                    {typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : ''}
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
                   </span>
                 ))}
             </div>
