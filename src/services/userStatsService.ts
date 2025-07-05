@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 /**
  * Get user account statistics: reviews written, tours booked, places visited

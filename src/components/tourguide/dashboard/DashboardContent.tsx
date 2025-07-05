@@ -45,6 +45,7 @@ interface UpcomingTour {
   clients: number;
   location: string;
   status: "confirmed" | "pending" | "cancelled";
+  tour_id?: number; // Add tour_id for modal fetching
 }
 
 interface Review {
@@ -96,6 +97,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     setSelectedTour(tour);
     setIsMessageClientsModalOpen(true);
     setLoadingClients(true);
+    
+    // Use tour_id if available, otherwise fall back to id
+    const tourIdToUse = tour.tour_id || tour.id;
+    
     // Fetch clients who booked this tour
     const { data, error } = await supabase
       .from("bookings")
@@ -112,21 +117,22 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         )
       `
       )
-      .eq("tour_id", tour.id)
+      .eq("tour_id", tourIdToUse)
       .eq("status", "confirmed");
     if (error) {
       setClients([]);
       setLoadingClients(false);
       return;
-    } // Map to Client type
-    const mapped = (data || []).map((b: any) => ({
-      id: b.users?.id || 0,
+    }    // Map to Client type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mapped = (data || []).map((booking: any) => ({
+      id: booking.users?.id || 0,
       name:
-        b.users?.first_name +
-        (b.users?.last_name ? " " + b.users?.last_name : ""),
-      email: b.users?.email || "",
-      phone: b.users?.phone,
-      avatar: b.users?.profile_picture,
+        booking.users?.first_name +
+        (booking.users?.last_name ? " " + booking.users?.last_name : ""),
+      email: booking.users?.email || "",
+      phone: booking.users?.phone,
+      avatar: booking.users?.profile_picture,
     }));
     setClients(mapped);
     setLoadingClients(false);

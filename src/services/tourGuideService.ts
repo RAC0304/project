@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 // Interface untuk specialties
 export interface TourGuideSpecialties {
@@ -62,6 +62,7 @@ export async function getTourGuideIdByUserId(
     // Convert user_id to string to ensure consistent formatting
     const userId = String(user_id);
 
+    // First try to get a single result with maybeSingle()
     const { data, error } = await supabase
       .from("tour_guides")
       .select("id")
@@ -69,6 +70,32 @@ export async function getTourGuideIdByUserId(
       .maybeSingle();
 
     if (error) {
+      // If error is about multiple rows, handle it gracefully
+      if (error.code === "PGRST116") {
+        console.warn(
+          `Multiple tour guide records found for user_id: ${userId}. Fetching the first one.`
+        );
+
+        // Get all records and return the first one
+        const { data: allRecords, error: allError } = await supabase
+          .from("tour_guides")
+          .select("id")
+          .eq("user_id", userId)
+          .limit(1);
+
+        if (allError) {
+          console.error("Error fetching tour guide ID (fallback):", allError);
+          return null;
+        }
+
+        if (!allRecords || allRecords.length === 0) {
+          console.warn("No tour guide found for user_id:", userId);
+          return null;
+        }
+
+        return allRecords[0].id;
+      }
+
       console.error("Error fetching tour guide ID:", error);
       return null;
     }

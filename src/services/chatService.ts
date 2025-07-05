@@ -1,5 +1,5 @@
 // src/services/chatService.ts
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 export type ChatMessage = {
   id: number;

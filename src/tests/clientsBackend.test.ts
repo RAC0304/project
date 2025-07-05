@@ -2,10 +2,10 @@
 // tests/clientsService.test.ts
 
 import { clientsService } from "../src/services/clientsService";
-import { supabase } from "../src/config/supabaseClient";
+import { supabase } from "../s../utils/supabaseClient";
 
 // Mock Supabase
-jest.mock("../src/config/supabaseClient", () => ({
+jest.mock("../s../utils/supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
   },

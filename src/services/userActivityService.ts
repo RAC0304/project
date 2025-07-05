@@ -1,5 +1,5 @@
 // src/services/userActivityService.ts
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import { formatIndonesianDate } from "../utils/dateUtils";
 
 export interface ActivityItem {

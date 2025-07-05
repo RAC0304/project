@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import { Booking } from "./bookingService";
 
 export interface BookingWithDetails extends Booking {
@@ -454,11 +454,61 @@ export async function getAllTourGuidesWithBookings() {
   const guides = [];
   for (const user of users) {
     // Profil tour_guide
-    const { data: guideProfile } = await supabase
+    const { data: guideProfile, error: guideProfileError } = await supabase
       .from("tour_guides")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // Handle potential duplicate guide profiles
+    if (guideProfileError) {
+      if (guideProfileError.code === "PGRST116") {
+        console.warn(
+          `Multiple tour guide profiles found for user ${user.id}. Using the first one.`
+        );
+
+        const { data: allGuides, error: allGuidesError } = await supabase
+          .from("tour_guides")
+          .select("*")
+          .eq("user_id", user.id)
+          .limit(1);
+
+        if (allGuidesError || !allGuides || allGuides.length === 0) {
+          guides.push({ user, guideProfile: null, tours: [], bookings: [] });
+          debugLog.push(
+            `User ${user.id} (${user.first_name} ${user.last_name}) belum punya profil tour_guide.`
+          );
+          continue;
+        }
+
+        const firstGuide = allGuides[0];
+        debugLog.push(
+          `User ${user.id} (${user.first_name} ${user.last_name}) punya profil tour_guide (resolved duplicate).`
+        );
+
+        // Continue with the first guide profile
+        const { data: tours } = await supabase
+          .from("tours")
+          .select("*")
+          .eq("tour_guide_id", firstGuide.id);
+
+        guides.push({
+          user,
+          guideProfile: firstGuide,
+          tours: tours || [],
+          bookings: [],
+        });
+        continue;
+      }
+
+      console.error("Error fetching tour guide profile:", guideProfileError);
+      guides.push({ user, guideProfile: null, tours: [], bookings: [] });
+      debugLog.push(
+        `Error fetching tour guide profile for user ${user.id}: ${guideProfileError.message}`
+      );
+      continue;
+    }
+
     if (!guideProfile) {
       guides.push({ user, guideProfile: null, tours: [], bookings: [] });
       debugLog.push(
@@ -517,11 +567,95 @@ export async function sendMessageToCustomer({
     .eq("user_id", senderUserId)
     .maybeSingle();
 
-  if (tourGuideError || !tourGuide) {
+  if (tourGuideError) {
+    // Handle potential duplicate guide profiles
+    if (tourGuideError.code === "PGRST116") {
+      console.warn(
+        `Multiple tour guide profiles found for user ${senderUserId}. Using the first one.`
+      );
+
+      const { data: allGuides, error: allGuidesError } = await supabase
+        .from("tour_guides")
+        .select("id")
+        .eq("user_id", senderUserId)
+        .limit(1);
+
+      if (allGuidesError || !allGuides || allGuides.length === 0) {
+        console.error("Tour guide not found or error:", allGuidesError);
+        return {
+          success: false,
+          error: allGuidesError || "Tour guide profile not found",
+        };
+      }
+
+      const firstGuide = allGuides[0];
+
+      // Handle file attachment if provided
+      let attachmentUrl = null;
+      let attachmentName = null;
+      let attachmentSize = null;
+      let attachmentType = null;
+
+      if (attachment) {
+        // Upload file to storage
+        const fileName = `${Date.now()}-${attachment.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("message-attachments")
+          .upload(fileName, attachment);
+
+        if (uploadError) {
+          console.error("Error uploading attachment:", uploadError);
+          return { success: false, error: uploadError };
+        }
+
+        // Get public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("message-attachments").getPublicUrl(fileName);
+
+        attachmentUrl = publicUrl;
+        attachmentName = attachment.name;
+        attachmentSize = attachment.size;
+        attachmentType = attachment.type;
+      }
+
+      // Continue with the first guide profile
+      const { data: insertedMessage, error: insertError } = await supabase
+        .from("messages")
+        .insert({
+          sender_id: senderUserId,
+          receiver_id: receiverUserId,
+          tour_guide_id: firstGuide.id,
+          content,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          attachment_size: attachmentSize,
+          attachment_type: attachmentType,
+          sent_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Error inserting message:", insertError);
+        return { success: false, error: insertError };
+      }
+
+      return { success: true, data: insertedMessage };
+    }
+
     console.error("Tour guide not found or error:", tourGuideError);
     return {
       success: false,
-      error: tourGuideError || "Tour guide profile not found",
+      error: tourGuideError,
+    };
+  }
+
+  if (!tourGuide) {
+    console.error("Tour guide not found for user:", senderUserId);
+    return {
+      success: false,
+      error: "Tour guide profile not found",
     };
   }
 

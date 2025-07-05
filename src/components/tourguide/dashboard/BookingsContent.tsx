@@ -8,6 +8,7 @@ import { updateBookingStatusSupabase } from "../../../services/bookingService";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import MessageModal from "../modals/MessageModal";
 import Toast from "../../common/Toast";
+import { Booking } from "../../../types/tourguide";
 
 interface BookingsContentProps {
   tourGuideId: number;
@@ -28,7 +29,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [toast, setToast] = useState({
     isVisible: false,
-    type: "success" as "success" | "error" | "info",
+    type: "success" as "success" | "error" | "warning",
     message: "",
   });
 
@@ -45,7 +46,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
       if (data.bookings.length === 0) {
         setToast({
           isVisible: true,
-          type: "info",
+          type: "warning",
           message:
             "No bookings found for your tours. You'll see them here when customers make reservations.",
         });
@@ -222,6 +223,30 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Function to convert BookingWithDetails to Booking type
+  const convertToBookingType = (booking: BookingWithDetails): Booking => {
+    return {
+      id: booking.id.toString(),
+      tourId: booking.tour_id.toString(),
+      tourName: booking.tourName || 'Unknown Tour',
+      tourGuideId: '0', // Not available in BookingWithDetails
+      tourGuideName: '', // Not available in BookingWithDetails
+      userId: booking.user_id.toString(),
+      userName: booking.userName || 'Unknown User',
+      userEmail: booking.userEmail || '',
+      userPhone: '', // Not available in BookingWithDetails
+      date: booking.date,
+      participants: booking.participants,
+      status: booking.status as "confirmed" | "pending" | "cancelled" | "completed",
+      specialRequests: booking.special_requests,
+      totalAmount: Number(booking.total_amount),
+      paymentStatus: booking.payment_status === 'paid' ? 'paid' : 
+                    booking.payment_status === 'pending' ? 'pending' : 'refunded',
+      createdAt: booking.created_at || new Date().toISOString(),
+      updatedAt: booking.updated_at || new Date().toISOString(),
+    };
   };
 
   return (
@@ -408,6 +433,18 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Total Amount
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Payment Status
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Status
                     </th>
                     <th
@@ -445,6 +482,21 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {booking.participants}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="font-medium">
+                            ${booking.total_amount ? Number(booking.total_amount).toFixed(2) : '0.00'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            booking.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                            booking.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            booking.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {booking.payment_status || 'Unknown'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
@@ -473,7 +525,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                   ) : (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={8}
                         className="px-6 py-10 text-center text-gray-500"
                       >
                         No bookings found. New bookings will appear here once
@@ -521,7 +573,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
       {selectedBooking && (
         <>
           <BookingDetailsModal
-            booking={selectedBooking}
+            booking={convertToBookingType(selectedBooking)}
             isOpen={showDetailsModal}
             onClose={() => setShowDetailsModal(false)}
             onStatusUpdate={handleStatusUpdate}

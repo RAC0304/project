@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Destination, Attraction, Activity } from "../../types";
 import type { DestinationCategory } from "../../types";
 import Toast, { ToastType } from "../common/Toast";
-import { supabase } from "../../config/supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 
 const DestinationsContent: React.FC = () => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);

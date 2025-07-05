@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 import {
   getTopDestinations as getTopDestinationsSupabase,
   getTopTourGuides as getTopTourGuidesSupabase,

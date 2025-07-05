@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 export interface Tour {
   id?: number; // Made id optional to align with creation logic

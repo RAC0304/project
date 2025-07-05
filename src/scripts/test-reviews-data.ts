@@ -1,5 +1,5 @@
 // Script untuk test data reviews
-import { supabase } from "../config/supabaseClient";
+import { supabase } from "../utils/supabaseClient";
 
 export const testReviewsData = async () => {
   console.log("=== Testing Reviews Data ===");

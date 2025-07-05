@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Booking } from "../../types/tourguide";
-import { supabase } from "../../config/supabaseClient";
+import { supabase } from "../../utils/supabaseClient";
 import {
   Search,
   Edit,

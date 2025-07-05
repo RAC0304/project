@@ -3,7 +3,7 @@ import { Mail, Phone, Languages, Award, Clock, MapPin } from "lucide-react";
 import { User } from "../../../types";
 import Toast from "../../common/Toast";
 import { PROFILE_IMAGE } from "../../../constants/images";
-import supabase from "../../../config/supabaseClient";
+import { supabase } from "../../../utils/supabaseClient";
 
 // Extended form data interface to include languages and experience
 interface ProfileFormData {
