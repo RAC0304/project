@@ -62,8 +62,8 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
             <Star
               key={i}
               className={`w-4 h-4 ${i < Math.floor(guide.rating)
-                  ? "text-yellow-400 fill-yellow-400"
-                  : "text-gray-300"
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-300"
                 }`}
             />
           ))}
@@ -103,17 +103,6 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
             src={guide.imageUrl}
             alt={guide.name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to dicebear avatar if image fails to load
-              const target = e.target as HTMLImageElement;
-              const firstName = guide.name.split(' ')[0] || '';
-              const lastName = guide.name.split(' ')[1] || '';
-              const seed = firstName || lastName || 'default';
-              const fallbackUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
-              if (target.src !== fallbackUrl) {
-                target.src = fallbackUrl;
-              }
-            }}
           />
           <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
             <div className="flex items-center">{renderRating()}</div>

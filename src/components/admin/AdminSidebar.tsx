@@ -91,6 +91,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           label: "Destinations",
           icon: <MapPin className="w-[18px] h-[18px]" />,
         },
+        {
+          id: "itineraries",
+          label: "Itineraries",
+          icon: <Calendar className="w-[18px] h-[18px]" />,
+        },
       ],
     },
     {

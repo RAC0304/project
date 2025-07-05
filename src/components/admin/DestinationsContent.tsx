@@ -4,7 +4,11 @@ import type { DestinationCategory } from "../../types";
 import Toast, { ToastType } from "../common/Toast";
 import { supabase } from "../../utils/supabaseClient";
 
-const DestinationsContent: React.FC = () => {
+interface DestinationsContentProps {
+  setActivePage?: (page: string) => void;
+}
+
+const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage }) => {
   const [allDestinations, setAllDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentDestination, setCurrentDestination] =
@@ -1142,30 +1146,46 @@ const DestinationsContent: React.FC = () => {
               </div>
             )}
           </div>
-          <button
-            onClick={() => {
-              if (showForm) {
-                // If form is currently shown, just hide it
-                setShowForm(false);
-              } else {
-                // If showing form, reset everything first
-                resetForm();
-                setIsEditing(false);
-                setCurrentDestination(null);
-                setShowForm(true);
-              }
-            }}
-            disabled={isLoading}
-            className={`px-4 py-2 rounded-md ${
-              showForm
-                ? "bg-gray-500 hover:bg-gray-600"
-                : "bg-teal-500 hover:bg-teal-600"
-            } text-white font-medium transition-colors ${
-              isLoading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {showForm ? "Cancel" : "Add New Destination"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (showForm) {
+                  // If form is currently shown, just hide it
+                  setShowForm(false);
+                } else {
+                  // If showing form, reset everything first
+                  resetForm();
+                  setIsEditing(false);
+                  setCurrentDestination(null);
+                  setShowForm(true);
+                }
+              }}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-md ${
+                showForm
+                  ? "bg-gray-500 hover:bg-gray-600"
+                  : "bg-teal-500 hover:bg-teal-600"
+              } text-white font-medium transition-colors ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {showForm ? "Cancel" : "Add New Destination"}
+            </button>
+            <button
+              onClick={() => {
+                // Navigate to itineraries management
+                if (setActivePage) {
+                  setActivePage('itineraries');
+                }
+              }}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              Add New Itineraries
+            </button>
+          </div>
         </div>
         {/* Search bar */}
         <div className="mb-6">

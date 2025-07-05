@@ -18,6 +18,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Just a placeholder comment - we'll use the TypeScript version below
+
 // Add a helper function to check storage status and ensure avatar bucket exists
 export const checkSupabaseStorage = async () => {
   try {
@@ -25,7 +27,7 @@ export const checkSupabaseStorage = async () => {
     // try to directly access the avatars bucket
     console.log("Testing direct access to avatars bucket...");
 
-    const { error } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from("avatars")
       .list("", { limit: 1 });
 
@@ -142,29 +144,4 @@ export const ensureSupabaseBucket = async (
   }
 };
 
-// Helper function to construct profile picture URLs
-export const getProfilePictureUrl = (
-  filename: string | null | undefined
-): string => {
-  if (!filename || filename.trim() === "") {
-    return "";
-  }
-
-  // If it's already a full URL, return as-is
-  if (filename.startsWith("http")) {
-    return filename;
-  }
-
-  // Construct the Supabase storage URL
-  return `${supabaseUrl}/storage/v1/object/public/avatars/profile/${filename}`;
-};
-
-// Helper function to get fallback avatar URL
-export const getFallbackAvatarUrl = (name: string): string => {
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-    name
-  )}`;
-};
-
-// Export both the client and the URL
-export { supabase, supabaseUrl };
+export { supabase };

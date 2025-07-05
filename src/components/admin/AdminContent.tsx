@@ -3,6 +3,7 @@ import DashboardContent from "./DashboardContent";
 import UsersContent from "./UsersContent";
 import GuidesContent from "./GuidesContent";
 import DestinationsContent from "./DestinationsContent";
+import ItinerariesContent from "./ItinerariesContent";
 import BookingsContent from "./BookingsContent";
 import AnalyticsContent from "./AnalyticsContent";
 import SecurityContent from "./SecurityContent";
@@ -34,6 +35,7 @@ const AdminContent: React.FC<AdminContentProps> = ({
             {activePage === "users" && "User Management"}
             {activePage === "guides" && "Tour Guide Management"}
             {activePage === "destinations" && "Destinations"}
+            {activePage === "itineraries" && "Itineraries"}
             {activePage === "bookings" && "Bookings"}
             {activePage === "analytics" && "Analytics"}
             {activePage === "security" && "Security Management"}
@@ -50,7 +52,8 @@ const AdminContent: React.FC<AdminContentProps> = ({
       )}
       {activePage === "users" && <UsersContent />}{" "}
       {activePage === "guides" && <GuidesContent />}
-      {activePage === "destinations" && <DestinationsContent />}
+      {activePage === "destinations" && <DestinationsContent setActivePage={setActivePage} />}
+      {activePage === "itineraries" && <ItinerariesContent />}
       {activePage === "bookings" && <BookingsContent />}{" "}
       {activePage === "analytics" && <AnalyticsContent user={user} />}
       {activePage === "security" && <SecurityContent />}
