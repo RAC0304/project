@@ -57,24 +57,27 @@ const DestinationPage: React.FC = () => {
             typeof destinationData.category === "object" &&
             !Array.isArray(destinationData.category)
           ) {
-            const categoryValues = Object.values(
-              destinationData.category
-            ).filter(
-              (val) =>
-                typeof val === "string" &&
-                [
-                  "beach",
-                  "mountain",
-                  "cultural",
-                  "adventure",
-                  "historical",
-                  "nature",
-                  "city",
-                ].includes(val)
+            // Handle case where category is an object with boolean values
+            const categoryObj = destinationData.category as Record<string, unknown>;
+            const categoryKeys = Object.keys(categoryObj);
+            const categoryValues = categoryKeys.filter(key => 
+              categoryObj[key] === true ||
+              categoryObj[key] === 1 ||
+              categoryObj[key] === "true"
+            ).filter(key =>
+              [
+                "beach",
+                "mountain",
+                "cultural",
+                "adventure",
+                "historical",
+                "nature",
+                "city",
+              ].includes(key)
             ) as DestinationCategory[];
-            // Jika objek, ambil hanya value string yang valid, jika kosong jadikan array kosong
-            destinationData.category =
-              categoryValues.length > 0 ? categoryValues : [];
+            
+            // Set to filtered values or empty array
+            destinationData.category = categoryValues.length > 0 ? categoryValues : [];
           } else if (
             destinationData.category &&
             typeof destinationData.category === "string"
@@ -296,7 +299,7 @@ const DestinationPage: React.FC = () => {
                     key={category}
                     className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm"
                   >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {typeof category === 'string' ? category.charAt(0).toUpperCase() + category.slice(1) : ''}
                   </span>
                 ))}
             </div>
