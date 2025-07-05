@@ -108,6 +108,13 @@ const DestinationPage: React.FC = () => {
             destinationData.category = [];
           }
 
+          // Ensure all arrays are properly initialized
+          if (!destinationData.images) destinationData.images = [];
+          if (!destinationData.attractions) destinationData.attractions = [];
+          if (!destinationData.activities) destinationData.activities = [];
+          if (!destinationData.travelTips) destinationData.travelTips = [];
+          if (!destinationData.reviews) destinationData.reviews = [];
+
           setDestination(destinationData);
         } else {
           setError("Destination not found");
@@ -288,9 +295,8 @@ const DestinationPage: React.FC = () => {
           {destination.images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${
-                index === activeImageIndex ? "bg-white" : "bg-white/50"
-              }`}
+              className={`w-2 h-2 rounded-full ${index === activeImageIndex ? "bg-white" : "bg-white/50"
+                }`}
               onClick={() => setActiveImageIndex(index)}
             ></button>
           ))}
@@ -327,11 +333,10 @@ const DestinationPage: React.FC = () => {
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${
-                activeSection === section.id
+              className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${activeSection === section.id
                   ? "bg-teal-50 text-teal-700"
                   : "text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               {section.label}
             </button>
