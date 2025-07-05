@@ -118,7 +118,7 @@ const Header: React.FC = () => {
       <div className={`relative transition-all duration-300 ${headerClass}`}>
         {/* Glass effect overlay for better readability */}
         {!isScrolled && (
-          <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 "></div>
         )}
         <div className="container mx-auto px-4 py-3 flex justify-between items-center relative z-10">
           <Link to="/home" className="flex items-center">
