@@ -102,7 +102,7 @@ const Header: React.FC = () => {
 
   // Change the header class to be fully white when scrolled
   const headerClass = isScrolled
-    ? "bg-white shadow-sm text-gray-800" // Fully white background with slight shadow
+    ? "bg-white text-gray-800" // Fully white background with slight shadow
     : "bg-transparent text-white";
 
   const handleLogout = async () => {
@@ -135,14 +135,14 @@ const Header: React.FC = () => {
             />
             <span
               className={`font-bold ml-2 text-xl md:text-2xl ${isScrolled
-                  ? "text-teal-600"
-                  : useWhiteText
-                    ? "text-white"
-                    : "text-teal-600"
+                ? "text-teal-600"
+                : useWhiteText
+                  ? "text-white"
+                  : "text-teal-600"
                 }`}
             >
               <span className="hidden sm:inline">WanderWise</span>
-              <span className="sm:hidden">WW</span>
+              <span className="sm:hidden">WanderWise</span>
             </span>
           </Link>
 
@@ -150,12 +150,12 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center">
             <div
               className={`flex items-center space-x-2 px-4 py-2 rounded-full ${isScrolled
-                  ? "bg-transparent" // Remove background completely when scrolled
-                  : showSolidGreenMenuBg
-                    ? "bg-teal-600 backdrop-blur-sm"
-                    : showGreenMenuBg
-                      ? "bg-teal-600/30 backdrop-blur-sm"
-                      : "bg-white/90 backdrop-blur-sm"
+                ? "bg-transparent" // Remove background completely when scrolled
+                : showSolidGreenMenuBg
+                  ? "bg-teal-600 backdrop-blur-sm"
+                  : showGreenMenuBg
+                    ? "bg-teal-600/30 backdrop-blur-sm"
+                    : "bg-white/90 backdrop-blur-sm"
                 } transition-all duration-300`}
             >
               {navLinks.map((link) => (
@@ -180,10 +180,10 @@ const Header: React.FC = () => {
                 >
                   {React.cloneElement(link.icon, {
                     className: `w-4 h-4 ${isScrolled
-                        ? "text-teal-600"
-                        : useWhiteMenuText
-                          ? "text-white"
-                          : "text-teal-600"
+                      ? "text-teal-600"
+                      : useWhiteMenuText
+                        ? "text-white"
+                        : "text-teal-600"
                       }`,
                   })}
                   <span>{link.name}</span>
@@ -232,26 +232,26 @@ const Header: React.FC = () => {
             aria-label="Toggle menu"
           >
             <div className={`relative w-8 h-8 flex items-center justify-center overflow-hidden rounded-lg transition-all duration-200 ${isScrolled
-                ? 'bg-gray-100 hover:bg-gray-200'
-                : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm'
+              ? 'bg-gray-100 hover:bg-gray-200'
+              : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm'
               }`}>
               <div className={`transition-all duration-300 absolute ${isMenuOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"}`}>
                 <Menu
                   className={`w-5 h-5 ${isScrolled
-                      ? "text-gray-700"
-                      : useWhiteText
-                        ? "text-white"
-                        : "text-teal-600"
+                    ? "text-gray-700"
+                    : useWhiteText
+                      ? "text-white"
+                      : "text-teal-600"
                     }`}
                 />
               </div>
               <div className={`transition-all duration-300 absolute ${isMenuOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"}`}>
                 <X
                   className={`w-5 h-5 ${isScrolled
-                      ? "text-gray-700"
-                      : useWhiteText
-                        ? "text-white"
-                        : "text-teal-600"
+                    ? "text-gray-700"
+                    : useWhiteText
+                      ? "text-white"
+                      : "text-teal-600"
                     }`}
                 />
               </div>
@@ -260,21 +260,21 @@ const Header: React.FC = () => {
         </div>
       </div>
       {/* Mobile menu */}
-      <div className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+      <div className={`fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
         <div
-          className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-gradient-to-br from-white to-gray-50 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="flex flex-col h-full">
             {/* Header menu mobile dengan gradient */}
-            <div className="bg-gradient-to-r from-teal-600 to-teal-700 p-6 rounded-bl-3xl">
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 p-6 rounded-bl-2xl">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-3">
-                  <Logo className="text-white" width={40} height={40} />
+
                   <span className="text-xl font-bold text-white">WanderWise</span>
                 </div>
                 <button
                   onClick={toggleMenu}
-                  className="text-white hover:text-teal-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+                  className="text-white hover:text-teal-100 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -306,13 +306,13 @@ const Header: React.FC = () => {
                     <Link
                       to={link.path}
                       className={`flex items-center space-x-4 p-4 rounded-xl transition-all duration-200 ${location.pathname === link.path
-                          ? 'bg-teal-50 text-teal-700 shadow-sm border-l-4 border-teal-600'
-                          : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50'
+                        ? 'bg-teal-50 text-teal-700 shadow-sm border-l-4 border-teal-600'
+                        : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50'
                         }`}
                     >
                       <div className={`p-2 rounded-lg ${location.pathname === link.path
-                          ? 'bg-teal-100'
-                          : 'bg-gray-100'
+                        ? 'bg-teal-100'
+                        : 'bg-gray-100'
                         }`}>
                         {React.cloneElement(link.icon, {
                           className: `w-5 h-5 ${location.pathname === link.path ? 'text-teal-600' : 'text-gray-500'
@@ -363,8 +363,8 @@ const Header: React.FC = () => {
             </nav>
 
             {/* Footer mobile menu */}
-            <div className="p-6 bg-gray-50 border-t border-gray-200">
-              <p className="text-center text-xs text-gray-500">
+            <div className="p-6 bg-gray-100 border-t border-gray-200">
+              <p className="text-center text-xs text-gray-600">
                 © 2025 WanderWise. All rights reserved.
               </p>
             </div>
