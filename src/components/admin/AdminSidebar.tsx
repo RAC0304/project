@@ -126,13 +126,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       )}{" "}
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}{" "}
       <div
-        className={`${
-          mobileMenuOpen
+        className={`${mobileMenuOpen
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
-        } ${
-          isMinimized ? "w-20" : "w-72"
-        } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col overflow-hidden`}
+          } ${isMinimized ? "w-20" : "w-72"
+          } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col overflow-hidden`}
       >
         {" "}
         {/* Logo/Brand - Improved styling */}{" "}
@@ -155,9 +153,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Profile Summary - Improved with better spacing and shadow */}{" "}
         <div className="p-5 border-b border-gray-100 bg-white shadow-sm flex-shrink-0">
           <div
-            className={`flex ${
-              isMinimized ? "justify-center" : "items-center space-x-4"
-            }`}
+            className={`flex ${isMinimized ? "justify-center" : "items-center space-x-4"
+              }`}
           >
             {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
@@ -196,15 +193,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                       <button
                         onClick={() => setActivePage(item.id)}
                         title={item.label}
-                        className={`w-full ${
-                          isMinimized
+                        className={`w-full ${isMinimized
                             ? "flex justify-center"
                             : "flex items-center justify-between"
-                        } p-3 rounded-lg transition-all duration-200 ${
-                          activePage === item.id
+                          } p-3 rounded-lg transition-all duration-200 ${activePage === item.id
                             ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                             : "text-gray-700 hover:bg-gray-50"
-                        }`}
+                          }`}
                       >
                         {isMinimized ? (
                           <div className="flex items-center justify-center">
@@ -236,11 +231,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className={`w-full ${
-                isMinimized
+              className={`w-full ${isMinimized
                   ? "flex justify-center"
                   : "flex items-center justify-center space-x-2"
-              } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
+                } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
             >
               <LogOut className="w-5 h-5" />
               {!isMinimized && <span className="font-medium">Sign Out</span>}

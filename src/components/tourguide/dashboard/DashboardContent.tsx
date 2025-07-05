@@ -14,6 +14,23 @@ import TourDetailsModal from "../modals/TourDetailsModal";
 import MessageClientsModal from "../modals/MessageClientsModal";
 import { supabase } from "../../../utils/supabaseClient";
 
+// Helper function to format date
+const formatDate = (dateString: string): string => {
+  if (!dateString) return "-";
+
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return dateString;
+  }
+};
+
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -78,7 +95,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   guideStats,
   upcomingTours = [],
   recentReviews = [],
-  setActivePage = () => {},
+  setActivePage = () => { },
   loading = false,
 }) => {
   const [selectedTour, setSelectedTour] = useState<UpcomingTour | null>(null);
@@ -266,9 +283,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">
-                        {tour.date
-                          ? `${tour.date}${tour.time ? ` at ${tour.time}` : ""}`
-                          : "-"}
+                        {tour.date ? formatDate(tour.date) : "-"}
+                        {tour.time && tour.time !== "09:00" ? ` • ${tour.time}` : ""}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -334,11 +350,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={`${review.id}-${i}`}
-                            className={`w-3 h-3 ${
-                              i < review.rating
+                            className={`w-3 h-3 ${i < review.rating
                                 ? "text-yellow-400 fill-yellow-400"
                                 : "text-gray-300"
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>

@@ -27,8 +27,30 @@ export async function getUpcomingToursByGuide(
       tour_guide_id
     );
 
-    // Get bookings for tours owned by this guide
-    const { data: bookings, error } = await supabase
+    // First, get all tours for this guide
+    const { data: tours, error: toursError } = await supabase
+      .from("tours")
+      .select("id, title, location, is_active")
+      .eq("tour_guide_id", tour_guide_id)
+      .eq("is_active", true);
+
+    console.log("Tours query result:", { tours, toursError });
+
+    if (toursError) {
+      console.error("Error fetching tours:", toursError);
+      return [];
+    }
+
+    if (!tours || tours.length === 0) {
+      console.log("No tours found for this guide");
+      return [];
+    }
+
+    const tourIds = tours.map((tour) => tour.id);
+    console.log("Tour IDs:", tourIds);
+
+    // Get upcoming bookings for these tours
+    const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
       .select(
         `
@@ -37,74 +59,107 @@ export async function getUpcomingToursByGuide(
         participants,
         status,
         tour_id,
+        payment_status,
+        created_at,
         tours!inner (
           id,
           title,
           location,
-          is_active,
-          tour_guide_id
+          tour_guide_id,
+          is_active
         )
       `
       )
-      .eq("tours.tour_guide_id", tour_guide_id)
-      .eq("tours.is_active", true)
+      .in("tour_id", tourIds)
       .in("status", ["confirmed", "pending"])
       .gte("date", new Date().toISOString().split("T")[0])
       .order("date", { ascending: true });
 
-    console.log("Upcoming tours query result:", { bookings, error });
+    console.log("Bookings query result:", { bookings, bookingsError });
 
-    if (error) {
-      console.error("Error fetching upcoming tours:", error);
+    if (bookingsError) {
+      console.error("Error fetching bookings:", bookingsError);
       return [];
     }
 
-    if (!bookings || bookings.length === 0) {
-      console.log("No bookings found, fetching active tours instead");
-      // If no bookings, return active tours without booking details
-      const { data: tours, error: tourError } = await supabase
-        .from("tours")
-        .select("id, title, location, is_active")
-        .eq("tour_guide_id", tour_guide_id)
-        .eq("is_active", true)
-        .limit(5);
+    // If there are upcoming bookings, group by tour and aggregate client counts
+    if (bookings && bookings.length > 0) {
+      // Group bookings by tour_id and aggregate participant counts
+      const tourBookingMap = new Map<number, any>();
 
-      console.log("Active tours query result:", { tours, tourError });
+      bookings.forEach((booking: any) => {
+        const tourId = booking.tour_id;
+        if (!tourBookingMap.has(tourId)) {
+          tourBookingMap.set(tourId, {
+            ...booking,
+            totalClients: 0,
+            allBookings: []
+          });
+        }
 
-      if (tourError) {
-        console.error("Error fetching tours:", tourError);
-        return [];
-      }
+        const tourData = tourBookingMap.get(tourId);
+        tourData.totalClients += booking.participants || 0;
+        tourData.allBookings.push(booking);
 
-      const result = (tours || []).map((tour: Tour) => ({
-        id: tour.id,
-        title: tour.title,
-        date: "",
-        time: "",
-        clients: 0,
-        location: tour.location,
-        status: "pending" as const,
-        tour_id: tour.id, // Use the same tour ID
-      }));
+        // Use the earliest date for the tour
+        if (!tourData.date || booking.date < tourData.date) {
+          tourData.date = booking.date;
+          tourData.id = booking.id; // Use the earliest booking ID
+        }
+      });
 
-      console.log("Returning tours without bookings:", result);
+      const result: UpcomingTour[] = Array.from(tourBookingMap.values()).map((tourData: any) => {
+        // Determine the overall status based on tour active status and booking statuses
+        const bookingStatuses = tourData.allBookings.map((b: any) => b.status);
+        const isActiveTour = tourData.tours?.is_active;
+        let overallStatus: "confirmed" | "pending" | "cancelled" = "pending";
+
+        // If tour is active and has confirmed bookings, mark as confirmed
+        if (isActiveTour && bookingStatuses.includes("confirmed")) {
+          overallStatus = "confirmed";
+        } else if (isActiveTour && bookingStatuses.includes("pending")) {
+          overallStatus = "pending";
+        } else if (isActiveTour && bookingStatuses.every((status: string) => status === "cancelled")) {
+          overallStatus = "cancelled";
+        } else if (isActiveTour) {
+          // If tour is active but no specific booking status, default to confirmed
+          overallStatus = "confirmed";
+        }
+
+        return {
+          id: tourData.id, // This is the booking ID
+          title: tourData.tours?.title || "Unknown Tour",
+          date: tourData.date || "",
+          time: tourData.created_at ? new Date(tourData.created_at).toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }) : "09:00", // Format time from created_at
+          clients: tourData.totalClients,
+          location: tourData.tours?.location || "Unknown Location",
+          status: overallStatus,
+          tour_id: tourData.tours?.id || tourData.tour_id, // Add the actual tour ID for fetching details
+        };
+      });
+
+      console.log("Returning upcoming tours with aggregated bookings:", result);
       return result;
     }
 
-    // Map bookings to UpcomingTour format
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: UpcomingTour[] = bookings.map((booking: any) => ({
-      id: booking.id, // This is the booking ID
-      title: booking.tours?.title || "Unknown Tour",
-      date: booking.date || "",
-      time: "09:00 AM", // Default time since we don't have specific times
-      clients: booking.participants || 0,
-      location: booking.tours?.location || "Unknown Location",
-      status: booking.status as "confirmed" | "pending" | "cancelled",
-      tour_id: booking.tours?.id || booking.tour_id, // Add the actual tour ID for fetching details
+    // If no upcoming bookings, show active tours as potential upcoming tours
+    console.log("No upcoming bookings found, showing active tours");
+    const result = tours.map((tour: Tour) => ({
+      id: tour.id,
+      title: tour.title,
+      date: "",
+      time: "",
+      clients: 0,
+      location: tour.location,
+      status: "confirmed" as const, // Active tours should be confirmed, not pending
+      tour_id: tour.id, // Use the same tour ID
     }));
 
-    console.log("Returning upcoming tours with bookings:", result);
+    console.log("Returning active tours as upcoming:", result);
     return result;
   } catch (error) {
     console.error("Error in getUpcomingToursByGuide:", error);

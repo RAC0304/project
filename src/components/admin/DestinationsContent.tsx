@@ -102,11 +102,11 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
           // Map attractions to match our frontend model
           const mappedAttractions = attractionsData
             ? attractionsData.map((attr) => ({
-                id: attr.id.toString(),
-                name: attr.name,
-                description: attr.description,
-                imageUrl: attr.image_url || "",
-              }))
+              id: attr.id.toString(),
+              name: attr.name,
+              description: attr.description,
+              imageUrl: attr.image_url || "",
+            }))
             : [];
 
           // Fetch activities
@@ -118,13 +118,13 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
           // Map activities to match our frontend model
           const mappedActivities = activitiesData
             ? activitiesData.map((act) => ({
-                id: act.id.toString(),
-                name: act.name,
-                description: act.description,
-                duration: act.duration || "",
-                price: act.price || "",
-                imageUrl: act.image_url || "",
-              }))
+              id: act.id.toString(),
+              name: act.name,
+              description: act.description,
+              duration: act.duration || "",
+              price: act.price || "",
+              imageUrl: act.image_url || "",
+            }))
             : [];
 
           // Fetch travel tips
@@ -253,8 +253,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
       length > maxLength
         ? "text-red-600 font-medium"
         : length > maxLength * 0.9
-        ? "text-amber-600"
-        : "text-gray-500";
+          ? "text-amber-600"
+          : "text-gray-500";
     return { count: `${length}/${maxLength}`, className };
   };
 
@@ -1161,13 +1161,11 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                 }
               }}
               disabled={isLoading}
-              className={`px-4 py-2 rounded-md ${
-                showForm
+              className={`px-4 py-2 rounded-md ${showForm
                   ? "bg-gray-500 hover:bg-gray-600"
                   : "bg-teal-500 hover:bg-teal-600"
-              } text-white font-medium transition-colors ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+                } text-white font-medium transition-colors ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               {showForm ? "Cancel" : "Add New Destination"}
             </button>
@@ -1179,9 +1177,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                 }
               }}
               disabled={isLoading}
-              className={`px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               Add New Itineraries
             </button>
@@ -1229,9 +1226,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                       Name*
                     </label>
                     <span
-                      className={`text-xs ${
-                        getCharacterCount(formData.name, 255).className
-                      }`}
+                      className={`text-xs ${getCharacterCount(formData.name, 255).className
+                        }`}
                     >
                       {getCharacterCount(formData.name, 255).count}
                     </span>
@@ -1257,9 +1253,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                       Location*
                     </label>
                     <span
-                      className={`text-xs ${
-                        getCharacterCount(formData.location, 255).className
-                      }`}
+                      className={`text-xs ${getCharacterCount(formData.location, 255).className
+                        }`}
                     >
                       {getCharacterCount(formData.location, 255).count}
                     </span>
@@ -1285,9 +1280,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                       Main Image URL
                     </label>
                     <span
-                      className={`text-xs ${
-                        getCharacterCount(formData.imageUrl, 255).className
-                      }`}
+                      className={`text-xs ${getCharacterCount(formData.imageUrl, 255).className
+                        }`}
                     >
                       {getCharacterCount(formData.imageUrl, 255).count}
                     </span>
@@ -1339,10 +1333,9 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                       Best Time to Visit
                     </label>
                     <span
-                      className={`text-xs ${
-                        getCharacterCount(formData.bestTimeToVisit, 255)
+                      className={`text-xs ${getCharacterCount(formData.bestTimeToVisit, 255)
                           .className
-                      }`}
+                        }`}
                     >
                       {getCharacterCount(formData.bestTimeToVisit, 255).count}
                     </span>
@@ -1360,14 +1353,14 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                     formData.bestTimeToVisit,
                     255
                   ) && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      {getFieldWarning(
-                        "Best Time to Visit",
-                        formData.bestTimeToVisit,
-                        255
-                      )}
-                    </p>
-                  )}
+                      <p className="text-xs text-amber-600 mt-1">
+                        {getFieldWarning(
+                          "Best Time to Visit",
+                          formData.bestTimeToVisit,
+                          255
+                        )}
+                      </p>
+                    )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1392,11 +1385,10 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                         type="button"
                         key={category}
                         onClick={() => handleCategoryToggle(category)}
-                        className={`px-3 py-1 text-sm rounded-full ${
-                          selectedCategories.includes(category)
+                        className={`px-3 py-1 text-sm rounded-full ${selectedCategories.includes(category)
                             ? "bg-teal-500 text-white"
                             : "bg-gray-200 text-gray-700"
-                        }`}
+                          }`}
                       >
                         {category}
                       </button>
@@ -1438,8 +1430,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                           alt={`Additional ${index}`}
                           className="h-24 w-full object-cover rounded-md"
                           onError={(e) =>
-                            (e.currentTarget.src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yPC90ZXh0Pjwvc3ZnPg==")
+                          (e.currentTarget.src =
+                            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yPC90ZXh0Pjwvc3ZnPg==")
                           }
                         />
                         <button
@@ -1555,8 +1547,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                               alt={attraction.name}
                               className="h-10 w-10 object-cover rounded-md"
                               onError={(e) =>
-                                (e.currentTarget.src =
-                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
+                              (e.currentTarget.src =
+                                "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                               }
                             />
                           )}
@@ -1653,8 +1645,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                               alt={activity.name}
                               className="h-10 w-10 object-cover rounded-md"
                               onError={(e) =>
-                                (e.currentTarget.src =
-                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
+                              (e.currentTarget.src =
+                                "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                               }
                             />
                           )}
@@ -1690,18 +1682,16 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                     setShowForm(false);
                   }}
                   disabled={isLoading}
-                  className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                  className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
+                  className={`px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center ${isLoading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {isLoading && (
                     <svg
@@ -1815,8 +1805,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                                 src={destination.imageUrl}
                                 alt={destination.name}
                                 onError={(e) =>
-                                  (e.currentTarget.src =
-                                    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
+                                (e.currentTarget.src =
+                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5FcnJvcjwvdGV4dD48L3N2Zz4=")
                                 }
                               />
                             </div>
@@ -1835,7 +1825,7 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {destination.category &&
-                          destination.category.length > 0 ? (
+                            destination.category.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {destination.category.map((cat, idx) => (
                                 <span
@@ -1860,18 +1850,16 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                           <button
                             onClick={() => handleEdit(destination)}
                             disabled={isLoading}
-                            className={`text-blue-600 hover:text-blue-900 mr-4 ${
-                              isLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
+                            className={`text-blue-600 hover:text-blue-900 mr-4 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(destination.id)}
                             disabled={isLoading}
-                            className={`text-red-600 hover:text-red-900 ${
-                              isLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
+                            className={`text-red-600 hover:text-red-900 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
                           >
                             Delete
                           </button>

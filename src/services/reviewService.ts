@@ -947,3 +947,76 @@ export const debugTourGuideReviews = async (tourGuideId: number) => {
     return null;
   }
 };
+
+/**
+ * Get a specific tour guide review by ID
+ */
+export const getTourGuideReviewById = async (
+  reviewId: number
+): Promise<TourGuideReview | null> => {
+  try {
+    console.log("Fetching review by ID:", reviewId);
+
+    // Get review data with customer information and tour guide response
+    const { data, error } = await supabase
+      .from("reviews")
+      .select(
+        `
+        *,
+        users!reviews_user_id_fkey (
+          id,
+          first_name,
+          last_name,
+          username,
+          email
+        ),
+        review_responses (
+          response,
+          created_at
+        )
+      `
+      )
+      .eq("id", reviewId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching review by ID:", error);
+      throw error;
+    }
+
+    if (!data) {
+      console.log("No review found with ID:", reviewId);
+      return null;
+    }
+
+    console.log("Review data with response:", data);
+
+    // Transform data with tour guide response
+    const review: TourGuideReview = {
+      id: data.id.toString(),
+      tourId: "", // Will be filled later if needed
+      tourName: "Review Tour", // Default tour name
+      clientName: data.users
+        ? `${data.users.first_name || ""} ${data.users.last_name || ""
+          }`.trim() ||
+        data.users.username ||
+        "Customer"
+        : "Anonymous User",
+      clientEmail: data.users?.email || "",
+      rating: data.rating,
+      title: data.title,
+      content: data.content,
+      date: data.created_at,
+      tourDate: data.created_at,
+      verified: data.is_verified || false,
+      helpful: data.helpful_count || 0,
+      response: data.review_responses?.response || undefined,
+      responseDate: data.review_responses?.created_at || undefined,
+    };
+
+    return review;
+  } catch (error) {
+    console.error("Error in getTourGuideReviewById:", error);
+    throw error;
+  }
+};

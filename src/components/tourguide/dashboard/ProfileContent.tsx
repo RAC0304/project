@@ -110,7 +110,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         lastName: data.users?.last_name || "",
         phone: data.users?.phone || "",
         location: data.location || "",
-        bio: data.bio || "",
+        bio: data.short_bio || data.bio || "", // Use short_bio for bio field
         specialties: specialtiesStr || defaultSpecialties,
         shortBio: data.short_bio || "",
         experience: data.experience?.toString() || "",
@@ -174,6 +174,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+      // Sync bio with shortBio
+      ...(name === 'shortBio' && { bio: value }),
     }));
   };
 
@@ -200,7 +202,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     const { error: guideError } = await supabase
       .from("tour_guides")
       .update({
-        bio: formData.bio,
+        bio: formData.shortBio, // Use shortBio for bio field
         specialties: specialtiesObj,
         short_bio: formData.shortBio,
         experience: Number(formData.experience),
