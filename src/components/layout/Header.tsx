@@ -20,6 +20,9 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useEnhancedAuth();
 
+  // Check if current page is home page
+  const isHomePage = location.pathname === "/home" || location.pathname === "/";
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   useEffect(() => {
@@ -78,7 +81,7 @@ const Header: React.FC = () => {
 
   const headerClass = isScrolled
     ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
-    : "bg-white/10 backdrop-blur-sm text-white";
+    : "bg-transparent text-white"; // Changed to bg-transparent
 
   const handleLogout = async () => {
     await logout();
@@ -96,13 +99,23 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 py-1 flex justify-between items-center">
         <Link to="/home" className="flex items-center">
           <Logo
-            className={isScrolled ? "text-teal-600" : "text-teal-600"}
+            className={
+              isScrolled
+                ? "text-teal-600"
+                : isHomePage
+                ? "text-white"
+                : "text-teal-600"
+            }
             width={60}
             height={60}
           />
           <span
-            className={`font-bold text-xl ml-2 ${
-              isScrolled ? "text-teal-600" : "text-teal-600"
+            className={`font-bold text-2xl ml-2 ${
+              isScrolled
+                ? "text-teal-600"
+                : isHomePage
+                ? "text-white"
+                : "text-teal-600"
             }`}
           >
             WanderWise
@@ -116,18 +129,24 @@ const Header: React.FC = () => {
               className={`flex items-center space-x-1 px-2 py-0.5 rounded-full transition hover:bg-teal-500/10
                 ${
                   location.pathname === link.path
-                    ? "font-medium"
-                    : "font-normal"
+                    ? "font-semibold"
+                    : "font-medium"
                 }
                 ${
                   isScrolled
-                    ? "text-gray-700 hover:text-teal-600"
-                    : "text-teal-600 hover:text-teal-600"
+                    ? "text-teal-600 hover:text-teal-700"
+                    : isHomePage 
+                      ? "text-white hover:text-white" 
+                      : "text-teal-600 hover:text-teal-700"
                 }`}
             >
               {React.cloneElement(link.icon, {
                 className: `w-4 h-4 ${
-                  isScrolled ? "text-teal-600" : "text-teal-600"
+                  isScrolled 
+                    ? "text-teal-600" 
+                    : isHomePage 
+                      ? "text-white" 
+                      : "text-teal-600"
                 }`,
               })}
               <span>{link.name}</span>
@@ -137,10 +156,10 @@ const Header: React.FC = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/profile"
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/20 text-teal-600 hover:bg-teal-50 transition-colors duration-300"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors duration-300"
               >
-                <User className="w-4 h-4" />
-                <span className="text-sm">
+                <User className="w-4 h-4 text-white" />
+                <span className="text-sm font-bold">
                   {user.profile.firstName} {user.profile.lastName}
                 </span>
               </Link>
