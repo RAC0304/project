@@ -108,13 +108,6 @@ const DestinationPage: React.FC = () => {
             destinationData.category = [];
           }
 
-          // Ensure all arrays are properly initialized
-          if (!destinationData.images) destinationData.images = [];
-          if (!destinationData.attractions) destinationData.attractions = [];
-          if (!destinationData.activities) destinationData.activities = [];
-          if (!destinationData.travelTips) destinationData.travelTips = [];
-          if (!destinationData.reviews) destinationData.reviews = [];
-
           setDestination(destinationData);
         } else {
           setError("Destination not found");
@@ -334,8 +327,8 @@ const DestinationPage: React.FC = () => {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap ${activeSection === section.id
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-gray-700 hover:bg-gray-50"
+                ? "bg-teal-50 text-teal-700"
+                : "text-gray-700 hover:bg-gray-50"
                 }`}
             >
               {section.label}
@@ -370,17 +363,17 @@ const DestinationPage: React.FC = () => {
                 </h3>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-700">{destination.location}</p>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      destination.location
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-teal-600 hover:text-teal-800 transition-colors"
-                  >
-                    <Map className="w-4 h-4 mr-1" />
-                    <span>View on Map</span>
-                  </a>
+                  {destination.googleMapsUrl && (
+                    <a
+                      href={destination.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-teal-600 hover:text-teal-800 transition-colors"
+                    >
+                      <Map className="w-4 h-4 mr-1" />
+                      <span>View on Map</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -591,26 +584,13 @@ const DestinationPage: React.FC = () => {
                           <h5 className="text-sm font-semibold text-gray-800 mb-2">
                             Tour Guide
                           </h5>
-                          <div className="flex items-center">
-                            <img
-                              src={
-                                review.tourGuide.avatar || "/default-avatar.png"
-                              }
-                              alt={review.tourGuide.name}
-                              className="w-10 h-10 rounded-full mr-3 object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  "/default-avatar.png";
-                              }}
-                            />
-                            <div>
-                              <div className="font-medium text-gray-800">
-                                {review.tourGuide.name}
-                              </div>
-                              <span className="text-sm text-gray-600">
-                                {review.tourGuide.specialty}
-                              </span>
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              {review.tourGuide.name}
                             </div>
+                            <span className="text-sm text-gray-600">
+                              {review.tourGuide.specialty}
+                            </span>
                           </div>
                         </div>
                       )}

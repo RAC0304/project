@@ -148,29 +148,24 @@ export const getDestinationReviews = async (
       images: review.review_images?.map((img: any) => img.image_url) || [],
       tourGuide: review.tour_guides
         ? {
-            id: review.tour_guides.id.toString(),
-            name: review.tour_guides.users
-              ? `${review.tour_guides.users.first_name} ${review.tour_guides.users.last_name}`
-              : "Tour Guide",
-            avatar: review.tour_guides.profile_picture || undefined,
-            specialty: (() => {
-              const specialties = review.tour_guides.specialties;
-              if (Array.isArray(specialties)) {
-                return specialties.join(", ");
-              }
-              if (typeof specialties === "object" && specialties !== null) {
-                // Handle case where specialties is an object like {nature: true, culture: true}
-                const keys = Object.keys(specialties).filter(
-                  (key) => specialties[key as keyof typeof specialties] === true || specialties[key as keyof typeof specialties] === 1
-                );
-                return keys.length > 0 ? keys.join(", ") : "Tour Guide";
-              }
-              if (typeof specialties === "string") {
-                return specialties;
-              }
-              return "Tour Guide";
-            })(),
-          }
+          id: review.tour_guides.id.toString(),
+          name: review.tour_guides.users
+            ? `${review.tour_guides.users.first_name} ${review.tour_guides.users.last_name}`
+            : "Tour Guide",
+          avatar: review.tour_guides.profile_picture || undefined,
+          specialty: (() => {
+            const specialties = review.tour_guides.specialties;
+            if (Array.isArray(specialties)) {
+              return specialties.join(", ");
+            } else if (typeof specialties === 'object' && specialties !== null) {
+              // Handle object specialty like {nature: true, culture: true, adventure: true, photography: true}
+              return Object.keys(specialties).filter(key => specialties[key]).join(", ");
+            } else if (typeof specialties === 'string') {
+              return specialties;
+            }
+            return "Tour Guide";
+          })(),
+        }
         : undefined,
     }));
 
@@ -545,13 +540,13 @@ export const getUserBookingReviews = async (
       tour_guides: review.tour_guides,
       review_tags: review.review_tags
         ? review.review_tags.map((tag: { tag: string }) => ({
-            tag: tag.tag,
-          }))
+          tag: tag.tag,
+        }))
         : [],
       review_images: review.review_images
         ? review.review_images.map((img: { image_url: string }) => ({
-            image_url: img.image_url,
-          }))
+          image_url: img.image_url,
+        }))
         : [],
     })
   );
@@ -608,34 +603,34 @@ export const getBookingReviews = async (
       updated_at: review.updated_at,
       bookings: review.bookings
         ? {
-            date: new Date(review.bookings.date).toLocaleDateString("id-ID"),
-            tours: review.bookings.tours
-              ? {
-                  title: review.bookings.tours.title,
-                  location: review.bookings.tours.location,
-                }
-              : undefined,
-          }
+          date: new Date(review.bookings.date).toLocaleDateString("id-ID"),
+          tours: review.bookings.tours
+            ? {
+              title: review.bookings.tours.title,
+              location: review.bookings.tours.location,
+            }
+            : undefined,
+        }
         : undefined,
       tour_guides: review.tour_guides
         ? {
-            users: review.tour_guides.users
-              ? {
-                  first_name: review.tour_guides.users.first_name,
-                  last_name: review.tour_guides.users.last_name,
-                }
-              : undefined,
-          }
+          users: review.tour_guides.users
+            ? {
+              first_name: review.tour_guides.users.first_name,
+              last_name: review.tour_guides.users.last_name,
+            }
+            : undefined,
+        }
         : undefined,
       review_tags: review.review_tags
         ? review.review_tags.map((tag: any) => ({
-            tag: tag.tag,
-          }))
+          tag: tag.tag,
+        }))
         : [],
       review_images: review.review_images
         ? review.review_images.map((img: any) => ({
-            image_url: img.image_url,
-          }))
+          image_url: img.image_url,
+        }))
         : [],
     }));
 
@@ -670,73 +665,58 @@ export interface TourGuideReview {
  * Get reviews for a specific tour guide
  */
 export const getTourGuideReviews = async (
-  tourGuideId: number
-): Promise<TourGuideReview[]> => {
+  tourGuideId: string
+): Promise<DestinationReview[]> => {
   try {
-    console.log("Fetching reviews for tour guide ID:", tourGuideId);
+    // Convert tourGuideId to number if it's a string
+    const numericTourGuideId = parseInt(tourGuideId);
 
     const { data, error } = await supabase
       .from("reviews")
       .select(
         `
         *,
-        users!reviews_user_id_fkey (
-          username,
+        users!reviews_user_id_fkey(
+          id,
           first_name,
           last_name,
-          email
+          profile_picture
         ),
-        bookings!reviews_booking_id_fkey (
-          id,
-          tour_date,
-          tours!bookings_tour_id_fkey (
-            id,
-            title
-          )
-        ),
-        destinations!reviews_destination_id_fkey (
-          name
-        ),
-        review_responses!review_responses_review_id_fkey (
-          id,
-          response,
-          created_at
-        )
+        review_images(image_url)
       `
       )
-      .eq("tour_guide_id", tourGuideId)
+      .eq("tour_guide_id", numericTourGuideId)
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching tour guide reviews:", error);
-      throw error;
+      throw new Error(`Failed to fetch reviews: ${error.message}`);
     }
 
-    console.log("Raw data from Supabase:", data);
+    if (!data) {
+      return [];
+    }
 
-    // Transform data to match TourGuideReview interface
-    return (data || []).map(
-      (review: any): TourGuideReview => ({
-        id: review.id.toString(),
-        tourId: review.bookings?.tours?.id?.toString() || "",
-        tourName: review.bookings?.tours?.title || "Unknown Tour",
-        clientName: review.users
-          ? `${review.users.first_name || ""} ${
-              review.users.last_name || ""
-            }`.trim() || review.users.username
-          : "Anonymous User",
-        clientEmail: review.users?.email || "",
-        rating: review.rating,
-        title: review.title,
-        content: review.content,
-        date: review.created_at,
-        tourDate: review.bookings?.tour_date || review.created_at,
-        verified: review.is_verified || false,
-        helpful: review.helpful_count || 0,
-        response: review.review_responses?.[0]?.response,
-        responseDate: review.review_responses?.[0]?.created_at,
-      })
-    );
+    // Transform the data to match our interface
+    const reviews: DestinationReview[] = data.map((review: any) => ({
+      id: review.id.toString(),
+      userId: review.user_id.toString(),
+      userName: review.users
+        ? `${review.users.first_name} ${review.users.last_name}`
+        : "Anonymous",
+      userAvatar: review.users?.profile_picture || undefined,
+      rating: review.rating,
+      title: review.title,
+      content: review.content,
+      date: new Date(review.created_at).toLocaleDateString("id-ID"),
+      helpfulCount: review.helpful_count || 0,
+      isVerified: review.is_verified || false,
+      images: review.review_images?.map((img: any) => img.image_url) || [],
+      // No tour guide info needed since this is for tour guide reviews
+      tourGuide: undefined,
+    }));
+
+    return reviews;
   } catch (error) {
     console.error("Error in getTourGuideReviews:", error);
     throw error;
@@ -744,79 +724,38 @@ export const getTourGuideReviews = async (
 };
 
 /**
- * Get a single review for tour guide with detailed information
+ * Get average rating for a tour guide
  */
-export const getTourGuideReviewById = async (
-  reviewId: number
-): Promise<TourGuideReview | null> => {
+export const getTourGuideRating = async (
+  tourGuideId: string
+): Promise<{ averageRating: number; totalReviews: number }> => {
   try {
+    const numericTourGuideId = parseInt(tourGuideId);
+
     const { data, error } = await supabase
       .from("reviews")
-      .select(
-        `
-        *,
-        users!reviews_user_id_fkey (
-          username,
-          first_name,
-          last_name,
-          email
-        ),
-        bookings!reviews_booking_id_fkey (
-          id,
-          tour_date,
-          tours!bookings_tour_id_fkey (
-            id,
-            title
-          )
-        ),
-        destinations!reviews_destination_id_fkey (
-          name
-        ),
-        review_responses!review_responses_review_id_fkey (
-          id,
-          response,
-          created_at,
-          user_id
-        )
-      `
-      )
-      .eq("id", reviewId)
-      .single();
+      .select("rating")
+      .eq("tour_guide_id", numericTourGuideId);
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return null;
-      }
-      console.error("Error fetching review:", error);
-      throw error;
+      console.error("Error fetching tour guide rating:", error);
+      return { averageRating: 0, totalReviews: 0 };
     }
 
-    if (!data) return null;
+    if (!data || data.length === 0) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
 
-    // Transform data
+    const totalReviews = data.length;
+    const averageRating = data.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
+
     return {
-      id: data.id.toString(),
-      tourId: data.bookings?.tours?.id?.toString() || "",
-      tourName: data.bookings?.tours?.title || "Unknown Tour",
-      clientName: data.users
-        ? `${data.users.first_name || ""} ${
-            data.users.last_name || ""
-          }`.trim() || data.users.username
-        : "Anonymous User",
-      clientEmail: data.users?.email || "",
-      rating: data.rating,
-      title: data.title,
-      content: data.content,
-      date: data.created_at,
-      tourDate: data.bookings?.tour_date || data.created_at,
-      verified: data.is_verified || false,
-      helpful: data.helpful_count || 0,
-      response: data.review_responses?.[0]?.response,
-      responseDate: data.review_responses?.[0]?.created_at,
+      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+      totalReviews,
     };
   } catch (error) {
-    console.error("Error in getTourGuideReviewById:", error);
-    throw error;
+    console.error("Error in getTourGuideRating:", error);
+    return { averageRating: 0, totalReviews: 0 };
   }
 };
 
@@ -925,11 +864,10 @@ export const getTourGuideReviewsSimple = async (
         tourId: "", // Will be filled later if needed
         tourName: "Review Tour", // Default tour name
         clientName: review.users
-          ? `${review.users.first_name || ""} ${
-              review.users.last_name || ""
+          ? `${review.users.first_name || ""} ${review.users.last_name || ""
             }`.trim() ||
-            review.users.username ||
-            "Customer"
+          review.users.username ||
+          "Customer"
           : "Anonymous User",
         clientEmail: review.users?.email || "",
         rating: review.rating,
