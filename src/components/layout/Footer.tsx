@@ -1,16 +1,34 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
-  Instagram,
-  Facebook,
-  Twitter,
   Mail,
   MapPin,
-  Phone,
 } from "lucide-react";
 // import Logo from "../common/Logo";
 
 const Footer: React.FC = () => {
+  const location = useLocation();
+  const isAboutPage = location.pathname === "/about";
+
+  const scrollToSection = (sectionId: string) => {
+    if (isAboutPage) {
+      // If already on about page, scroll to section
+      const element = document.querySelector(`#${sectionId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        // Update URL without triggering navigation
+        window.history.pushState(null, "", `#${sectionId}`);
+      }
+    } else {
+      // If not on about page, navigate to about page with hash
+      window.location.href = `/about#${sectionId}`;
+    }
+  };
+
+  const handleInformationClick = (sectionId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    scrollToSection(sectionId);
+  };
   return (
     <footer className="bg-teal-900 text-white">
       <div className="container mx-auto px-4 py-12">
@@ -67,44 +85,44 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/about#about"
-                  className="text-teal-100 hover:text-white transition-colors"
+                <button
+                  onClick={(e) => handleInformationClick("about", e)}
+                  className="text-teal-100 hover:text-white transition-colors text-left"
                 >
                   About Indonesia
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/about#culture"
-                  className="text-teal-100 hover:text-white transition-colors"
+                <button
+                  onClick={(e) => handleInformationClick("culture", e)}
+                  className="text-teal-100 hover:text-white transition-colors text-left"
                 >
                   Cultural Insight
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/about#travel-tips"
-                  className="text-teal-100 hover:text-white transition-colors"
+                <button
+                  onClick={(e) => handleInformationClick("travel-tips", e)}
+                  className="text-teal-100 hover:text-white transition-colors text-left"
                 >
                   Travel Tips
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/about#facts"
-                  className="text-teal-100 hover:text-white transition-colors"
+                <button
+                  onClick={(e) => handleInformationClick("facts", e)}
+                  className="text-teal-100 hover:text-white transition-colors text-left"
                 >
-                  Fact About Indonesia
-                </Link>
+                  Facts About Indonesia
+                </button>
               </li>
               <li>
-                <Link
-                  to="/about#faq"
-                  className="text-teal-100 hover:text-white transition-colors"
+                <button
+                  onClick={(e) => handleInformationClick("faq", e)}
+                  className="text-teal-100 hover:text-white transition-colors text-left"
                 >
                   FAQs
-                </Link>
+                </button>
               </li>
             </ul>
           </div>

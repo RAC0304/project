@@ -11,15 +11,6 @@ const AboutPage: React.FC = () => {
     category: string;
   }>(null);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.querySelector(`#${sectionId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      // Update URL without triggering navigation
-      window.history.pushState(null, "", `#${sectionId}`);
-    }
-  };
-
   useEffect(() => {
     // Add smooth scrolling CSS
     document.documentElement.style.scrollBehavior = "smooth";
@@ -52,41 +43,6 @@ const AboutPage: React.FC = () => {
   return (
     <div className="pt-14 pb-16 bg-gradient-to-br from-teal-50 via-white to-gray-50 min-h-screen">
       <div className="container mx-auto px-4">
-        {/* Internal Navigation */}
-        <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => scrollToSection("about")}
-              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-            >
-              About Indonesia
-            </button>
-            <button
-              onClick={() => scrollToSection("culture")}
-              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-            >
-              Cultural Insight
-            </button>
-            <button
-              onClick={() => scrollToSection("travel-tips")}
-              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-            >
-              Travel Tips
-            </button>
-            <button
-              onClick={() => scrollToSection("facts")}
-              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-            >
-              Facts About Indonesia
-            </button>
-            <button
-              onClick={() => scrollToSection("faq")}
-              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
-            >
-              FAQs
-            </button>
-          </div>
-        </div>
         {/* Hero Section */}
         <div
           className="text-center mb-16 relative"
