@@ -456,10 +456,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                     </span>
                     {(user?.profile as { is_verified?: boolean })
                       ?.is_verified && (
-                      <span className="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full ml-2">
-                        Verified
-                      </span>
-                    )}
+                        <span className="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full ml-2">
+                          Verified
+                        </span>
+                      )}
                   </div>
                 </div>
 
@@ -690,10 +690,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                     <div
                       key={option}
                       className={`inline-flex items-center px-4 py-1 rounded-full select-none text-sm border transition-all duration-200 cursor-pointer
-                        ${
-                          isChecked
-                            ? "bg-teal-500 text-white border-teal-600 shadow-md transform scale-105"
-                            : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
+                        ${isChecked
+                          ? "bg-teal-500 text-white border-teal-600 shadow-md transform scale-105"
+                          : "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200"
                         }
                         ${isEditing ? "cursor-pointer" : "cursor-default"}
                       `}
@@ -716,7 +715,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                         name="specialties"
                         value={option}
                         checked={isChecked}
-                        onChange={() => {}} // Handled by onClick above
+                        onChange={() => { }} // Handled by onClick above
                         className="sr-only" // Hide default checkbox
                         disabled={!isEditing}
                       />
@@ -791,9 +790,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
                   {isEditing && (
                     <div className="flex flex-col space-y-2">
                       <label
-                        className={`inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-md cursor-pointer border border-teal-200 hover:bg-teal-100 transition-colors ${
-                          isImageLoading ? "opacity-70 cursor-not-allowed" : ""
-                        }`}
+                        className={`inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-md cursor-pointer border border-teal-200 hover:bg-teal-100 transition-colors ${isImageLoading ? "opacity-70 cursor-not-allowed" : ""
+                          }`}
                       >
                         <svg
                           className="w-5 h-5 mr-2"

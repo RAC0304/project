@@ -42,11 +42,23 @@ export async function getTours(): Promise<Tour[]> {
 export async function getToursByGuide(tour_guide_id: number): Promise<Tour[]> {
   const { data, error } = await supabase
     .from(TABLE_NAME)
-    .select("*")
+    .select(
+      `
+      *,
+      destinations:destination_id (
+        name
+      )
+    `
+    )
     .eq("tour_guide_id", tour_guide_id)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data as Tour[];
+
+  // Transform data to include destination_name
+  return (data || []).map((tour) => ({
+    ...tour,
+    destination_name: tour.destinations?.name || null,
+  })) as Tour[];
 }
 
 export async function createTour(
@@ -60,14 +72,28 @@ export async function createTour(
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .insert([tourData])
-    .select()
+    .select(
+      `
+      *,
+      destinations:destination_id (
+        name
+      )
+    `
+    )
     .single();
   if (error) {
     console.error("tourService - createTour error:", error);
     throw error;
   }
   console.log("tourService - createTour result:", data);
-  return data as Tour;
+
+  // Transform data to include destination_name
+  const transformedData = {
+    ...data,
+    destination_name: data.destinations?.name || null,
+  };
+
+  return transformedData as Tour;
 }
 
 export async function updateTour(
@@ -84,14 +110,28 @@ export async function updateTour(
     .from(TABLE_NAME)
     .update(tourData)
     .eq("id", id)
-    .select()
+    .select(
+      `
+      *,
+      destinations:destination_id (
+        name
+      )
+    `
+    )
     .single();
   if (error) {
     console.error("tourService - updateTour error:", error);
     throw error;
   }
   console.log("tourService - updateTour result:", data);
-  return data as Tour;
+
+  // Transform data to include destination_name
+  const transformedData = {
+    ...data,
+    destination_name: data.destinations?.name || null,
+  };
+
+  return transformedData as Tour;
 }
 
 export async function deleteTour(id: number): Promise<void> {
