@@ -217,10 +217,10 @@ const Header: React.FC = () => {
                 ${
                   isScrolled
                     ? "bg-teal-500 text-white hover:bg-teal-600"
-                    : "bg-white/20 text-teal-500 hover:bg-white/30"
+                    : "bg-transparent text-white hover:text-teal-300"
                 } transition-colors duration-300`}
               >
-                <User className="w-4 h-4" />
+                <User className={`w-4 h-4 ${isScrolled ? "" : "text-white"}`} />
                 <span>Login</span>
               </Link>
             )}
@@ -228,101 +228,104 @@ const Header: React.FC = () => {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden text-2xl"
+            className="md:hidden text-2xl relative"
             onClick={toggleMenu}
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? (
-              <X
-                className={
-                  isScrolled
-                    ? "text-gray-800"
-                    : useWhiteText
-                    ? "text-white"
-                    : "text-teal-600"
-                }
-              />
-            ) : (
-              <Menu
-                className={
-                  isScrolled
-                    ? "text-gray-800"
-                    : useWhiteText
-                    ? "text-white"
-                    : "text-teal-600"
-                }
-              />
-            )}
+            <div className="relative w-6 h-6 flex items-center justify-center overflow-hidden">
+              <div className={`transition-all duration-300 absolute ${isMenuOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"}`}>
+                <Menu
+                  className={
+                    isScrolled
+                      ? "text-gray-800"
+                      : useWhiteText
+                      ? "text-white"
+                      : "text-teal-600"
+                  }
+                />
+              </div>
+              <div className={`transition-all duration-300 absolute ${isMenuOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"}`}>
+                <X
+                  className={
+                    isScrolled
+                      ? "text-gray-800"
+                      : useWhiteText
+                      ? "text-white"
+                      : "text-teal-600"
+                  }
+                />
+              </div>
+            </div>
           </button>
         </div>
       </div>
       {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40">
-          <div className="fixed inset-y-0 right-0 w-64 bg-white shadow-lg p-6 transform transition-transform duration-300 ease-in-out z-50">
-            <div className="flex flex-col h-full">
-              <div className="flex justify-between items-center mb-8">
-                <span className="text-xl font-bold text-gray-800">Menu</span>
-                <button
-                  onClick={toggleMenu}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <nav className="flex-1">
-                <ul className="space-y-4">
-                  {navLinks.map((link) => (
-                    <li key={link.path}>
-                      <Link
-                        to={link.path}
-                        className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors duration-300"
-                      >
-                        {link.icon}
-                        <span>{link.name}</span>
-                      </Link>
-                    </li>
-                  ))}{" "}
-                  {user ? (
-                    <>
-                      <li className="pt-4 border-t">
-                        <Link
-                          to="/profile"
-                          className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors duration-300"
-                        >
-                          <User className="w-4 h-4" />
-                          <span>
-                            {user.profile.firstName} {user.profile.lastName}
-                          </span>
-                        </Link>
-                      </li>
-                      <li>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center space-x-2 text-red-500 hover:text-red-600 transition-colors duration-300"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span>Logout</span>
-                        </button>
-                      </li>
-                    </>
-                  ) : (
+      <div className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+        <div 
+          className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg p-6 z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between items-center mb-8">
+              <span className="text-xl font-bold text-gray-800">Menu</span>
+              <button
+                onClick={toggleMenu}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <nav className="flex-1">
+              <ul className="space-y-4">
+                {navLinks.map((link) => (
+                  <li key={link.path}>
+                    <Link
+                      to={link.path}
+                      className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors duration-300"
+                    >
+                      {link.icon}
+                      <span>{link.name}</span>
+                    </Link>
+                  </li>
+                ))}{" "}
+                {user ? (
+                  <>
                     <li className="pt-4 border-t">
                       <Link
-                        to="/login"
+                        to="/profile"
                         className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors duration-300"
                       >
                         <User className="w-4 h-4" />
-                        <span>Login</span>
+                        <span>
+                          {user.profile.firstName} {user.profile.lastName}
+                        </span>
                       </Link>
                     </li>
-                  )}
-                </ul>
-              </nav>
-            </div>
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 text-red-500 hover:text-red-600 transition-colors duration-300"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <li className="pt-4 border-t">
+                    <Link
+                      to="/login"
+                      className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 transition-colors duration-300"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Login</span>
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </nav>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };
