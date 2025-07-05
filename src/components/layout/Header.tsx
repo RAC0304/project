@@ -22,6 +22,27 @@ const Header: React.FC = () => {
 
   // Check if current page is home page
   const isHomePage = location.pathname === "/home" || location.pathname === "/";
+  // Check if it's exactly the destinations list page
+  const isDestinationsListPage = location.pathname === "/destinations";
+  // Check if it's a destination detail page (includes /destinations/ but is not the list page)
+  const isDestinationDetailPage = location.pathname.includes("/destinations/");
+  // Check if we're on any destinations-related page (for white text)
+  const isDestinationsPage = location.pathname.includes("/destinations");
+
+  // Use white text on home and destination detail pages only
+  const useWhiteText = !isScrolled && (isHomePage || isDestinationDetailPage);
+  
+  // Show green menu background only on home page or destination detail pages before scrolling
+  const showGreenMenuBg = !isScrolled && (isHomePage || isDestinationDetailPage);
+  
+  // Solid green background specifically for destination detail pages
+  const showSolidGreenMenuBg = !isScrolled && isDestinationDetailPage;
+
+  // No longer using the white logo on destinations list page
+  // const useWhiteLogoOnDestination = !isScrolled && isDestinationsPage;
+  
+  // Use white text for menu items on home and destination detail pages before scrolling
+  const useWhiteMenuText = !isScrolled && (isHomePage || isDestinationDetailPage);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -79,9 +100,10 @@ const Header: React.FC = () => {
     },
   ];
 
+  // Change the header class to be fully white when scrolled
   const headerClass = isScrolled
-    ? "bg-white/95 backdrop-blur-sm shadow-md text-gray-800"
-    : "bg-transparent text-white"; // Changed to bg-transparent
+    ? "bg-white shadow-sm text-gray-800" // Fully white background with slight shadow
+    : "bg-transparent text-white";
 
   const handleLogout = async () => {
     await logout();
@@ -92,113 +114,147 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${headerClass}`}
-    >
-      {" "}
-      <div className="container mx-auto px-4 py-1 flex justify-between items-center">
-        <Link to="/home" className="flex items-center">
-          <Logo
-            className={
-              isScrolled
-                ? "text-teal-600"
-                : isHomePage
-                ? "text-white"
-                : "text-teal-600"
-            }
-            width={60}
-            height={60}
-          />
-          <span
-            className={`font-bold text-2xl ml-2 ${
-              isScrolled
-                ? "text-teal-600"
-                : isHomePage
-                ? "text-white"
-                : "text-teal-600"
-            }`}
-          >
-            WanderWise
-          </span>
-        </Link>
-        <div className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`flex items-center space-x-1 px-2 py-0.5 rounded-full transition hover:bg-teal-500/10
-                ${
-                  location.pathname === link.path
-                    ? "font-semibold"
-                    : "font-medium"
-                }
-                ${
-                  isScrolled
-                    ? "text-teal-600 hover:text-teal-700"
-                    : isHomePage 
-                      ? "text-white hover:text-white" 
-                      : "text-teal-600 hover:text-teal-700"
-                }`}
+    <header className="fixed top-0 w-full z-50">
+      <div className={`relative transition-all duration-300 ${headerClass}`}>
+        <div className="container mx-auto px-4 py-2.5 flex justify-between items-center">
+          <Link to="/home" className="flex items-center">
+            <Logo
+              className={
+                isScrolled
+                  ? "text-teal-600"
+                  : useWhiteText
+                  ? "text-white"
+                  : "text-teal-600"
+              }
+              width={60}
+              height={60}
+            />
+            <span
+              className={`font-bold text-2xl ml-2 ${
+                isScrolled
+                  ? "text-teal-600"
+                  : useWhiteText
+                  ? "text-white"
+                  : "text-teal-600"
+              }`}
             >
-              {React.cloneElement(link.icon, {
-                className: `w-4 h-4 ${
-                  isScrolled 
-                    ? "text-teal-600" 
-                    : isHomePage 
-                      ? "text-white" 
-                      : "text-teal-600"
-                }`,
-              })}
-              <span>{link.name}</span>
-            </Link>
-          ))}{" "}
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/profile"
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors duration-300"
-              >
-                <User className="w-4 h-4 text-white" />
-                <span className="text-sm font-bold">
-                  {user.profile.firstName} {user.profile.lastName}
-                </span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
-                  bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              WanderWise
+            </span>
+          </Link>
+
+          {/* Added container with rounded background for navigation menu */}
+          <div className="hidden md:flex items-center">
+            <div
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
+                isScrolled
+                  ? "bg-transparent" // Remove background completely when scrolled
+                  : showSolidGreenMenuBg
+                  ? "bg-teal-600 backdrop-blur-sm" 
+                  : showGreenMenuBg
+                  ? "bg-teal-600/30 backdrop-blur-sm"
+                  : "bg-white/90 backdrop-blur-sm"
+              } transition-all duration-300`}
+            >
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`flex items-center space-x-1 px-3 py-1.5 rounded-full transition
+                  ${
+                    location.pathname === link.path
+                      ? isScrolled
+                        ? "bg-teal-100 font-semibold" 
+                        : useWhiteMenuText
+                          ? "bg-white/20 font-semibold" 
+                          : "bg-teal-100 font-semibold"
+                      : "font-medium"  // Removed hover:bg-gray-100 background
+                  }
+                  ${
+                    isScrolled
+                      ? "text-teal-600 hover:text-teal-700"
+                      : useWhiteMenuText
+                        ? "text-white hover:text-teal-300" 
+                        : "text-teal-600 hover:text-teal-700"
+                  }`}
+                >
+                  {React.cloneElement(link.icon, {
+                    className: `w-4 h-4 ${
+                      isScrolled
+                        ? "text-teal-600"
+                        : useWhiteMenuText
+                        ? "text-white"
+                        : "text-teal-600"
+                    }`,
+                  })}
+                  <span>{link.name}</span>
+                </Link>
+              ))}
             </div>
-          ) : (
-            <Link
-              to="/login"
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
+
+            {user ? (
+              <div className="flex items-center space-x-4 ml-6">
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors duration-300"
+                >
+                  <User className="w-4 h-4 text-white" />
+                  <span className="text-sm font-bold">
+                    {user.profile.firstName} {user.profile.lastName}
+                  </span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-3 py-1.5 rounded-lg 
+                  bg-red-500 text-white hover:bg-red-600 transition-colors duration-300"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                 ${
                   isScrolled
                     ? "bg-teal-500 text-white hover:bg-teal-600"
                     : "bg-white/20 text-teal-500 hover:bg-white/30"
                 } transition-colors duration-300`}
-            >
-              <User className="w-4 h-4" />
-              <span>Login</span>
-            </Link>
-          )}
-        </div>
+              >
+                <User className="w-4 h-4" />
+                <span>Login</span>
+              </Link>
+            )}
+          </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-2xl"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? (
-            <X className={isScrolled ? "text-gray-800" : "text-teal-600"} />
-          ) : (
-            <Menu className={isScrolled ? "text-gray-800" : "text-teal-600"} />
-          )}
-        </button>
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-2xl"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? (
+              <X
+                className={
+                  isScrolled
+                    ? "text-gray-800"
+                    : useWhiteText
+                    ? "text-white"
+                    : "text-teal-600"
+                }
+              />
+            ) : (
+              <Menu
+                className={
+                  isScrolled
+                    ? "text-gray-800"
+                    : useWhiteText
+                    ? "text-white"
+                    : "text-teal-600"
+                }
+              />
+            )}
+          </button>
+        </div>
       </div>
       {/* Mobile menu */}
       {isMenuOpen && (
