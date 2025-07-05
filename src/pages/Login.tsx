@@ -270,23 +270,28 @@ const LoginPage: React.FC = () => {
                           {user.role}
                         </span>
                       </div>{" "}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmailOrUsername(user.email);
-                          setPassword(user.password);
-                        }}
-                        className="text-xs text-teal-600 hover:text-teal-800 font-medium px-2 py-1 rounded bg-teal-100 hover:bg-teal-200 transition-colors"
-                      >
-                        Use
-                      </button>
+                      {user.role !== "Administrator" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmailOrUsername(user.email);
+                            setPassword(user.password);
+                          }}
+                          className="text-xs text-teal-600 hover:text-teal-800 font-medium px-2 py-1 rounded bg-teal-100 hover:bg-teal-200 transition-colors"
+                        >
+                          Use
+                        </button>
+                      )}
                     </div>
                     <p className="text-xs text-gray-600 mb-2">
                       {user.description}
                     </p>
                     <div className="text-xs text-gray-500">
                       {user.role === "Administrator" ? (
-                        <div>Check the <b>manual book</b> for email and password details</div>
+                        <div>
+                          Check the <b>manual book</b> for email and password
+                          details
+                        </div>
                       ) : (
                         <>
                           <div>Email: {user.email}</div>

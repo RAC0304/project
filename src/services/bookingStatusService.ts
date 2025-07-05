@@ -40,6 +40,7 @@ export interface BookingStatus {
   todayTours: BookingWithDetails[];
   completedTours: BookingWithDetails[];
   eligibleForReview: BookingWithDetails[];
+  finishableTours: BookingWithDetails[];
 }
 
 export class BookingStatusService {
@@ -157,6 +158,60 @@ export class BookingStatusService {
     return data || [];
   }
 
+  // Method untuk mendapatkan booking yang bisa diselesaikan user
+  static async getFinishableTours(
+    userId: number
+  ): Promise<BookingWithDetails[]> {
+    const today = new Date().toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(
+        `
+        *,
+        tours (
+          id,
+          title,
+          description,
+          location,
+          duration,
+          destination_id,
+          tour_guides (
+            id,
+            user_id,
+            rating,
+            users (
+              first_name,
+              last_name,
+              profile_picture
+            )
+          )
+        )
+      `
+      )
+      .eq("user_id", userId)
+      .eq("status", "confirmed")
+      .eq("payment_status", "paid")
+      .lte("date", today) // Tour yang sudah selesai atau hari ini
+      .order("date", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Method untuk menyelesaikan booking
+  static async finishBooking(bookingId: number): Promise<void> {
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        status: "completed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", bookingId);
+
+    if (error) throw error;
+  }
+
   // Tahap 6: Check if user can review booking
   static async canReview(userId: number, bookingId: number): Promise<boolean> {
     const { data, error } = await supabase.rpc("can_user_review", {
@@ -232,19 +287,26 @@ export class BookingStatusService {
   static async getCustomerBookingStatus(
     userId: number
   ): Promise<BookingStatus> {
-    const [upcomingTours, todayTours, completedTours, eligibleForReview] =
-      await Promise.all([
-        this.getUpcomingTours(userId),
-        this.getTodayTours(userId),
-        this.getCompletedTours(userId),
-        this.getEligibleForReview(userId),
-      ]);
+    const [
+      upcomingTours,
+      todayTours,
+      completedTours,
+      eligibleForReview,
+      finishableTours,
+    ] = await Promise.all([
+      this.getUpcomingTours(userId),
+      this.getTodayTours(userId),
+      this.getCompletedTours(userId),
+      this.getEligibleForReview(userId),
+      this.getFinishableTours(userId),
+    ]);
 
     return {
       upcomingTours,
       todayTours,
       completedTours,
       eligibleForReview,
+      finishableTours,
     };
   }
 }

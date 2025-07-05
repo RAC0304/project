@@ -22,12 +22,16 @@ export async function getUpcomingToursByGuide(
   tour_guide_id: number
 ): Promise<UpcomingTour[]> {
   try {
-    console.log("getUpcomingToursByGuide called with tour_guide_id:", tour_guide_id);
-    
+    console.log(
+      "getUpcomingToursByGuide called with tour_guide_id:",
+      tour_guide_id
+    );
+
     // Get bookings for tours owned by this guide
     const { data: bookings, error } = await supabase
       .from("bookings")
-      .select(`
+      .select(
+        `
         id,
         date,
         participants,
@@ -40,7 +44,8 @@ export async function getUpcomingToursByGuide(
           is_active,
           tour_guide_id
         )
-      `)
+      `
+      )
       .eq("tours.tour_guide_id", tour_guide_id)
       .eq("tours.is_active", true)
       .in("status", ["confirmed", "pending"])
@@ -81,7 +86,7 @@ export async function getUpcomingToursByGuide(
         status: "pending" as const,
         tour_id: tour.id, // Use the same tour ID
       }));
-      
+
       console.log("Returning tours without bookings:", result);
       return result;
     }

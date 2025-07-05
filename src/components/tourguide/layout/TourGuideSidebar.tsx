@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useEnhancedAuth } from "../../../contexts/useEnhancedAuth";
 import RoleBadge from "../../common/RoleBadge";
+import { User } from "../../../types/user";
 import {
   Calendar,
   MapPin,
@@ -8,23 +9,23 @@ import {
   Star,
   MessageSquare,
   Layout,
-  User,
+  User as UserIcon,
   LogOut,
   Menu,
   X,
   ChevronRight,
-  ChevronLeft,
-  Database,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// import { PROFILE_IMAGE } from "../../../constants/images";
+import { supabase } from "../../../utils/supabaseClient";
 
 // Default profile image generator (same as ProfileContent)
-const DEFAULT_PROFILE_IMAGE = (user?: any) => {
+const DEFAULT_PROFILE_IMAGE = (user?: User) => {
   const firstName = user?.profile?.firstName || "";
   const lastName = user?.profile?.lastName || "";
   const seed = firstName || lastName || "default";
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+    seed
+  )}`;
 };
 import SidebarLogo from "./SidebarLogo";
 
@@ -47,9 +48,83 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [internalIsMinimized, setInternalIsMinimized] = useState(false);
+  const [profileImage, setProfileImage] = useState<string>("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Use external minimize state if provided, otherwise use internal state
   const isMinimized = externalIsMinimized || internalIsMinimized;
+
+  // Fetch user profile picture from Supabase
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      setIsLoadingProfile(true);
+      try {
+        // Get user data from Supabase
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("profile_picture")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          setProfileImage(user?.profile_picture || DEFAULT_PROFILE_IMAGE(user));
+          return;
+        }
+
+        if (userData?.profile_picture) {
+          setProfileImage(userData.profile_picture);
+        } else {
+          setProfileImage(DEFAULT_PROFILE_IMAGE(user));
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setProfileImage(user?.profile_picture || DEFAULT_PROFILE_IMAGE(user));
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+
+    // Set up real-time subscription for profile picture changes
+    if (user) {
+      const subscription = supabase
+        .channel("profile-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "users",
+            filter: `id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log("Profile updated:", payload);
+            if (payload.new && payload.new.profile_picture) {
+              setProfileImage(payload.new.profile_picture);
+            }
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user]);
+
+  // Update profile image when user context changes
+  useEffect(() => {
+    if (user?.profile_picture) {
+      setProfileImage(user.profile_picture);
+    } else if (user) {
+      setProfileImage(DEFAULT_PROFILE_IMAGE(user));
+    }
+  }, [user]);
 
   // const handleToggleMinimize = () => {
   //   if (onMinimizeChange) {
@@ -142,11 +217,13 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
       </div>{" "}
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}
       <div
-        className={`${mobileMenuOpen
-          ? "translate-x-0"
-          : "-translate-x-full lg:translate-x-0"
-          } ${isMinimized ? "w-20" : "w-72"
-          } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
+        className={`${
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full lg:translate-x-0"
+        } ${
+          isMinimized ? "w-20" : "w-72"
+        } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out`}
       >
         {" "}
         {/* Logo/Brand */}
@@ -167,16 +244,23 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
         {/* Profile Summary */}
         <div className="p-5 border-b border-gray-100 bg-white shadow-sm sticky top-20 z-20">
           <div
-            className={`flex ${isMinimized ? "justify-center" : "items-center space-x-4"
-              }`}
+            className={`flex ${
+              isMinimized ? "justify-center" : "items-center space-x-4"
+            }`}
           >
             {" "}
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500 bg-white shadow-inner">
-              <img
-                src={(user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+              {isLoadingProfile ? (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                  <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <img
+                  src={profileImage || DEFAULT_PROFILE_IMAGE(user || undefined)}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             {!isMinimized && (
               <div className="flex-1 min-w-0">
@@ -206,13 +290,15 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
                       <button
                         onClick={() => onPageChange(item.id)}
                         title={item.label}
-                        className={`w-full ${isMinimized
-                          ? "flex justify-center"
-                          : "flex items-center justify-between"
-                          } p-3 rounded-lg transition-all duration-200 ${activePage === item.id
+                        className={`w-full ${
+                          isMinimized
+                            ? "flex justify-center"
+                            : "flex items-center justify-between"
+                        } p-3 rounded-lg transition-all duration-200 ${
+                          activePage === item.id
                             ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                             : "text-gray-700 hover:bg-gray-100"
-                          }`}
+                        }`}
                       >
                         {isMinimized ? (
                           <div className="flex items-center justify-center">
@@ -239,22 +325,24 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
               <button
                 onClick={() => onPageChange("profile")}
                 title="My Profile"
-                className={`w-full ${isMinimized
-                  ? "flex justify-center"
-                  : "flex items-center justify-between"
-                  } p-3 rounded-lg transition-all duration-200 ${activePage === "profile"
+                className={`w-full ${
+                  isMinimized
+                    ? "flex justify-center"
+                    : "flex items-center justify-between"
+                } p-3 rounded-lg transition-all duration-200 ${
+                  activePage === "profile"
                     ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                }`}
               >
                 {isMinimized ? (
                   <div className="flex items-center justify-center">
-                    <User className="w-[18px] h-[18px]" />
+                    <UserIcon className="w-[18px] h-[18px]" />
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center space-x-3">
-                      <User className="w-[18px] h-[18px]" />
+                      <UserIcon className="w-[18px] h-[18px]" />
                       <span className="font-medium">My Profile</span>
                     </div>
                     {activePage === "profile" && (
@@ -270,10 +358,11 @@ const TourGuideSidebar: React.FC<TourGuideSidebarProps> = ({
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className={`w-full ${isMinimized
-                ? "flex justify-center"
-                : "flex items-center justify-center space-x-2"
-                } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
+              className={`w-full ${
+                isMinimized
+                  ? "flex justify-center"
+                  : "flex items-center justify-center space-x-2"
+              } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
             >
               <LogOut className="w-5 h-5" />
               {!isMinimized && <span className="font-medium">Sign Out</span>}

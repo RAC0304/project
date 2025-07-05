@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Mail, Phone, Languages, Award, Clock, MapPin } from "lucide-react";
-import { User } from "../../../types";
+import { User } from "../../../types/user";
 import Toast from "../../common/Toast";
-import { PROFILE_IMAGE } from "../../../constants/images";
 import { supabase } from "../../../utils/supabaseClient";
+import { useEnhancedAuth } from "../../../contexts/useEnhancedAuth";
 
 // Extended form data interface to include languages and experience
 interface ProfileFormData {
@@ -35,6 +35,7 @@ const DEFAULT_PROFILE_IMAGE = (user?: User | null) => {
 };
 
 const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
+  const { updateProfilePicture } = useEnhancedAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState({
     isVisible: false,
@@ -43,7 +44,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   });
   const [tourCount, setTourCount] = useState<number>(0);
   const [profileImage, setProfileImage] = useState<string>(
-    (user as any)?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
+    user?.profile_picture || DEFAULT_PROFILE_IMAGE(user)
   );
   const [isImageLoading, setIsImageLoading] = useState(false);
 
@@ -127,6 +128,14 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         reviewCount: data.review_count || 0,
       }));
 
+      // Update profile image from database
+      const dbProfileImage = data.users?.profile_picture;
+      if (dbProfileImage) {
+        setProfileImage(dbProfileImage);
+      } else {
+        setProfileImage(DEFAULT_PROFILE_IMAGE(user));
+      }
+
       // Tours count
       if (Array.isArray(data.tours)) {
         setTourCount(data.tours.length);
@@ -144,6 +153,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
   useEffect(() => {
     fetchTourGuide();
   }, [fetchTourGuide]);
+
+  // Update profile image when user changes
+  useEffect(() => {
+    if (user) {
+      const userProfilePicture = user?.profile_picture;
+      if (userProfilePicture) {
+        setProfileImage(userProfilePicture);
+      } else {
+        setProfileImage(DEFAULT_PROFILE_IMAGE(user));
+      }
+    }
+  }, [user]);
 
   // Handle input change
   const handleInputChange = (
@@ -314,6 +335,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
           type: "success",
           message: "Profile image updated!",
         });
+        // Update the user context with new profile picture
+        updateProfilePicture(publicUrl);
+        // Force refresh user data by calling fetchTourGuide
+        await fetchTourGuide();
       } else {
         setToast({
           isVisible: true,
@@ -349,13 +374,17 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
           type: "success",
           message: "Profile image removed.",
         });
+        // Update the user context with default profile picture
+        updateProfilePicture(defaultImage);
+        // Force refresh user data by calling fetchTourGuide
+        await fetchTourGuide();
       } else {
         setToast({
           isVisible: true,
           type: "error",
           message: "Failed to remove profile image.",
         });
-        setProfileImage((user as any)?.profile_picture || "");
+        setProfileImage(user?.profile_picture || "");
       }
     } catch {
       setToast({
@@ -363,7 +392,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         type: "error",
         message: "Failed to remove profile image.",
       });
-      setProfileImage((user as any)?.profile_picture || "");
+      setProfileImage(user?.profile_picture || "");
     } finally {
       setIsImageLoading(false);
     }

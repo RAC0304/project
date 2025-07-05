@@ -78,7 +78,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   guideStats,
   upcomingTours = [],
   recentReviews = [],
-  setActivePage = () => { },
+  setActivePage = () => {},
   loading = false,
 }) => {
   const [selectedTour, setSelectedTour] = useState<UpcomingTour | null>(null);
@@ -97,10 +97,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     setSelectedTour(tour);
     setIsMessageClientsModalOpen(true);
     setLoadingClients(true);
-    
+
     // Use tour_id if available, otherwise fall back to id
     const tourIdToUse = tour.tour_id || tour.id;
-    
+
     // Fetch clients who booked this tour
     const { data, error } = await supabase
       .from("bookings")
@@ -123,7 +123,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
       setClients([]);
       setLoadingClients(false);
       return;
-    }    // Map to Client type
+    } // Map to Client type
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapped = (data || []).map((booking: any) => ({
       id: booking.users?.id || 0,
@@ -334,16 +334,18 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={`${review.id}-${i}`}
-                            className={`w-3 h-3 ${i < review.rating
+                            className={`w-3 h-3 ${
+                              i < review.rating
                                 ? "text-yellow-400 fill-yellow-400"
                                 : "text-gray-300"
-                              }`}
+                            }`}
                           />
                         ))}
                       </div>
                     </div>
                     <span className="text-xs text-gray-500">{review.date}</span>
-                  </div>                  <p className="text-sm text-gray-600 mb-2">
+                  </div>{" "}
+                  <p className="text-sm text-gray-600 mb-2">
                     "{review.content}"
                   </p>
                   <p className="text-xs text-gray-500">Tour: {review.tour}</p>

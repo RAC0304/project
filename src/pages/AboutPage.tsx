@@ -1,24 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { culturalInsights } from "../data/culturalInsights";
 import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 
 const AboutPage: React.FC = () => {
-  const [selectedInsight, setSelectedInsight] = useState<
-    | null
-    | {
-      id: number;
-      title: string;
-      content: string;
-      imageUrl: string;
-      category: string;
+  const [selectedInsight, setSelectedInsight] = useState<null | {
+    id: string;
+    title: string;
+    content: string;
+    imageUrl: string;
+    category: string;
+  }>(null);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.querySelector(`#${sectionId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+      // Update URL without triggering navigation
+      window.history.pushState(null, "", `#${sectionId}`);
     }
-  >(null);
+  };
+
+  useEffect(() => {
+    // Add smooth scrolling CSS
+    document.documentElement.style.scrollBehavior = "smooth";
+
+    // Handle hash navigation
+    const handleHashNavigation = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        setTimeout(() => {
+          const element = document.querySelector(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
+    };
+
+    // Handle initial load
+    handleHashNavigation();
+
+    // Listen for hash changes
+    window.addEventListener("hashchange", handleHashNavigation);
+
+    return () => {
+      document.documentElement.style.scrollBehavior = "auto";
+      window.removeEventListener("hashchange", handleHashNavigation);
+    };
+  }, []);
 
   return (
     <div className="pt-14 pb-16 bg-gradient-to-br from-teal-50 via-white to-gray-50 min-h-screen">
       <div className="container mx-auto px-4">
+        {/* Internal Navigation */}
+        <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => scrollToSection("about")}
+              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+            >
+              About Indonesia
+            </button>
+            <button
+              onClick={() => scrollToSection("culture")}
+              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+            >
+              Cultural Insight
+            </button>
+            <button
+              onClick={() => scrollToSection("travel-tips")}
+              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+            >
+              Travel Tips
+            </button>
+            <button
+              onClick={() => scrollToSection("facts")}
+              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+            >
+              Facts About Indonesia
+            </button>
+            <button
+              onClick={() => scrollToSection("faq")}
+              className="px-4 py-2 text-teal-700 hover:text-teal-900 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+            >
+              FAQs
+            </button>
+          </div>
+        </div>
         {/* Hero Section */}
-        <div className="text-center mb-16 relative">
+        <div
+          className="text-center mb-16 relative"
+          id="about"
+          style={{ scrollMarginTop: "100px" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-teal-400/10 to-teal-300/10 rounded-3xl transform -rotate-1"></div>
           <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-white/20">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mb-6">
@@ -36,7 +110,7 @@ const AboutPage: React.FC = () => {
                 />
               </svg>
             </div>{" "}
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-6" id="about">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-6">
               About Indonesia
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -114,7 +188,11 @@ const AboutPage: React.FC = () => {
           </div>
         </div>{" "}
         {/* Cultural Insights */}
-        <div className="mb-20" id="culture">
+        <div
+          className="mb-20"
+          id="culture"
+          style={{ scrollMarginTop: "100px" }}
+        >
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mb-4">
               <svg
@@ -156,7 +234,11 @@ const AboutPage: React.FC = () => {
           </div>
         </div>{" "}
         {/* Travel Tips */}
-        <div className="mb-20" id="travel-tips">
+        <div
+          className="mb-20"
+          id="travel-tips"
+          style={{ scrollMarginTop: "100px" }}
+        >
           <div className="bg-gradient-to-br from-teal-50 via-gray-50 to-teal-50 rounded-3xl p-10 shadow-2xl border border-white/30 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-teal-400/10 to-teal-300/10 rounded-full transform translate-x-32 -translate-y-32"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-gray-400/10 to-teal-400/10 rounded-full transform -translate-x-24 translate-y-24"></div>
@@ -453,7 +535,7 @@ const AboutPage: React.FC = () => {
           </div>
         </div>{" "}
         {/* Fun Facts Section */}
-        <div className="mb-20" id="facts">
+        <div className="mb-20" id="facts" style={{ scrollMarginTop: "100px" }}>
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-400 to-teal-500 rounded-full mb-4">
               <svg
@@ -552,7 +634,7 @@ const AboutPage: React.FC = () => {
           </div>
         </div>{" "}
         {/* FAQ Section */}
-        <div id="faq">
+        <div id="faq" style={{ scrollMarginTop: "100px" }}>
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full mb-4">
               <svg
@@ -605,8 +687,7 @@ const AboutPage: React.FC = () => {
                 <p className="text-gray-700 leading-relaxed pl-11">
                   The Indonesian Rupiah (IDR) is the official currency. Credit
                   cards are widely accepted in tourist areas and major cities,
-                  but carry cash for smaller establishments and rural area
-                  s.
+                  but carry cash for smaller establishments and rural area s.
                   ATMs are readily available in urban centers and tourist
                   destinations.
                 </p>

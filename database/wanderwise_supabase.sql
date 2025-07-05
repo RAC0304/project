@@ -134,9 +134,9 @@ CREATE TABLE public.itinerary_bookings (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT itinerary_bookings_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_bookings_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
   CONSTRAINT itinerary_bookings_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
-  CONSTRAINT itinerary_bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT itinerary_bookings_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
+  CONSTRAINT itinerary_bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.itinerary_days (
   id bigint NOT NULL DEFAULT nextval('itinerary_days_id_seq'::regclass),
@@ -156,8 +156,8 @@ CREATE TABLE public.itinerary_destinations (
   destination_id bigint NOT NULL,
   order_index integer DEFAULT 1,
   CONSTRAINT itinerary_destinations_pkey PRIMARY KEY (id),
-  CONSTRAINT itinerary_destinations_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id),
-  CONSTRAINT itinerary_destinations_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
+  CONSTRAINT itinerary_destinations_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_destinations_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
 );
 CREATE TABLE public.itinerary_images (
   id bigint NOT NULL DEFAULT nextval('itinerary_images_id_seq'::regclass),
@@ -200,16 +200,16 @@ CREATE TABLE public.itinerary_reviews (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT itinerary_reviews_pkey PRIMARY KEY (id),
-  CONSTRAINT itinerary_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT itinerary_reviews_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
+  CONSTRAINT itinerary_reviews_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.itinerary_tag_relations (
   id bigint NOT NULL DEFAULT nextval('itinerary_tag_relations_id_seq'::regclass),
   itinerary_id bigint,
   tag_id bigint,
   CONSTRAINT itinerary_tag_relations_pkey PRIMARY KEY (id),
-  CONSTRAINT itinerary_tag_relations_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.itinerary_tags(id),
-  CONSTRAINT itinerary_tag_relations_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
+  CONSTRAINT itinerary_tag_relations_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_tag_relations_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.itinerary_tags(id)
 );
 CREATE TABLE public.itinerary_tags (
   id bigint NOT NULL DEFAULT nextval('itinerary_tags_id_seq'::regclass),
@@ -230,9 +230,9 @@ CREATE TABLE public.messages (
   attachment_size integer,
   attachment_type text,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id),
+  CONSTRAINT messages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
   CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
-  CONSTRAINT messages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
+  CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.payments (
   id bigint NOT NULL DEFAULT nextval('payments_id_seq'::regclass),
@@ -357,8 +357,8 @@ CREATE TABLE public.tours (
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   destination_id bigint,
   CONSTRAINT tours_pkey PRIMARY KEY (id),
-  CONSTRAINT tours_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
-  CONSTRAINT tours_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id)
+  CONSTRAINT tours_destination_id_fkey FOREIGN KEY (destination_id) REFERENCES public.destinations(id),
+  CONSTRAINT tours_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
 CREATE TABLE public.travel_tips (
   id bigint NOT NULL DEFAULT nextval('travel_tips_id_seq'::regclass),

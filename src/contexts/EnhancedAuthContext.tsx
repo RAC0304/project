@@ -39,6 +39,7 @@ interface AuthContextType {
     currentPassword: string,
     newPassword: string
   ) => Promise<{ success: boolean; error?: string }>;
+  updateProfilePicture: (profilePictureUrl: string) => void;
   hasPermission: (action: string, resource: string) => boolean;
   isRole: (role: UserRole) => boolean;
   isMinRole: (minRole: UserRole) => boolean;
@@ -539,6 +540,17 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
     }
   };
 
+  const updateProfilePicture = (profilePictureUrl: string): void => {
+    if (!user) return;
+
+    const updatedUser = {
+      ...user,
+      profile_picture: profilePictureUrl,
+    };
+    setUser(updatedUser);
+    saveSession(updatedUser);
+  };
+
   const checkPermission = (action: string, resource: string): boolean => {
     if (!user) return false;
     return hasPermission(user?.role || "", action, resource);
@@ -562,6 +574,7 @@ export const EnhancedAuthProvider: React.FC<AuthProviderProps> = ({
     logout,
     updateProfile,
     updatePassword,
+    updateProfilePicture,
     hasPermission: checkPermission,
     isRole,
     isMinRole,

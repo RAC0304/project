@@ -29,6 +29,7 @@ export interface User {
   isActive?: boolean;
   dateOfBirth?: string;
   gender?: "male" | "female" | "other";
+  profile_picture?: string;
 }
 
 export const DEFAULT_PROFILE_IMAGE = "/images/default-profile.png";

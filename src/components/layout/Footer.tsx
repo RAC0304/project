@@ -20,9 +20,7 @@ const Footer: React.FC = () => {
               Discover the beauty and culture of Indonesia with WanderWise, your
               trusted guide to unforgettable experiences.
             </p>
-            <div className="flex space-x-4 pt-2">
-
-            </div>
+            <div className="flex space-x-4 pt-2"></div>
           </div>
 
           <div>
@@ -46,26 +44,18 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  to="/#experiences"
+                  to="/about"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
-                  Experiences
+                  About
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/#culture"
+                  to="/history"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
-                  Culture
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about#about"
-                  className="text-teal-100 hover:text-white transition-colors"
-                >
-                  About Indonesia
+                  History
                 </Link>
               </li>
             </ul>
@@ -78,10 +68,10 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/about"
+                  to="/about#about"
                   className="text-teal-100 hover:text-white transition-colors"
                 >
-                  About
+                  About Indonesia
                 </Link>
               </li>
               <li>

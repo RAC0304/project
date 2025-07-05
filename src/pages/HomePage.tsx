@@ -8,7 +8,7 @@ import {
   Search,
   ArrowRight,
 } from "lucide-react";
-import { destinations } from "../data/destinations";
+import { getRandomDestinations } from "../services/destinationService";
 import { itineraries } from "../data/itineraries";
 import { culturalInsights } from "../data/culturalInsights";
 import DestinationCard from "../components/destinations/DestinationCard";
@@ -17,26 +17,42 @@ import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 import SearchForm from "../components/common/SearchForm";
 import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
-import { CulturalInsight } from "../types";
+import { CulturalInsight, Destination } from "../types";
 
 const HomePage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [popularDestinations, setPopularDestinations] = useState<Destination[]>(
+    []
+  );
+  const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
   const { user } = useEnhancedAuth();
   const navigate = useNavigate();
   // State untuk menyimpan insight yang dipilih untuk ditampilkan di popup
-  const [selectedInsight, setSelectedInsight] = useState<null | {
-    id: number;
-    title: string;
-    content: string;
-    imageUrl: string;
-    category: string;
-  }>(null);
+  const [selectedInsight, setSelectedInsight] =
+    useState<CulturalInsight | null>(null);
 
   // Fungsi untuk menangani klik pada tombol Read More
   const handleReadMore = (insight: CulturalInsight) => {
     // Langsung tampilkan popup insight tanpa navigasi
     setSelectedInsight(insight);
   };
+
+  useEffect(() => {
+    // Load random destinations
+    const loadDestinations = async () => {
+      try {
+        setIsLoadingDestinations(true);
+        const randomDestinations = await getRandomDestinations(4);
+        setPopularDestinations(randomDestinations);
+      } catch (error) {
+        console.error("Error loading destinations:", error);
+      } finally {
+        setIsLoadingDestinations(false);
+      }
+    };
+
+    loadDestinations();
+  }, []);
 
   useEffect(() => {
     // Proteksi akses: hanya customer yang boleh
@@ -54,7 +70,6 @@ const HomePage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const popularDestinations = destinations.slice(0, 4);
   const featuredItineraries = itineraries.slice(0, 2);
   const featuredInsights = culturalInsights.slice(0, 3);
 
@@ -135,9 +150,31 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularDestinations.map((destination) => (
-            <DestinationCard key={destination.id} destination={destination} />
-          ))}
+          {isLoadingDestinations ? (
+            // Loading skeleton
+            Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-gray-200 animate-pulse rounded-lg h-64"
+              >
+                <div className="h-40 bg-gray-300 rounded-t-lg"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                </div>
+              </div>
+            ))
+          ) : popularDestinations.length > 0 ? (
+            popularDestinations.map((destination) => (
+              <DestinationCard key={destination.id} destination={destination} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500">
+                No destinations available at the moment.
+              </p>
+            </div>
+          )}
         </div>
       </section>{" "}
       {/* Explore Categories */}

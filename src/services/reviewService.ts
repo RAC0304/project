@@ -73,6 +73,28 @@ export const getDestinationReviews = async (
   destinationId: string
 ): Promise<DestinationReview[]> => {
   try {
+    // First, get the numeric destination ID if a slug is provided
+    let numericDestinationId: number;
+
+    if (/^\d+$/.test(destinationId)) {
+      // If it's already a number, use it directly
+      numericDestinationId = parseInt(destinationId);
+    } else {
+      // If it's a slug, look up the numeric ID
+      const { data: destinationData, error: destinationError } = await supabase
+        .from("destinations")
+        .select("id")
+        .eq("slug", destinationId)
+        .single();
+
+      if (destinationError || !destinationData) {
+        console.error("Error fetching destination ID:", destinationError);
+        return [];
+      }
+
+      numericDestinationId = destinationData.id;
+    }
+
     const { data, error } = await supabase
       .from("reviews")
       .select(
@@ -97,7 +119,7 @@ export const getDestinationReviews = async (
         review_images(image_url)
       `
       )
-      .eq("destination_id", destinationId)
+      .eq("destination_id", numericDestinationId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -152,10 +174,32 @@ export const getDestinationRating = async (
   destinationId: string
 ): Promise<{ averageRating: number; totalReviews: number }> => {
   try {
+    // First, get the numeric destination ID if a slug is provided
+    let numericDestinationId: number;
+
+    if (/^\d+$/.test(destinationId)) {
+      // If it's already a number, use it directly
+      numericDestinationId = parseInt(destinationId);
+    } else {
+      // If it's a slug, look up the numeric ID
+      const { data: destinationData, error: destinationError } = await supabase
+        .from("destinations")
+        .select("id")
+        .eq("slug", destinationId)
+        .single();
+
+      if (destinationError || !destinationData) {
+        console.error("Error fetching destination ID:", destinationError);
+        return { averageRating: 0, totalReviews: 0 };
+      }
+
+      numericDestinationId = destinationData.id;
+    }
+
     const { data, error } = await supabase
       .from("reviews")
       .select("rating")
-      .eq("destination_id", destinationId);
+      .eq("destination_id", numericDestinationId);
 
     if (error) {
       console.error("Error fetching destination rating:", error);

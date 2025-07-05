@@ -230,20 +230,28 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     return {
       id: booking.id.toString(),
       tourId: booking.tour_id.toString(),
-      tourName: booking.tourName || 'Unknown Tour',
-      tourGuideId: '0', // Not available in BookingWithDetails
-      tourGuideName: '', // Not available in BookingWithDetails
+      tourName: booking.tourName || "Unknown Tour",
+      tourGuideId: "0", // Not available in BookingWithDetails
+      tourGuideName: "", // Not available in BookingWithDetails
       userId: booking.user_id.toString(),
-      userName: booking.userName || 'Unknown User',
-      userEmail: booking.userEmail || '',
-      userPhone: '', // Not available in BookingWithDetails
+      userName: booking.userName || "Unknown User",
+      userEmail: booking.userEmail || "",
+      userPhone: "", // Not available in BookingWithDetails
       date: booking.date,
       participants: booking.participants,
-      status: booking.status as "confirmed" | "pending" | "cancelled" | "completed",
+      status: booking.status as
+        | "confirmed"
+        | "pending"
+        | "cancelled"
+        | "completed",
       specialRequests: booking.special_requests,
       totalAmount: Number(booking.total_amount),
-      paymentStatus: booking.payment_status === 'paid' ? 'paid' : 
-                    booking.payment_status === 'pending' ? 'pending' : 'refunded',
+      paymentStatus:
+        booking.payment_status === "paid"
+          ? "paid"
+          : booking.payment_status === "pending"
+          ? "pending"
+          : "refunded",
       createdAt: booking.created_at || new Date().toISOString(),
       updatedAt: booking.updated_at || new Date().toISOString(),
     };
@@ -484,17 +492,25 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="font-medium">
-                            ${booking.total_amount ? Number(booking.total_amount).toFixed(2) : '0.00'}
+                            $
+                            {booking.total_amount
+                              ? Number(booking.total_amount).toFixed(2)
+                              : "0.00"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            booking.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                            booking.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            booking.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {booking.payment_status || 'Unknown'}
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              booking.payment_status === "paid"
+                                ? "bg-green-100 text-green-800"
+                                : booking.payment_status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : booking.payment_status === "failed"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {booking.payment_status || "Unknown"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
