@@ -1162,25 +1162,12 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
               }}
               disabled={isLoading}
               className={`px-4 py-2 rounded-md ${showForm
-                  ? "bg-gray-500 hover:bg-gray-600"
-                  : "bg-teal-500 hover:bg-teal-600"
+                ? "bg-gray-500 hover:bg-gray-600"
+                : "bg-teal-500 hover:bg-teal-600"
                 } text-white font-medium transition-colors ${isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
             >
               {showForm ? "Cancel" : "Add New Destination"}
-            </button>
-            <button
-              onClick={() => {
-                // Navigate to itineraries management
-                if (setActivePage) {
-                  setActivePage('itineraries');
-                }
-              }}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors ${isLoading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-            >
-              Add New Itineraries
             </button>
           </div>
         </div>
@@ -1334,7 +1321,7 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                     </label>
                     <span
                       className={`text-xs ${getCharacterCount(formData.bestTimeToVisit, 255)
-                          .className
+                        .className
                         }`}
                     >
                       {getCharacterCount(formData.bestTimeToVisit, 255).count}
@@ -1386,8 +1373,8 @@ const DestinationsContent: React.FC<DestinationsContentProps> = ({ setActivePage
                         key={category}
                         onClick={() => handleCategoryToggle(category)}
                         className={`px-3 py-1 text-sm rounded-full ${selectedCategories.includes(category)
-                            ? "bg-teal-500 text-white"
-                            : "bg-gray-200 text-gray-700"
+                          ? "bg-teal-500 text-white"
+                          : "bg-gray-200 text-gray-700"
                           }`}
                       >
                         {category}
