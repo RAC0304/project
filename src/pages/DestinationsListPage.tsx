@@ -100,7 +100,7 @@ const DestinationsListPage: React.FC = () => {
           {" "}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              {loading ? "Memuat..." : `${filteredDestinations.length} Destinasi Wisata`}
+              {loading ? "Memuat..." : `${total} Destinasi Wisata`}
             </h2>
             <button
               className="md:hidden flex items-center gap-2 text-teal-600 font-medium"
@@ -187,7 +187,7 @@ const DestinationsListPage: React.FC = () => {
               ))}
             </div>
             {/* Pagination controls */}
-            {total > filteredDestinations.length && hasMore && (
+            {hasMore && (
               <div className="flex justify-center mt-8">
                 <button
                   onClick={loadMore}
