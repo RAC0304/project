@@ -194,7 +194,7 @@ const DestinationsListPage: React.FC = () => {
                   className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg text-base font-medium transition-colors shadow"
                   disabled={loading}
                 >
-                  {loading ? "Memuat..." : "Halaman Berikutnya"}
+                  {loading ? "Memuat..." : "Tampilkan Destinasi Lainnya"}
                 </button>
               </div>
             )}
