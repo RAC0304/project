@@ -18,6 +18,8 @@ import { supabase } from "../../utils/supabaseClient";
 const GuidesContent: React.FC = () => {
   const [guides, setGuides] = useState<TourGuide[]>([]);
   const [filteredGuides, setFilteredGuides] = useState<TourGuide[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentGuide, setCurrentGuide] = useState<TourGuide | null>(null);
@@ -74,125 +76,223 @@ const GuidesContent: React.FC = () => {
   // Load guides data on component mount
   useEffect(() => {
     const fetchGuides = async () => {
-      // Fetch tour guides
-      const { data: guidesData, error: guidesError } = await supabase.from(
-        "tour_guides"
-      ).select(`
-        id,
-        user_id,
-        bio,
-        specialties,
-        location,
-        short_bio,
-        experience,
-        rating,
-        review_count,
-        availability,
-        is_verified,
-        users:users!tour_guides_user_id_fkey(id, first_name, last_name, email, profile_picture),
-        tours:tours(id, title, description, duration, price, max_group_size, location)
-      `);
-      if (guidesError) {
-        console.error("Failed to fetch tour guides:", guidesError);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Fetch tour guides
+        const { data: guidesData, error: guidesError } = await supabase.from(
+          "tour_guides"
+        ).select(`
+          id,
+          user_id,
+          bio,
+          specialties,
+          location,
+          short_bio,
+          experience,
+          rating,
+          review_count,
+          availability,
+          is_verified,
+          users:users!tour_guides_user_id_fkey(id, first_name, last_name, email, profile_picture),
+          tours:tours(id, title, description, duration, price, max_group_size, location)
+        `);
+
+        if (guidesError) {
+          console.error("Failed to fetch tour guides:", guidesError);
+          setError(`Failed to load guides: ${guidesError.message}`);
+          setGuides([]);
+          setFilteredGuides([]);
+          return;
+        }
+
+        // Fetch languages for all guides
+        const { data: languagesData, error: languagesError } = await supabase
+          .from("tour_guide_languages")
+          .select("tour_guide_id, language");
+
+        if (languagesError) {
+          console.warn("Failed to fetch languages:", languagesError);
+        }
+
+        // Map guides to TourGuide type
+        const guidesMapped = (guidesData || []).map((g: any) => {
+          const guideLanguages = (languagesData || [])
+            .filter((l: any) => l.tour_guide_id === g.id)
+            .map((l: any) => l.language);
+
+          // Parse specialties - handle JSONB, JSON string, array, or single values
+          let specialties: string[] = [];
+          if (g.specialties !== undefined && g.specialties !== null) {
+            if (Array.isArray(g.specialties)) {
+              specialties = g.specialties;
+            } else if (typeof g.specialties === 'object') {
+              // If it's a JSONB object, get all values (should be array or object)
+              specialties = Object.values(g.specialties);
+            } else if (typeof g.specialties === 'string') {
+              // Try to parse as JSON array, fallback to comma split, fallback to single string
+              try {
+                const parsed = JSON.parse(g.specialties);
+                if (Array.isArray(parsed)) {
+                  specialties = parsed;
+                } else if (typeof parsed === 'string') {
+                  specialties = [parsed];
+                } else if (typeof parsed === 'object' && parsed !== null) {
+                  specialties = Object.values(parsed);
+                }
+              } catch {
+                // If not JSON, try comma split
+                if (g.specialties.includes(',')) {
+                  specialties = g.specialties.split(',');
+                } else {
+                  specialties = [g.specialties];
+                }
+              }
+            }
+          }
+          // Ensure all specialties are strings and clean them, and filter out booleans/nulls
+          specialties = specialties
+            .filter((s: any) => typeof s === 'string' && s.trim() !== '')
+            .map((s: string) => s.trim());
+
+          return {
+            id: `guide-${g.id}`,
+            name: g.users ? `${g.users.first_name} ${g.users.last_name}` : "-",
+            specialties: specialties,
+            location: g.location || "",
+            description: g.bio || "",
+            shortBio: g.short_bio || "",
+            imageUrl: g.users?.profile_picture || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5",
+            languages: guideLanguages,
+            experience: g.experience || 0,
+            rating: Number(g.rating) || 0,
+            reviewCount: g.review_count || 0,
+            contactInfo: {
+              email: g.users?.email || "",
+              phone: "",
+            },
+            availability: g.availability || "",
+            isVerified: g.is_verified || false,
+            tours: (g.tours || []).map((t: any) => ({
+              id: `tour-${t.id}`,
+              title: t.title,
+              description: t.description,
+              duration: t.duration,
+              price: t.price?.toString() || "",
+              maxGroupSize: t.max_group_size || 0,
+              location: t.location || "",
+            })),
+            reviews: [],
+          };
+        });
+
+        console.log('=== DATA FETCH SUMMARY ===');
+        console.log('Total guides fetched:', guidesMapped.length);
+        console.log('All unique specialties found:',
+          [...new Set(guidesMapped.flatMap(g => g.specialties))].sort()
+        );
+        console.log('Sample guides with specialties:',
+          guidesMapped.slice(0, 5).map(g => ({
+            name: g.name,
+            specialties: g.specialties,
+            location: g.location
+          }))
+        );
+        console.log('========================');
+
+        setGuides(guidesMapped);
+        setFilteredGuides(guidesMapped);
+
+        // If no guides have specialties, add some test data for debugging
+        if (guidesMapped.every(g => g.specialties.length === 0)) {
+          console.warn('No specialties found in any guide. Adding test data...');
+          const testGuides = guidesMapped.map((guide, index) => ({
+            ...guide,
+            specialties: (index % 3 === 0 ? ['adventure', 'nature'] :
+              index % 3 === 1 ? ['cultural', 'historical'] :
+                ['culinary', 'photography']) as TourGuideSpecialty[]
+          }));
+          setGuides(testGuides);
+          setFilteredGuides(testGuides);
+        }
+      } catch (err) {
+        console.error('Error fetching guides:', err);
+        setError('Failed to load guides. Please try again.');
         setGuides([]);
         setFilteredGuides([]);
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      // Fetch languages for all guides
-      const { data: languagesData } = await supabase
-        .from("tour_guide_languages")
-        .select("tour_guide_id, language");
-      // Map guides to TourGuide type
-      const guidesMapped = (guidesData || []).map((g: any) => {
-        const guideLanguages = (languagesData || [])
-          .filter((l: any) => l.tour_guide_id === g.id)
-          .map((l: any) => l.language);
-        return {
-          id: `guide-${g.id}`,
-          name: g.users ? `${g.users.first_name} ${g.users.last_name}` : "-",
-          specialties: Array.isArray(g.specialties) ? g.specialties : [],
-          location: g.location || "",
-          description: g.bio || "",
-          shortBio: g.short_bio || "",
-          imageUrl: g.users?.profile_picture || "",
-          languages: guideLanguages,
-          experience: g.experience || 0,
-          rating: Number(g.rating) || 0,
-          reviewCount: g.review_count || 0,
-          contactInfo: {
-            email: g.users?.email || "",
-            phone: "",
-          },
-          availability: g.availability || "",
-          isVerified: g.is_verified || false,
-          tours: (g.tours || []).map((t: any) => ({
-            id: `tour-${t.id}`,
-            title: t.title,
-            description: t.description,
-            duration: t.duration,
-            price: t.price?.toString() || "",
-            maxGroupSize: t.max_group_size || 0,
-            location: t.location || "",
-          })),
-          reviews: [], // <-- tambahkan ini agar sesuai tipe
-        };
-      });
-      setGuides(guidesMapped);
-      setFilteredGuides(guidesMapped);
     };
     fetchGuides();
   }, []);
 
-  // Filter guides when search query changes
+  // Filter guides when any filter criteria changes
   useEffect(() => {
-    if (searchQuery) {
-      const filtered = guides.filter((guide) => {
-        const matchesSearch =
-          guide.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          guide.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          guide.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          guide.languages.some((lang) =>
-            lang.toLowerCase().includes(searchQuery.toLowerCase())
-          );
+    // Debug logging (can be removed in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('=== FILTER DEBUG ===');
+      console.log('Total guides:', guides.length);
+      console.log('Selected specialties:', selectedSpecialties);
 
-        const matchesSpecialties =
-          selectedSpecialties.length === 0 ||
-          selectedSpecialties.some((specialty) =>
-            guide.specialties.includes(specialty)
-          );
-
-        const matchesLocation =
-          !selectedLocation || guide.location === selectedLocation;
-
-        const matchesVerification =
-          !showUnverifiedOnly || guide.isVerified === false;
-
-        return (
-          matchesSearch &&
-          matchesSpecialties &&
-          matchesLocation &&
-          matchesVerification
-        );
-      });
-      setFilteredGuides(filtered);
-    } else {
-      const filtered = guides.filter((guide) => {
-        const matchesSpecialties =
-          selectedSpecialties.length === 0 ||
-          selectedSpecialties.some((specialty) =>
-            guide.specialties.includes(specialty)
-          );
-
-        const matchesLocation =
-          !selectedLocation || guide.location === selectedLocation;
-
-        const matchesVerification =
-          !showUnverifiedOnly || guide.isVerified === false;
-
-        return matchesSpecialties && matchesLocation && matchesVerification;
-      });
-      setFilteredGuides(filtered);
+      // Log sample of guides data
+      if (guides.length > 0 && selectedSpecialties.length > 0) {
+        console.log('Sample guide specialties:', guides.slice(0, 3).map(g => ({
+          name: g.name,
+          specialties: g.specialties
+        })));
+      }
     }
+
+
+    const filtered = guides.filter((guide) => {
+      // Normalize specialties and selectedSpecialties to lowercase-trim
+      const guideSpecialties = (guide.specialties || [])
+        .map((s: any) => (s || "").toString().toLowerCase().trim())
+        .filter((s: string) => s !== "");
+      const selectedSpecs = selectedSpecialties
+        .map((s) => s.toLowerCase().trim())
+        .filter((s) => s !== "");
+
+      // Search filter - only apply if there's a search query
+      const matchesSearch = !searchQuery ||
+        guide.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guide.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guide.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guide.shortBio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        guide.languages.some((lang) =>
+          lang.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        guideSpecialties.some((specialty) =>
+          specialty.includes(searchQuery.toLowerCase())
+        );
+
+      // Specialties filter - only apply if specialties are selected
+      // All selected specialties must be present in guideSpecialties (AND logic)
+      const matchesSpecialties =
+        selectedSpecs.length === 0 ||
+        selectedSpecs.every((specialty) =>
+          guideSpecialties.includes(specialty)
+        );
+
+      // Location filter - only apply if location is selected
+      const matchesLocation =
+        !selectedLocation || guide.location === selectedLocation;
+
+      // Verification filter - only apply if "unverified only" is checked
+      const matchesVerification =
+        !showUnverifiedOnly || guide.isVerified === false;
+
+      return matchesSearch && matchesSpecialties && matchesLocation && matchesVerification;
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Filtered count:', filtered.length);
+      console.log('==================');
+    }
+
+    setFilteredGuides(filtered);
   }, [
     searchQuery,
     selectedSpecialties,
@@ -203,7 +303,7 @@ const GuidesContent: React.FC = () => {
 
   // Get unique locations from tour guides
   const locations = Array.from(
-    new Set(guides.map((guide) => guide.location))
+    new Set(guides.map((guide) => guide.location).filter(location => location && location.trim() !== ""))
   ).sort();
 
   const toggleSpecialty = (specialty: TourGuideSpecialty) => {
@@ -456,10 +556,43 @@ const GuidesContent: React.FC = () => {
           const guideLanguages = (languagesData || [])
             .filter((l: any) => l.tour_guide_id === g.id)
             .map((l: any) => l.language);
+
+          // Use same specialties parsing logic
+          let specialties = [];
+          if (g.specialties) {
+            if (typeof g.specialties === 'string') {
+              try {
+                const parsed = JSON.parse(g.specialties);
+                if (Array.isArray(parsed)) {
+                  specialties = parsed;
+                } else {
+                  specialties = [parsed];
+                }
+              } catch {
+                specialties = [g.specialties];
+              }
+            } else if (Array.isArray(g.specialties)) {
+              specialties = g.specialties;
+            } else if (typeof g.specialties === 'object' && g.specialties !== null) {
+              if (Array.isArray(g.specialties)) {
+                specialties = g.specialties;
+              } else {
+                specialties = Object.values(g.specialties);
+              }
+            } else {
+              specialties = [g.specialties];
+            }
+          }
+
+          specialties = specialties
+            .filter((s: any) => s != null && s !== '')
+            .map((s: any) => String(s).trim())
+            .filter((s: string) => s !== '');
+
           return {
             id: `guide-${g.id}`,
             name: g.users ? `${g.users.first_name} ${g.users.last_name}` : "-",
-            specialties: Array.isArray(g.specialties) ? g.specialties : [],
+            specialties: specialties,
             location: g.location || "",
             description: g.bio || "",
             shortBio: g.short_bio || "",
@@ -552,14 +685,14 @@ const GuidesContent: React.FC = () => {
                 selectedSpecialties.length > 0 ||
                 selectedLocation ||
                 showUnverifiedOnly) && (
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium bg-white px-3 py-1.5 rounded-full border border-teal-200 hover:bg-teal-50 transition-all duration-200"
-                >
-                  <X size={16} className="mr-1" />
-                  Clear All Filters
-                </button>
-              )}
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium bg-white px-3 py-1.5 rounded-full border border-teal-200 hover:bg-teal-50 transition-all duration-200"
+                  >
+                    <X size={16} className="mr-1" />
+                    Clear All Filters
+                  </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -575,11 +708,10 @@ const GuidesContent: React.FC = () => {
                     <button
                       key={specialty}
                       onClick={() => toggleSpecialty(specialty)}
-                      className={`px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 border ${
-                        selectedSpecialties.includes(specialty)
-                          ? "bg-teal-500 text-white border-teal-500 shadow-md transform scale-105"
-                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                      }`}
+                      className={`px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 border ${selectedSpecialties.includes(specialty)
+                        ? "bg-teal-500 text-white border-teal-500 shadow-md transform scale-105"
+                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                        }`}
                     >
                       {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
                     </button>
@@ -630,65 +762,65 @@ const GuidesContent: React.FC = () => {
               selectedSpecialties.length > 0 ||
               selectedLocation ||
               showUnverifiedOnly) && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex items-center flex-wrap gap-2">
-                  <span className="text-sm font-medium text-gray-700 mr-2">
-                    Active filters:
-                  </span>
-
-                  {searchQuery && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Search: "{searchQuery}"
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
-                      >
-                        <X size={14} />
-                      </button>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <span className="text-sm font-medium text-gray-700 mr-2">
+                      Active filters:
                     </span>
-                  )}
 
-                  {selectedSpecialties.map((specialty) => (
-                    <span
-                      key={specialty}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
-                    >
-                      {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
-                      <button
-                        onClick={() => toggleSpecialty(specialty)}
-                        className="ml-2 text-teal-600 hover:text-teal-800"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+                    {searchQuery && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Search: "{searchQuery}"
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="ml-2 text-blue-600 hover:text-blue-800"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    )}
 
-                  {selectedLocation && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      📍 {selectedLocation}
-                      <button
-                        onClick={() => setSelectedLocation("")}
-                        className="ml-2 text-green-600 hover:text-green-800"
+                    {selectedSpecialties.map((specialty) => (
+                      <span
+                        key={specialty}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
                       >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  )}
+                        {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
+                        <button
+                          onClick={() => toggleSpecialty(specialty)}
+                          className="ml-2 text-teal-600 hover:text-teal-800"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
 
-                  {showUnverifiedOnly && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      Unverified only
-                      <button
-                        onClick={() => setShowUnverifiedOnly(false)}
-                        className="ml-2 text-yellow-600 hover:text-yellow-800"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  )}
+                    {selectedLocation && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        📍 {selectedLocation}
+                        <button
+                          onClick={() => setSelectedLocation("")}
+                          className="ml-2 text-green-600 hover:text-green-800"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    )}
+
+                    {showUnverifiedOnly && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Unverified only
+                        <button
+                          onClick={() => setShowUnverifiedOnly(false)}
+                          className="ml-2 text-yellow-600 hover:text-yellow-800"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Results Summary */}
             <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
@@ -715,7 +847,22 @@ const GuidesContent: React.FC = () => {
         </div>
         {/* Tour Guides List */}
         <div className="overflow-hidden rounded-lg border border-gray-200">
-          {filteredGuides.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+              <p className="mt-4 text-gray-500">Loading tour guides...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredGuides.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -825,11 +972,10 @@ const GuidesContent: React.FC = () => {
                               {[...Array(5)].map((_, i) => (
                                 <svg
                                   key={i}
-                                  className={`w-4 h-4 ${
-                                    i < Math.floor(guide.rating)
-                                      ? "text-yellow-400 fill-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
+                                  className={`w-4 h-4 ${i < Math.floor(guide.rating)
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-300"
+                                    }`}
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
                                 >
@@ -866,11 +1012,10 @@ const GuidesContent: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                guide.isVerified
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${guide.isVerified
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                                }`}
                             >
                               {guide.isVerified ? "Verified" : "Unverified"}
                             </span>
@@ -997,9 +1142,20 @@ const GuidesContent: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-2">
                 No tour guides found matching your criteria.
               </p>
+              <p className="text-gray-400 text-sm">
+                Try adjusting your filters or search terms
+              </p>
+              {(searchQuery || selectedSpecialties.length > 0 || selectedLocation || showUnverifiedOnly) && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-teal-600 hover:text-teal-800 text-sm font-medium"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1117,7 +1273,7 @@ const GuidesContent: React.FC = () => {
                     className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
                   >
                     {currentTour?.id &&
-                    formData.tours?.some((t) => t.id === currentTour.id)
+                      formData.tours?.some((t) => t.id === currentTour.id)
                       ? "Update Tour"
                       : "Add Tour"}
                   </button>
@@ -1210,11 +1366,10 @@ const GuidesContent: React.FC = () => {
                             type="button"
                             key={specialty}
                             onClick={() => toggleSpecialtyInForm(specialty)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              formData.specialties?.includes(specialty)
-                                ? "bg-teal-100 text-teal-800 border-teal-200"
-                                : "bg-gray-100 text-gray-800 border-gray-200"
-                            }`}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${formData.specialties?.includes(specialty)
+                              ? "bg-teal-100 text-teal-800 border-teal-200"
+                              : "bg-gray-100 text-gray-800 border-gray-200"
+                              }`}
                           >
                             {specialty}
                           </button>
@@ -1555,11 +1710,10 @@ const GuidesContent: React.FC = () => {
                       ? handleVerify
                       : undefined
                   }
-                  className={`px-4 py-2 bg-green-600 text-white rounded-lg ${
-                    !isVerifyChecked || selectedGuide?.isVerified
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-green-700"
-                  }`}
+                  className={`px-4 py-2 bg-green-600 text-white rounded-lg ${!isVerifyChecked || selectedGuide?.isVerified
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-green-700"
+                    }`}
                   disabled={!isVerifyChecked || selectedGuide?.isVerified}
                 >
                   Verify

@@ -215,7 +215,7 @@ const Header: React.FC = () => {
                 to="/login"
                 className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg 
                 ${isScrolled
-                    ? "bg-teal-500 text-white hover:bg-teal-600"
+                    ? "bg-teal-800 text-white hover:bg-teal-600"
                     : "bg-transparent text-white hover:text-teal-300"
                   } transition-colors duration-300`}
               >
@@ -266,7 +266,7 @@ const Header: React.FC = () => {
         >
           <div className="flex flex-col h-full">
             {/* Header menu mobile dengan gradient */}
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 p-6 rounded-bl-2xl">
+            <div className="bg-gradient-to-r from-teal-800 to-teal-600 p-6 rounded-bl-2xl">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-3">
 
