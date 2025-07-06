@@ -22,9 +22,7 @@ const DestinationsListPage: React.FC = () => {
     setSearchTerm,
     toggleCategory,
     clearFilters,
-    loadMore,
-    total,
-    hasMore
+    total
   } = useDestinations({
     search: searchParams.get("search") || undefined
   });
@@ -178,27 +176,13 @@ const DestinationsListPage: React.FC = () => {
         )}
 
 
-        {/* Destinations grid with pagination */}
+        {/* Destinations grid */}
         {!loading && !error && filteredDestinations.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
-              ))}
-            </div>
-            {/* Pagination controls */}
-            {hasMore && (
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={loadMore}
-                  className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg text-base font-medium transition-colors shadow"
-                  disabled={loading}
-                >
-                  {loading ? "Memuat..." : "Tampilkan Destinasi Lainnya"}
-                </button>
-              </div>
-            )}
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredDestinations.map((destination) => (
+              <DestinationCard key={destination.id} destination={destination} />
+            ))}
+          </div>
         )}
 
         {/* No results */}

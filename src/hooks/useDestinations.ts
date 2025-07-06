@@ -80,39 +80,30 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
     }, []);
 
     // Load destinations when filters change
-    const loadDestinations = useCallback(async (reset = true) => {
+    const loadDestinations = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
 
-            // Pagination: ambil 20 destinasi per halaman
+            // Ambil semua destinasi tanpa limit
             const filters: DestinationFilters = {
                 search: searchTerm || undefined,
-                categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-                limit: 20,
-                offset: reset ? 0 : offset
+                categories: selectedCategories.length > 0 ? selectedCategories : undefined
+                // Tidak ada limit dan offset untuk menampilkan semua data
             };
 
             const result = await getDestinations(filters);
 
-            if (reset) {
-                setDestinations(result.destinations);
-                setOffset(result.destinations.length);
-            } else {
-                setDestinations(prev => [...prev, ...result.destinations]);
-                setOffset(prev => prev + result.destinations.length);
-            }
-
+            // Selalu reset karena tidak ada pagination
+            setDestinations(result.destinations);
             setTotal(result.total);
-            setHasMore(result.hasMore);
+            setHasMore(false); // Selalu false karena semua data sudah dimuat
 
             // Debug information
-            console.log('Pagination Info:', {
+            console.log('All destinations loaded:', {
                 total: result.total,
-                hasMore: result.hasMore,
-                currentDestinations: result.destinations.length,
-                allDestinations: reset ? result.destinations.length : destinations.length + result.destinations.length
+                loaded: result.destinations.length
             });
 
         } catch (err) {
@@ -127,7 +118,7 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
     // Initial load and reload when filters change
     useEffect(() => {
         setOffset(0); // Reset offset when filters change
-        loadDestinations(true);
+        loadDestinations();
     }, [searchTerm, selectedCategories]);
 
     // Actions
@@ -145,12 +136,12 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
     }, []);
 
     const loadMore = useCallback(async () => {
-        if (!hasMore || loading) return;
-        await loadDestinations(false);
-    }, [hasMore, loading, loadDestinations]);
+        // Tidak digunakan lagi karena semua data sudah dimuat
+        return;
+    }, []);
 
     const refresh = useCallback(async () => {
-        await loadDestinations(true);
+        await loadDestinations();
     }, [loadDestinations]);
 
     return {
