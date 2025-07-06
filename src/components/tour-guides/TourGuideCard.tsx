@@ -167,17 +167,11 @@ const TourGuideCard: React.FC<TourGuideCardProps> = ({ guide }) => {
           )}
 
           <div className="pt-4 mt-2 flex justify-between items-center">
-            {hasActiveTours ? (
-              <div className="text-sm text-gray-600 flex items-center">
-                <Users className="w-4 h-4 mr-1 text-gray-500" />
-                Max group size:{" "}
-                {Math.max(...guide.tours.map((tour) => tour.maxGroupSize))}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500 italic">
-                No tours available
-              </div>
-            )}
+          {!hasActiveTours && (
+  <div className="text-sm text-gray-500 italic">
+    No tours available
+  </div>
+)}
             <div className="flex items-center space-x-3">
               {hasActiveTours && (
                 <button
