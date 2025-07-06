@@ -85,6 +85,8 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
             setLoading(true);
             setError(null);
 
+
+            // Pagination: ambil 20 destinasi per halaman
             const filters: DestinationFilters = {
                 search: searchTerm || undefined,
                 categories: selectedCategories.length > 0 ? selectedCategories : undefined,
@@ -105,6 +107,14 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
             setTotal(result.total);
             setHasMore(result.hasMore);
 
+            // Debug information
+            console.log('Pagination Info:', {
+                total: result.total,
+                hasMore: result.hasMore,
+                currentDestinations: result.destinations.length,
+                allDestinations: reset ? result.destinations.length : destinations.length + result.destinations.length
+            });
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load destinations';
             setError(errorMessage);
@@ -116,6 +126,7 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
 
     // Initial load and reload when filters change
     useEffect(() => {
+        setOffset(0); // Reset offset when filters change
         loadDestinations(true);
     }, [searchTerm, selectedCategories]);
 

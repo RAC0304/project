@@ -34,7 +34,8 @@ export const getDestinations = async (
         attractions(id, name, description, image_url),
         activities(id, name, description, duration, price, image_url),
         travel_tips(tip)
-      `
+      `,
+        { count: 'exact' }
       )
       .range(offset, offset + limit - 1);
 
@@ -101,8 +102,8 @@ export const getDestinations = async (
     }));
 
     // Get total count for pagination
-    const totalCount = count || destinations.length;
-    const hasMore = offset + limit < totalCount;
+    const totalCount = count || 0;
+    const hasMore = data.length === limit && offset + limit < totalCount;
 
     return {
       destinations,

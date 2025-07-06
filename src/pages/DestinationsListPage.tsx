@@ -21,7 +21,10 @@ const DestinationsListPage: React.FC = () => {
     selectedCategories,
     setSearchTerm,
     toggleCategory,
-    clearFilters
+    clearFilters,
+    loadMore,
+    total,
+    hasMore
   } = useDestinations({
     search: searchParams.get("search") || undefined
   });
@@ -129,8 +132,8 @@ const DestinationsListPage: React.FC = () => {
                       key={category.value}
                       onClick={() => toggleCategory(category.value)}
                       className={`px-3 py-1.5 rounded-full text-sm ${selectedCategories.includes(category.value)
-                          ? "bg-teal-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-teal-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         } transition-colors`}
                     >
                       {category.label}
@@ -174,13 +177,28 @@ const DestinationsListPage: React.FC = () => {
           </div>
         )}
 
-        {/* Destinations grid */}
+
+        {/* Destinations grid with pagination */}
         {!loading && !error && filteredDestinations.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredDestinations.map((destination) => (
-              <DestinationCard key={destination.id} destination={destination} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredDestinations.map((destination) => (
+                <DestinationCard key={destination.id} destination={destination} />
+              ))}
+            </div>
+            {/* Pagination controls */}
+            {total > filteredDestinations.length && hasMore && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={loadMore}
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg text-base font-medium transition-colors shadow"
+                  disabled={loading}
+                >
+                  {loading ? "Memuat..." : "Halaman Berikutnya"}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* No results */}
