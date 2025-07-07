@@ -58,11 +58,9 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
   // @ts-ignore: allow dynamic property for backward compatibility
   const matchingGuides = ((itinerary as any).tourGuides || []).map((guide: any) => {
     const imageUrl =
-      guide.imageUrl ||
       guide.profile_picture ||
-      (guide.users && guide.users.profile_picture) ||
-      guide.image_url ||
-      '';
+      (guide.users && guide.users.profile_picture);
+    // Fixed typo: removed 'guideprofile_picture' which is undefined
     console.log('Guide:', guide.name, 'imageUrl:', imageUrl, 'profile_picture:', guide.profile_picture, 'users.profile_picture:', guide.users?.profile_picture);
     return {
       ...guide,
@@ -453,9 +451,9 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                         : "border-gray-200 hover:border-teal-300"
                         }`}
                     >
-                      <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
+                      {/* <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
                         <img
-                          src={guide.imageUrl || "/default-avatar.png"}
+                          src={guide.profile_picture || "/default-avatar.png"}
                           alt={guide.name}
                           className="w-full h-full object-cover"
                           onError={e => {
@@ -464,7 +462,7 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                             target.src = "/default-avatar.png";
                           }}
                         />
-                      </div>
+                      </div> */}
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <h4 className="font-medium text-gray-900">

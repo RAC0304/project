@@ -641,6 +641,9 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                     Total Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Guide Fee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -694,103 +697,13 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
 // Fixed TripPlanRow Component
 type TripPlanRowProps = { trip: any };
 const TripPlanRow: React.FC<TripPlanRowProps> = ({ trip }) => {
-  const [totalPrice, setTotalPrice] = React.useState<number | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [debugInfo, setDebugInfo] = React.useState<any>(null);
-
-  React.useEffect(() => {
-    const fetchTotalPrice = async () => {
-      // Fetch total price for all statuses except cancelled/rejected
-      if (trip.status === 'cancelled' || trip.status === 'rejected') {
-        setIsLoading(false);
-        setTotalPrice(null);
-        return;
-      }
-
-      setIsLoading(true);
-
-      // Try to get booking by itinerary_id, user_id, start_date, end_date
-      if (!trip.itinerary_id || !trip.user_id || !trip.start_date || !trip.end_date) {
-        setDebugInfo({ error: 'Missing required parameters', trip });
-        setIsLoading(false);
-        setTotalPrice(null);
-        return;
-      }
-
-      try {
-        // Try both YYYY-MM-DD and ISO string for date matching
-        const normalizeDate = (date: string | Date) => {
-          if (!date) return null;
-          const dateObj = typeof date === 'string' ? new Date(date) : date;
-          // Try to keep the original string if it's already YYYY-MM-DD
-          if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-          return dateObj.toISOString().slice(0, 10);
-        };
-
-        const params = {
-          itinerary_id: String(trip.itinerary_id),
-          user_id: String(trip.user_id),
-          start_date: normalizeDate(trip.start_date),
-          end_date: normalizeDate(trip.end_date),
-        };
-
-        setDebugInfo({ params });
-
-        // Try to fetch booking with normalized params
-        // Ensure params are string (not null)
-        if (!params.start_date || !params.end_date) {
-          setDebugInfo((prev: any) => ({ ...prev, error: 'start_date or end_date is null', params }));
-          setIsLoading(false);
-          setTotalPrice(null);
-          return;
-        }
-        let booking = await getItineraryBookingByRequest(
-          params.itinerary_id,
-          params.user_id,
-          params.start_date,
-          params.end_date
-        );
-
-        // If not found, try with ISO string (sometimes backend expects full ISO)
-        if (!booking || booking.total_price == null) {
-          const isoParams = {
-            ...params,
-            start_date: new Date(trip.start_date).toISOString(),
-            end_date: new Date(trip.end_date).toISOString(),
-          };
-          booking = await getItineraryBookingByRequest(
-            isoParams.itinerary_id,
-            isoParams.user_id,
-            isoParams.start_date,
-            isoParams.end_date
-          );
-          setDebugInfo((prev: any) => ({ ...prev, isoParams, booking }));
-        } else {
-          setDebugInfo((prev: any) => ({ ...prev, booking }));
-        }
-
-        if (booking && booking.total_price !== null && booking.total_price !== undefined) {
-          setTotalPrice(Number(booking.total_price));
-        } else {
-          setTotalPrice(null);
-        }
-      } catch (error) {
-        let errMsg = '';
-        if (error instanceof Error) {
-          errMsg = error.message;
-        } else if (typeof error === 'string') {
-          errMsg = error;
-        } else {
-          errMsg = 'Unknown error';
-        }
-        setDebugInfo({ error: errMsg, trip });
-        setTotalPrice(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTotalPrice();
-  }, [trip.itinerary_id, trip.user_id, trip.start_date, trip.end_date, trip.status]);
+  // Total hari trip
+  const start = new Date(trip.start_date);
+  const end = new Date(trip.end_date);
+  // Hitung selisih hari (termasuk hari terakhir)
+  const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  // Guide fee hanya jika status confirmed
+  const guideFee = trip.status === 'confirmed' ? 50 * days : null;
 
   return (
     <tr>
@@ -818,31 +731,27 @@ const TripPlanRow: React.FC<TripPlanRowProps> = ({ trip }) => {
         {trip.group_size}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {isLoading ? (
-          <div className="flex items-center">
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"></div>
-            <span className="text-gray-400">Loading...</span>
-          </div>
-        ) : totalPrice !== null ? (
+        {trip.total_price !== undefined && trip.total_price !== null ? (
           <span className="text-blue-700 font-semibold">
-            ${Number(totalPrice).toLocaleString('en-US', {
+            ${Number(trip.total_price).toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
             })}
           </span>
         ) : (
-          <div className="flex flex-col">
-            <span className="text-gray-400">Not available</span>
-            {/* Debug info - remove in production */}
-            {debugInfo && (
-              <details className="text-xs text-gray-400 mt-1">
-                <summary className="cursor-pointer">Debug</summary>
-                <pre className="mt-1 text-xs overflow-x-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
-            )}
-          </div>
+          <span className="text-gray-400">Not available</span>
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {guideFee !== null ? (
+          <span className="text-green-700 font-semibold">
+            ${guideFee.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </span>
+        ) : (
+          <span className="text-gray-400">-</span>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
