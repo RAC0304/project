@@ -30,13 +30,13 @@ export interface UseDestinationsActions {
 export interface UseDestinationsReturn extends UseDestinationsState, UseDestinationsActions { }
 
 const categoryLabels: Record<DestinationCategory, string> = {
-    beach: 'Pantai',
-    mountain: 'Pegunungan',
-    cultural: 'Budaya',
-    adventure: 'Petualangan',
-    historical: 'Sejarah',
-    nature: 'Alam',
-    city: 'Kota'
+    beach: 'Beach',
+    mountain: 'Mountain',
+    cultural: 'Cultural',
+    adventure: 'Adventure',
+    historical: 'Historical',
+    nature: 'Nature',
+    city: 'City'
 };
 
 export const useDestinations = (initialFilters: DestinationFilters = {}): UseDestinationsReturn => {
