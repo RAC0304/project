@@ -149,7 +149,7 @@ const ItinerariesPage: React.FC = () => {
         )}
 
         {/* Custom itinerary CTA */}
-        <div className="mt-16 bg-teal-50 rounded-xl p-8 text-center">
+        {/* <div className="mt-16 bg-teal-50 rounded-xl p-8 text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Need a Custom Itinerary?
           </h2>
@@ -160,7 +160,7 @@ const ItinerariesPage: React.FC = () => {
           <button className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
             Request Custom Itinerary
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

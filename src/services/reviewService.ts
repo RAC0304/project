@@ -56,6 +56,7 @@ export interface ReviewWithDetails {
     users?: {
       first_name: string;
       last_name: string;
+      profile_picture?: string;
     };
   };
   review_tags?: Array<{

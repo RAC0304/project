@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Calendar,
@@ -7,9 +7,13 @@ import {
   MapPin,
   Star,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import { Itinerary } from "../../types";
-import { tourGuides } from "../../data/tourGuides";
+// import { tourGuides } from "../../data/tourGuides";
+import { useEnhancedAuth } from "../../contexts/useEnhancedAuth";
+import { createItineraryRequest } from "../../services/itineraryBookingService";
+import { BOOKING_CONFIG, BookingUtils } from "../../config/bookingConfig";
 
 interface TripPlanningModalProps {
   itinerary: Itinerary;
@@ -20,6 +24,7 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
   itinerary,
   onClose,
 }) => {
+  const { user, isLoggedIn } = useEnhancedAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -32,24 +37,57 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter tour guides based on itinerary destinations
-  const matchingGuides = tourGuides.filter(
-    (guide) =>
-      itinerary.destinations.includes(guide.location.toLowerCase()) ||
-      guide.specialties.some((specialty) =>
-        itinerary.destinations.some((dest) => dest.includes(specialty))
-      )
-  );
+  // Auto-fill form data if user is logged in
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.profile?.firstName && user.profile?.lastName
+          ? `${user.profile.firstName} ${user.profile.lastName}`
+          : user.username || '',
+        email: user.email || '',
+        phone: user.profile?.phone || '',
+      }));
+    }
+  }, [isLoggedIn, user]);
 
-  // Calculate min date (today) for the date pickers
-  const today = new Date();
-  const minDate = today.toISOString().split("T")[0];
+  // Use tour guides from itinerary if available (from backend relation)
+  // Map image_url (snake_case) to imageUrl (camelCase) if needed
+  // @ts-ignore: allow dynamic property for backward compatibility
+  const matchingGuides = ((itinerary as any).tourGuides || []).map((guide: any) => {
+    const imageUrl =
+      guide.imageUrl ||
+      guide.profile_picture ||
+      (guide.users && guide.users.profile_picture) ||
+      guide.image_url ||
+      '';
+    console.log('Guide:', guide.name, 'imageUrl:', imageUrl, 'profile_picture:', guide.profile_picture, 'users.profile_picture:', guide.users?.profile_picture);
+    return {
+      ...guide,
+      imageUrl,
+    };
+  });
+
+  // Calculate min date (today + minimum advance booking days)
+  const minDate = BOOKING_CONFIG.DATE.MIN_DATE();
+  const maxDate = BOOKING_CONFIG.DATE.MAX_DATE();
 
   // Extract the duration number from the itinerary duration string (e.g., "7 days" -> 7)
   const getDurationDays = () => {
-    const durationMatch = itinerary.duration.match(/(\d+)/);
-    return durationMatch ? parseInt(durationMatch[0], 10) : 5; // Default to 5 days if parsing fails
+    return BookingUtils.parseDurationDays(itinerary.duration);
+  };
+
+  // Parse group size from string (handle ranges like "3-4" or "7+")
+  const parseGroupSize = (groupSize: string): number => {
+    return BookingUtils.parseGroupSize(groupSize);
+  };
+
+  // Calculate estimated price based on duration and group size
+  const calculateEstimatedPrice = () => {
+    const hasGuide = formData.selectedGuideId !== "";
+    return BookingUtils.calculatePrice(itinerary.duration, formData.groupSize, hasGuide);
   };
 
   // Calculate default end date based on itinerary duration
@@ -90,43 +128,85 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Check if user is logged in
+      if (!isLoggedIn || !user) {
+        setError("Please log in to book an itinerary");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate form data using config
+      const validation = BookingUtils.validateBookingForm(formData);
+      if (!validation.isValid) {
+        setError(validation.errors.join('. '));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare request data
+      const requestData = {
+        user_id: user.id,
+        itinerary_id: itinerary.id,
+        tour_guide_id: formData.selectedGuideId || undefined,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        group_size: formData.groupSize,
+        additional_requests: formData.additionalRequests.trim() || undefined,
+      };
+
+      console.log('Submitting itinerary request:', requestData);
+
+      // Create the itinerary request
+      const result = await createItineraryRequest(requestData);
+      console.log('Itinerary request created:', result);
+
       setIsSuccess(true);
 
       // Close modal after showing success message
       setTimeout(() => {
         onClose();
-      }, 3000);
-    }, 1500);
+      }, BOOKING_CONFIG.UI.SUCCESS_MODAL_AUTO_CLOSE);
+
+    } catch (err) {
+      console.error('Error creating itinerary request:', err);
+
+      // Handle different types of errors
+      if (err instanceof Error) {
+        if (err.message.includes('Permission denied') || err.message.includes('42501')) {
+          setError('Permission denied. This may be due to database security settings. Please contact support or try again later.');
+        } else if (err.message.includes('network')) {
+          setError('Network error. Please check your internet connection and try again.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again or contact support.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Helper function to format dates for display
   const formatDateRange = () => {
     if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      return `${start.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })} - ${end.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })}`;
+      return `${BookingUtils.formatDate(formData.startDate)} - ${BookingUtils.formatDate(formData.endDate)}`;
     }
     return "";
   };
 
   // Find the selected guide details
-  const selectedGuide = tourGuides.find(
-    (guide) => guide.id === formData.selectedGuideId
+  const selectedGuide = matchingGuides.find(
+    (guide: any) => guide.id === formData.selectedGuideId
   );
 
   return (
@@ -181,6 +261,24 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Error Display */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Authentication Warning */}
+            {!isLoggedIn && (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                <p className="text-yellow-800 text-sm">
+                  Please log in to submit a booking request.
+                </p>
+              </div>
+            )}
+
             <div className="p-4 bg-teal-50 rounded-lg mb-4">
               <h3 className="font-medium text-gray-900 mb-2">
                 {itinerary.title}
@@ -272,6 +370,7 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                     id="startDate"
                     name="startDate"
                     min={minDate}
+                    max={maxDate}
                     required
                     value={formData.startDate}
                     onChange={handleChange}
@@ -325,11 +424,11 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                   onChange={handleChange}
                   className="block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
                 >
-                  <option value="1">1 person</option>
-                  <option value="2">2 people</option>
-                  <option value="3-4">3-4 people</option>
-                  <option value="5-6">5-6 people</option>
-                  <option value="7+">7+ people</option>
+                  {BOOKING_CONFIG.GROUP_SIZE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -345,21 +444,25 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {matchingGuides.map((guide) => (
+                  {matchingGuides.map((guide: any) => (
                     <div
                       key={guide.id}
                       onClick={() => selectGuide(guide.id)}
-                      className={`border rounded-lg p-3 cursor-pointer flex items-start space-x-3 transition-colors ${
-                        formData.selectedGuideId === guide.id
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-gray-200 hover:border-teal-300"
-                      }`}
+                      className={`border rounded-lg p-3 cursor-pointer flex items-start space-x-3 transition-colors ${formData.selectedGuideId === guide.id
+                        ? "border-teal-500 bg-teal-50"
+                        : "border-gray-200 hover:border-teal-300"
+                        }`}
                     >
                       <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
                         <img
-                          src={guide.imageUrl}
+                          src={guide.imageUrl || "/default-avatar.png"}
                           alt={guide.name}
                           className="w-full h-full object-cover"
+                          onError={e => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = "/default-avatar.png";
+                          }}
                         />
                       </div>
                       <div className="flex-1">
@@ -382,11 +485,10 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`w-3 h-3 ${
-                                  i < Math.floor(guide.rating)
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-300"
-                                }`}
+                                className={`w-3 h-3 ${i < Math.floor(guide.rating)
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -401,6 +503,36 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
               </div>
             )}
 
+            {/* Price Estimation */}
+            {formData.startDate && formData.endDate && formData.groupSize && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Estimated Price
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Base price ({getDurationDays()} days × {formData.groupSize} travelers)</span>
+                    <span>{BookingUtils.formatPrice(BOOKING_CONFIG.PRICING.BASE_PRICE_PER_DAY * getDurationDays() * parseGroupSize(formData.groupSize))}</span>
+                  </div>
+                  {formData.selectedGuideId && (
+                    <div className="flex justify-between">
+                      <span>Tour guide ({getDurationDays()} days)</span>
+                      <span>{BookingUtils.formatPrice(BOOKING_CONFIG.PRICING.GUIDE_SURCHARGE_PER_DAY * getDurationDays())}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 mt-2">
+                    <div className="flex justify-between font-medium">
+                      <span>Total Estimated Cost</span>
+                      <span>{BookingUtils.formatPrice(calculateEstimatedPrice())}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  * This is an estimated price. Final pricing will be confirmed after consultation.
+                </p>
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="additionalRequests"
@@ -412,6 +544,7 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                 id="additionalRequests"
                 name="additionalRequests"
                 rows={3}
+                maxLength={BOOKING_CONFIG.FORM.MAX_SPECIAL_REQUESTS_LENGTH}
                 placeholder="Tell us about any special requirements, customizations, or questions you have..."
                 value={formData.additionalRequests}
                 onChange={handleChange}
@@ -429,8 +562,11 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-md transition-colors flex items-center"
+                disabled={isSubmitting || !isLoggedIn}
+                className={`px-6 py-2 rounded-md transition-colors flex items-center ${isSubmitting || !isLoggedIn
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-teal-600 hover:bg-teal-700'
+                  } text-white`}
               >
                 {isSubmitting ? (
                   <>
@@ -457,7 +593,7 @@ const TripPlanningModal: React.FC<TripPlanningModalProps> = ({
                     Processing...
                   </>
                 ) : (
-                  "Request Planning"
+                  !isLoggedIn ? "Please Log In" : "Request Planning"
                 )}
               </button>
             </div>

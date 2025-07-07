@@ -17,6 +17,7 @@ import TimezoneInfo from "../components/common/TimezoneInfo";
 import { formatIndonesianDate } from "../utils/dateUtils";
 import { getUserAccountStats } from "../services/userStatsService";
 import BookingStatusTabs from "../components/customer/BookingStatusTabs";
+import TripRequestsNotification from "../components/user/TripRequestsNotification";
 import {
   userActivityService,
   type ActivityItem,
@@ -46,9 +47,8 @@ const UserProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(
     user?.profile?.avatar ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${
-        user?.username || "default"
-      }`
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || "default"
+    }`
   );
 
   // Ensure profile image loads properly from Supabase
@@ -495,8 +495,8 @@ const UserProfilePage: React.FC = () => {
         // Make sure gender is typed correctly
         const typedGender =
           editedUserFields.gender === "male" ||
-          editedUserFields.gender === "female" ||
-          editedUserFields.gender === "other"
+            editedUserFields.gender === "female" ||
+            editedUserFields.gender === "other"
             ? (editedUserFields.gender as "male" | "female" | "other")
             : undefined;
 
@@ -742,7 +742,9 @@ const UserProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-12">
       <div className="container mx-auto px-4">
+        {/* Trip Requests Notification for Customers */}
         {/* Profile Header */}
+
         <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
           <div className="h-32 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
           <div className="px-6 py-8 md:px-8 -mt-16">
@@ -791,11 +793,10 @@ const UserProfilePage: React.FC = () => {
                 <div className="absolute bottom-0 right-0 flex space-x-1">
                   {" "}
                   <label
-                    className={`p-2 bg-teal-500 rounded-full text-white ${
-                      isLoading
+                    className={`p-2 bg-teal-500 rounded-full text-white ${isLoading
                         ? "opacity-70 cursor-not-allowed"
                         : "hover:bg-teal-600 cursor-pointer"
-                    } transition-colors shadow-md`}
+                      } transition-colors shadow-md`}
                   >
                     {isLoading ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -812,15 +813,14 @@ const UserProfilePage: React.FC = () => {
                   </label>
                   {profileImage &&
                     profileImage !==
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                       <button
                         onClick={handleRemoveImage}
                         disabled={isLoading}
-                        className={`p-2 bg-red-500 rounded-full text-white ${
-                          isLoading
+                        className={`p-2 bg-red-500 rounded-full text-white ${isLoading
                             ? "opacity-70 cursor-not-allowed"
                             : "hover:bg-red-600"
-                        } transition-colors shadow-md`}
+                          } transition-colors shadow-md`}
                         title="Remove photo"
                       >
                         <span className="text-xs">×</span>
@@ -841,11 +841,10 @@ const UserProfilePage: React.FC = () => {
                   <button
                     onClick={testImageStorage}
                     disabled={isLoading}
-                    className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${
-                      isLoading
+                    className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${isLoading
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:bg-gray-300"
-                    }`}
+                      }`}
                   >
                     Test Storage
                   </button>
@@ -872,22 +871,20 @@ const UserProfilePage: React.FC = () => {
                       <button
                         onClick={handleSaveChanges}
                         disabled={isLoading}
-                        className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${
-                          isLoading
+                        className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${isLoading
                             ? "opacity-70 cursor-not-allowed"
                             : "hover:bg-teal-700"
-                        }`}
+                          }`}
                       >
                         {isLoading ? "Saving..." : "Save Changes"}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         disabled={isLoading}
-                        className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${
-                          isLoading
+                        className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${isLoading
                             ? "opacity-70 cursor-not-allowed"
                             : "hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         Cancel
                       </button>
@@ -896,11 +893,10 @@ const UserProfilePage: React.FC = () => {
                     <button
                       onClick={() => setIsEditing(true)}
                       disabled={isLoading}
-                      className={`flex items-center text-sm text-teal-600 ${
-                        isLoading
+                      className={`flex items-center text-sm text-teal-600 ${isLoading
                           ? "opacity-70 cursor-not-allowed"
                           : "hover:text-teal-700"
-                      }`}
+                        }`}
                     >
                       <Settings className="w-4 h-4 mr-1" />
                       Edit Profile
@@ -1030,9 +1026,9 @@ const UserProfilePage: React.FC = () => {
                           const value = e.target.value;
                           const typedValue =
                             value === "male" ||
-                            value === "female" ||
-                            value === "other" ||
-                            value === ""
+                              value === "female" ||
+                              value === "other" ||
+                              value === ""
                               ? (value as "" | "male" | "female" | "other")
                               : "";
                           setEditedUserFields({
@@ -1051,7 +1047,7 @@ const UserProfilePage: React.FC = () => {
                       <p className="text-gray-900">
                         {user.gender
                           ? user.gender.charAt(0).toUpperCase() +
-                            user.gender.slice(1)
+                          user.gender.slice(1)
                           : "Not specified"}
                       </p>
                     )}
@@ -1089,11 +1085,10 @@ const UserProfilePage: React.FC = () => {
                       {" "}
                       <div className="flex items-center space-x-3">
                         <label
-                          className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${
-                            isLoading
+                          className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${isLoading
                               ? "opacity-70 cursor-not-allowed"
                               : "cursor-pointer hover:bg-teal-100"
-                          } transition-colors`}
+                            } transition-colors`}
                         >
                           {isLoading ? (
                             <span className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></span>
@@ -1113,15 +1108,14 @@ const UserProfilePage: React.FC = () => {
                         </label>
                         {profileImage &&
                           profileImage !==
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` && (
                             <button
                               onClick={handleRemoveImage}
                               disabled={isLoading}
-                              className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${
-                                isLoading
+                              className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${isLoading
                                   ? "opacity-70 cursor-not-allowed"
                                   : "hover:bg-red-100"
-                              } transition-colors`}
+                                } transition-colors`}
                             >
                               {isLoading ? "Removing..." : "Remove Photo"}
                             </button>
@@ -1130,11 +1124,10 @@ const UserProfilePage: React.FC = () => {
                           <button
                             onClick={testImageStorage}
                             disabled={isLoading}
-                            className={`px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 ${
-                              isLoading
+                            className={`px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 ${isLoading
                                 ? "opacity-70 cursor-not-allowed"
                                 : "hover:bg-blue-100"
-                            } transition-colors`}
+                              } transition-colors`}
                             title="Test Supabase storage functionality"
                           >
                             <span className="flex items-center">
@@ -1156,11 +1149,10 @@ const UserProfilePage: React.FC = () => {
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
-                  className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${
-                    isLoading
+                  className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${isLoading
                       ? "opacity-70 cursor-not-allowed"
                       : "hover:bg-red-600"
-                  } transition-colors duration-300`}
+                    } transition-colors duration-300`}
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
@@ -1205,17 +1197,15 @@ const UserProfilePage: React.FC = () => {
                 <button
                   onClick={refreshActivities}
                   disabled={activitiesLoading}
-                  className={`p-2 rounded-lg transition-colors ${
-                    activitiesLoading
+                  className={`p-2 rounded-lg transition-colors ${activitiesLoading
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                       : "bg-teal-50 text-teal-600 hover:bg-teal-100"
-                  }`}
+                    }`}
                   title="Refresh activities"
                 >
                   <div
-                    className={`w-4 h-4 ${
-                      activitiesLoading ? "animate-spin" : ""
-                    }`}
+                    className={`w-4 h-4 ${activitiesLoading ? "animate-spin" : ""
+                      }`}
                   >
                     🔄
                   </div>
@@ -1273,39 +1263,39 @@ const UserProfilePage: React.FC = () => {
                               {/* Show different badges based on activity type */}
                               {activity.details?.activityType ===
                                 "creation" && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                  Booking Created
-                                </span>
-                              )}
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                    Booking Created
+                                  </span>
+                                )}
 
                               {activity.details?.activityType ===
                                 "confirmation" && (
-                                <>
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                                    Confirmed
-                                  </span>
-                                  {/* Show Pay Now button for confirmed bookings with pending payment */}
-                                  {activity.details?.paymentStatus ===
-                                    "pending" && (
-                                    <button
-                                      onClick={() =>
-                                        handlePayNow({
-                                          id: activity.details!.bookingId || 0,
-                                          title:
-                                            activity.details!.tourTitle ||
-                                            "Unknown Tour",
-                                          amount: activity.details!.amount || 0,
-                                          participants:
-                                            activity.details!.participants || 1,
-                                        })
-                                      }
-                                      className="ml-2 inline-flex items-center px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium rounded transition-colors"
-                                    >
-                                      💳 Pay Now
-                                    </button>
-                                  )}
-                                </>
-                              )}
+                                  <>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                      Confirmed
+                                    </span>
+                                    {/* Show Pay Now button for confirmed bookings with pending payment */}
+                                    {activity.details?.paymentStatus ===
+                                      "pending" && (
+                                        <button
+                                          onClick={() =>
+                                            handlePayNow({
+                                              id: activity.details!.bookingId || 0,
+                                              title:
+                                                activity.details!.tourTitle ||
+                                                "Unknown Tour",
+                                              amount: activity.details!.amount || 0,
+                                              participants:
+                                                activity.details!.participants || 1,
+                                            })
+                                          }
+                                          className="ml-2 inline-flex items-center px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium rounded transition-colors"
+                                        >
+                                          💳 Pay Now
+                                        </button>
+                                      )}
+                                  </>
+                                )}
 
                               {activity.details?.activityType === "payment" && (
                                 <>
@@ -1325,10 +1315,10 @@ const UserProfilePage: React.FC = () => {
 
                               {activity.details?.activityType ===
                                 "cancellation" && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                                  Cancelled
-                                </span>
-                              )}
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                                    Cancelled
+                                  </span>
+                                )}
 
                               {/* Fallback for legacy booking activities without activityType */}
                               {!activity.details?.activityType && (
@@ -1338,17 +1328,16 @@ const UserProfilePage: React.FC = () => {
                                   </span>
                                   {activity.details?.status && (
                                     <span
-                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${
-                                        activity.details.status === "confirmed"
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${activity.details.status === "confirmed"
                                           ? "bg-green-50 text-green-700 border border-green-200"
                                           : activity.details.status ===
                                             "pending"
-                                          ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                          : activity.details.status ===
-                                            "cancelled"
-                                          ? "bg-red-50 text-red-700 border border-red-200"
-                                          : "bg-gray-50 text-gray-700 border border-gray-200"
-                                      }`}
+                                            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                            : activity.details.status ===
+                                              "cancelled"
+                                              ? "bg-red-50 text-red-700 border border-red-200"
+                                              : "bg-gray-50 text-gray-700 border border-gray-200"
+                                        }`}
                                     >
                                       {activity.details.status}
                                     </span>
@@ -1356,7 +1345,7 @@ const UserProfilePage: React.FC = () => {
                                   {/* Pay Now button for legacy confirmed bookings with pending payment */}
                                   {activity.details?.status === "confirmed" &&
                                     activity.details?.paymentStatus ===
-                                      "pending" && (
+                                    "pending" && (
                                       <button
                                         onClick={() =>
                                           handlePayNow({
@@ -1380,15 +1369,15 @@ const UserProfilePage: React.FC = () => {
                                   {/* Chat button for legacy paid bookings */}
                                   {activity.details?.paymentStatus ===
                                     "paid" && (
-                                    <button
-                                      className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
-                                      onClick={() =>
-                                        handleChatWithTourGuide(activity)
-                                      }
-                                    >
-                                      Chat dengan Tour Guide
-                                    </button>
-                                  )}
+                                      <button
+                                        className="ml-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                                        onClick={() =>
+                                          handleChatWithTourGuide(activity)
+                                        }
+                                      >
+                                        Chat dengan Tour Guide
+                                      </button>
+                                    )}
                                 </>
                               )}
                             </>
@@ -1397,19 +1386,18 @@ const UserProfilePage: React.FC = () => {
                           {/* Handle other activity types */}
                           {activity.type !== "booking" && activity.details && (
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                activity.type === "message"
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.type === "message"
                                   ? "bg-green-50 text-green-700 border border-green-200"
                                   : activity.type === "tour_request"
-                                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                  : "bg-gray-50 text-gray-700 border border-gray-200"
-                              }`}
+                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                    : "bg-gray-50 text-gray-700 border border-gray-200"
+                                }`}
                             >
                               {activity.type === "message"
                                 ? "Message"
                                 : activity.type === "tour_request"
-                                ? "Tour Request"
-                                : activity.type}
+                                  ? "Tour Request"
+                                  : activity.type}
                             </span>
                           )}
                         </div>
@@ -1462,6 +1450,8 @@ const UserProfilePage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-800 mb-6">
               My Bookings
             </h2>
+            {/* Trip Requests Notification for Customers (moved here) */}
+            <TripRequestsNotification userId={user.id} onPayNow={handlePayNow} />
             <BookingStatusTabs
               userId={parseInt(user.id)}
               hideReviewNeeded={true}
@@ -1490,9 +1480,8 @@ const UserProfilePage: React.FC = () => {
           }}
           booking={selectedBookingForPayment}
           userDetails={{
-            name: `${user.profile?.firstName || ""} ${
-              user.profile?.lastName || ""
-            }`.trim(),
+            name: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""
+              }`.trim(),
             email: user.email || "",
             phone: user.profile?.phone || "",
           }}
@@ -1526,18 +1515,16 @@ const UserProfilePage: React.FC = () => {
                 chatMessages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`mb-2 flex ${
-                      msg.sender_id === parseInt(user.id)
+                    className={`mb-2 flex ${msg.sender_id === parseInt(user.id)
                         ? "justify-end"
                         : "justify-start"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`px-3 py-1 rounded-lg ${
-                        msg.sender_id === parseInt(user.id)
+                      className={`px-3 py-1 rounded-lg ${msg.sender_id === parseInt(user.id)
                           ? "bg-teal-600 text-white"
                           : "bg-gray-200 text-gray-800"
-                      } max-w-[70%]`}
+                        } max-w-[70%]`}
                     >
                       <span>{msg.content}</span>
                       <div className="text-xs text-gray-300 mt-1 text-right">

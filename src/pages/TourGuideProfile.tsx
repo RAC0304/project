@@ -438,14 +438,12 @@ const TourGuideProfile: React.FC = () => {
                       </svg>
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Belum ada review
+                      No reviews yet
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Jadilah yang pertama memberikan review untuk {mappedGuide.name}
+                      Be the first to leave a review for {mappedGuide.name} by clicking the "Book Now" button above to start your adventure!
                     </p>
-                    <button className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-                      Tulis Review
-                    </button>
+
                   </div>
                 </div>
               )}

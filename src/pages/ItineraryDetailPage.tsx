@@ -12,28 +12,77 @@ import {
   Bed,
   Car,
 } from "lucide-react";
-import { getItineraryById } from "../data/itineraries";
+import { getItineraryBySlug, getItineraryById } from "../services/itineraryService";
+import { Itinerary } from "../types";
 import TripPlanningModal from "../components/itineraries/TripPlanningModal";
 import NotFoundPage from "./NotFoundPage";
+import { useEnhancedAuth } from "../contexts/useEnhancedAuth";
 
 const ItineraryDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const itinerary = id ? getItineraryById(id) : undefined;
+  const { slug } = useParams<{ slug: string }>();
+  const [itinerary, setItinerary] = useState<Itinerary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState(1);
   const [isPlanningModalOpen, setIsPlanningModalOpen] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const navigate = useNavigate();
+  const { isLoggedIn } = useEnhancedAuth();
 
   useEffect(() => {
-    // Reset active day when itinerary changes
-    setActiveDay(1);
+    const loadItinerary = async () => {
+      if (!slug) {
+        console.log('❌ No slug provided');
+        return;
+      }
 
-    // Scroll to top when itinerary changes
-    window.scrollTo(0, 0);
-  }, [id]);
+      try {
+        console.log('🔄 Loading itinerary with slug:', slug);
+        setLoading(true);
+        setError(null);
+
+        // First try to load by slug
+        let data = await getItineraryBySlug(slug);
+
+        // If not found and slug is numeric, try loading by ID
+        if (!data && /^\d+$/.test(slug)) {
+          console.log('🔄 Slug appears to be numeric, trying to load by ID:', slug);
+          data = await getItineraryById(slug);
+
+          // If found by ID, redirect to the correct slug URL
+          if (data) {
+            console.log('✅ Found by ID, redirecting to slug URL:', data.slug);
+            navigate(`/itineraries/${data.slug}`, { replace: true });
+            return;
+          }
+        }
+
+        if (data) {
+          console.log('✅ Itinerary loaded successfully:', data.title);
+          setItinerary(data);
+        } else {
+          console.log('❌ No itinerary data returned');
+          setItinerary(null);
+        }
+
+        // Reset active day when itinerary changes
+        setActiveDay(1);
+
+        // Scroll to top when itinerary changes
+        window.scrollTo(0, 0);
+      } catch (err) {
+        console.error('❌ Error loading itinerary:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load itinerary');
+      } finally {
+        console.log('🏁 Loading complete');
+        setLoading(false);
+      }
+    };
+
+    loadItinerary();
+  }, [slug, navigate]);
 
   const handlePlanTripClick = () => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     if (isLoggedIn) {
       setIsPlanningModalOpen(true);
     } else {
@@ -49,6 +98,61 @@ const ItineraryDetailPage: React.FC = () => {
   const handleCancelClick = () => {
     setShowWarningModal(false);
   };
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading itinerary...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center max-w-md mx-auto">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="bg-red-100 p-3 rounded-full w-16 h-16 mx-auto mb-4">
+                  <svg
+                    className="w-10 h-10 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-red-800 mb-2">
+                  Error Loading Itinerary
+                </h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!itinerary) {
     return <NotFoundPage />;
@@ -84,8 +188,20 @@ const ItineraryDetailPage: React.FC = () => {
             <div className="flex items-center text-white/90">
               <MapPin className="w-5 h-5 mr-1" />
               <span>
-                {itinerary.destinations.length} destination
-                {itinerary.destinations.length > 1 ? "s" : ""}
+                {itinerary.destinations && itinerary.destinations.length > 0
+                  ? `${itinerary.destinations.length} destination${itinerary.destinations.length > 1 ? "s" : ""}: `
+                  : "No destinations"}
+                {itinerary.destinations && itinerary.destinations.length > 0 &&
+                  itinerary.destinations.map((dest, idx) => {
+                    // Use a robust key: prefer dest.id, then dest.slug, then dest.name, then fallback to idx
+                    const key = dest.id || dest.slug || dest.name || idx;
+                    return (
+                      <span key={key}>
+                        {dest.name}{idx < itinerary.destinations.length - 1 ? ", " : ""}
+                      </span>
+                    );
+                  })
+                }
               </span>
             </div>
           </div>
@@ -102,6 +218,36 @@ const ItineraryDetailPage: React.FC = () => {
               <p className="text-gray-700 mb-6 leading-relaxed">
                 {itinerary.description}
               </p>
+
+              {/* Tour Guides */}
+              <div className="mb-4">
+                <span className="font-semibold text-gray-800">Tour Guides: </span>
+                {itinerary.tourGuides && itinerary.tourGuides.length > 0
+                  ? itinerary.tourGuides.map((tg, idx) => (
+                    <React.Fragment key={tg.id || tg.name || idx}>
+                      <span>
+                        {tg.name}
+                      </span>
+                      {idx < itinerary.tourGuides.length - 1 ? ', ' : ''}
+                    </React.Fragment>
+                  ))
+                  : <span className="text-gray-500">No tour guides assigned</span>
+                }
+              </div>
+
+              {/* Destinations */}
+              <div className="mb-4">
+                <span className="font-semibold text-gray-800">Destinations: </span>
+                {itinerary.destinations && itinerary.destinations.length > 0
+                  ? itinerary.destinations.map((dest, idx) => (
+                    <React.Fragment key={dest.id || dest.slug || dest.name || dest || idx}>
+                      <span>{dest.name || dest}</span>
+                      {idx < itinerary.destinations.length - 1 ? ', ' : ''}
+                    </React.Fragment>
+                  ))
+                  : <span className="text-gray-500">No destinations assigned</span>
+                }
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-teal-50 p-4 rounded-lg">
@@ -144,11 +290,10 @@ const ItineraryDetailPage: React.FC = () => {
                   <button
                     key={day.day}
                     onClick={() => setActiveDay(day.day)}
-                    className={`min-w-[120px] px-4 py-2 rounded-lg flex flex-col items-center ${
-                      activeDay === day.day
-                        ? "bg-teal-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                    }`}
+                    className={`min-w-[120px] px-4 py-2 rounded-lg flex flex-col items-center ${activeDay === day.day
+                      ? "bg-teal-600 text-white"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                      }`}
                   >
                     <span className="font-medium">Day {day.day}</span>
                     <span className="text-xs mt-1 truncate max-w-full">

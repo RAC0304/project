@@ -103,8 +103,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       items: [
         {
           id: "bookings",
-          label: "Bookings",
+          label: "Tour Bookings",
           icon: <Calendar className="w-[18px] h-[18px]" />,
+        },
+        {
+          id: "itinerary-requests",
+          label: "Trip Requests",
+          icon: <MapPin className="w-[18px] h-[18px]" />,
         },
         {
           id: "analytics",
@@ -127,8 +132,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       {/* Sidebar - Desktop always visible, mobile only when mobileMenuOpen is true */}{" "}
       <div
         className={`${mobileMenuOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0"
           } ${isMinimized ? "w-20" : "w-72"
           } bg-white h-screen shadow-xl fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out flex flex-col overflow-hidden`}
       >
@@ -194,8 +199,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                         onClick={() => setActivePage(item.id)}
                         title={item.label}
                         className={`w-full ${isMinimized
-                            ? "flex justify-center"
-                            : "flex items-center justify-between"
+                          ? "flex justify-center"
+                          : "flex items-center justify-between"
                           } p-3 rounded-lg transition-all duration-200 ${activePage === item.id
                             ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md"
                             : "text-gray-700 hover:bg-gray-50"
@@ -232,8 +237,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               onClick={handleLogout}
               title="Sign Out"
               className={`w-full ${isMinimized
-                  ? "flex justify-center"
-                  : "flex items-center justify-center space-x-2"
+                ? "flex justify-center"
+                : "flex items-center justify-center space-x-2"
                 } p-3 text-red-700 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200`}
             >
               <LogOut className="w-5 h-5" />

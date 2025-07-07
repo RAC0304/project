@@ -48,7 +48,7 @@ export type DestinationCategory =
   | "city";
 
 export interface Itinerary {
-  id: string;
+  id: number;
   slug?: string;
   title: string;
   duration: string;
@@ -66,6 +66,7 @@ export interface Itinerary {
   maxParticipants?: number;
   createdAt?: string;
   updatedAt?: string;
+  tourGuides?: import("./index").TourGuide[];
 }
 
 export interface ItineraryDay {

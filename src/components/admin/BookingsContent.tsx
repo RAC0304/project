@@ -436,13 +436,13 @@ const BookingsContent: React.FC<BookingsContentProps> = () => {
         <h1 className="text-2xl font-bold text-gray-800">
           Bookings Management
         </h1>
-        <button
+        {/* <button
           onClick={handleAddBooking}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
         >
           <Plus className="mr-2 h-5 w-5" />
           Add New Booking
-        </button>
+        </button> */}
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -622,11 +622,10 @@ const BookingsContent: React.FC<BookingsContentProps> = () => {
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded-md ${
-                  currentPage === 1
+                className={`px-3 py-1 rounded-md ${currentPage === 1
                     ? "text-gray-400 cursor-not-allowed"
                     : "text-gray-700 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -636,11 +635,10 @@ const BookingsContent: React.FC<BookingsContentProps> = () => {
                   <button
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
-                    className={`px-3 py-1 rounded-md ${
-                      currentPage === pageNumber
+                    className={`px-3 py-1 rounded-md ${currentPage === pageNumber
                         ? "bg-blue-600 text-white"
                         : "text-gray-700 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     {pageNumber}
                   </button>
@@ -649,11 +647,10 @@ const BookingsContent: React.FC<BookingsContentProps> = () => {
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded-md ${
-                  currentPage === totalPages
+                className={`px-3 py-1 rounded-md ${currentPage === totalPages
                     ? "text-gray-400 cursor-not-allowed"
                     : "text-gray-700 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>

@@ -4,6 +4,8 @@ import {
   getBookingsWithDetailsByGuideUserId,
   BookingWithDetails,
 } from "../../../services/bookingDetailsService";
+import { getTripRequestsByGuideId } from "../../../services/tripPlanningService";
+import { updateItineraryRequestStatus } from "../../../services/itineraryBookingService";
 import { updateBookingStatusSupabase } from "../../../services/bookingService";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import MessageModal from "../modals/MessageModal";
@@ -15,7 +17,7 @@ interface BookingsContentProps {
 }
 
 const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
-  const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]); // can be BookingWithDetails or TripRequest
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState("");
@@ -39,24 +41,36 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     if (!tourGuideId) return;
     setIsLoading(true);
     try {
-      const data = await getBookingsWithDetailsByGuideUserId(tourGuideId);
-      setBookings(data.bookings);
-      setDebugLog(data.debugLog || []);
-      console.log("[BookingsContent] Data bookings fetched:", data.bookings);
-      if (data.bookings.length === 0) {
+      const [bookingData, tripRequests] = await Promise.all([
+        getBookingsWithDetailsByGuideUserId(tourGuideId),
+        getTripRequestsByGuideId(tourGuideId),
+      ]);
+      // Add type property for distinction
+      const bookingsWithType = (bookingData.bookings || []).map((b) => ({ ...b, _type: "booking" }));
+      const tripRequestsWithType = (tripRequests || []).map((r) => ({ ...r, _type: "trip_request" }));
+      const all = [...bookingsWithType, ...tripRequestsWithType];
+      // Sort by date (for trip requests, use start_date)
+      all.sort((a, b) => {
+        const dateA = a._type === "trip_request" ? new Date(a.start_date) : new Date(a.date);
+        const dateB = b._type === "trip_request" ? new Date(b.start_date) : new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      });
+      setBookings(all);
+      setDebugLog(bookingData.debugLog || []);
+      if (all.length === 0) {
         setToast({
           isVisible: true,
           type: "warning",
           message:
-            "No bookings found for your tours. You'll see them here when customers make reservations.",
+            "No bookings or trip requests found. You'll see them here when customers make reservations or request a trip.",
         });
       }
     } catch (error) {
-      console.error("[BookingsContent] Error fetching bookings:", error);
+      console.error("[BookingsContent] Error fetching bookings or trip requests:", error);
       setToast({
         isVisible: true,
         type: "error",
-        message: "Failed to load bookings. Please try again.",
+        message: "Failed to load bookings or trip requests. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -80,10 +94,16 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
 
   // Filter bookings based on search term and filters
   const filteredBookings = bookings.filter((booking) => {
+    // For trip requests, use name/email/itinerary title for search
     const matchesSearch =
       searchTerm === "" ||
-      booking.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.tourName?.toLowerCase().includes(searchTerm.toLowerCase());
+      (booking._type === "booking"
+        ? booking.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.tourName?.toLowerCase().includes(searchTerm.toLowerCase())
+        : booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.itineraries?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
     const matchesStatus =
       statusFilter === "" || booking.status === statusFilter;
@@ -91,7 +111,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
     // Time filter logic
     if (timeFilter === "") return matchesSearch && matchesStatus;
 
-    const bookingDate = new Date(booking.date);
+    const bookingDate = booking._type === "trip_request" ? new Date(booking.start_date) : new Date(booking.date);
     const today = new Date();
 
     switch (timeFilter) {
@@ -250,8 +270,8 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
         booking.payment_status === "paid"
           ? "paid"
           : booking.payment_status === "pending"
-          ? "pending"
-          : "refunded",
+            ? "pending"
+            : "refunded",
       createdAt: booking.created_at || new Date().toISOString(),
       updatedAt: booking.updated_at || new Date().toISOString(),
     };
@@ -334,10 +354,10 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                 {timeFilter === "today"
                   ? "Today"
                   : timeFilter === "tomorrow"
-                  ? "Tomorrow"
-                  : timeFilter === "week"
-                  ? "This Week"
-                  : "This Month"}
+                    ? "Tomorrow"
+                    : timeFilter === "week"
+                      ? "This Week"
+                      : "This Month"}
                 <button
                   onClick={() => handleRemoveFilter("time")}
                   className="ml-2 text-teal-500 hover:text-teal-700"
@@ -386,11 +406,10 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
           <div className="flex justify-end px-4 py-2 bg-gray-50">
             <button
               onClick={toggleDebugMode}
-              className={`text-xs px-2 py-1 rounded ${
-                debugMode
+              className={`text-xs px-2 py-1 rounded ${debugMode
                   ? "bg-red-100 text-red-700 hover:bg-red-200"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               {debugMode ? "Debug Mode: ON" : "Debug Mode"}
             </button>
@@ -466,75 +485,198 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {currentBookings.length > 0 ? (
                     currentBookings.map((booking) => (
-                      <tr key={booking.id}>
+                      <tr
+                        key={booking.id + (booking._type === "trip_request" ? "-trip" : "")}
+                        className={
+                          booking._type === "trip_request"
+                            ? "bg-blue-50 border-l-4 border-blue-400"
+                            : ""
+                        }
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">
-                            {booking.userName}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {booking.userEmail}
-                          </div>
+                          {booking._type === "trip_request" ? (
+                            <>
+                              <div className="font-medium text-blue-900 flex items-center gap-2">
+                                {booking.name}
+                                <span className="ml-2 px-2 py-0.5 rounded bg-blue-200 text-blue-800 text-xs font-semibold">Trip Request</span>
+                              </div>
+                              <div className="text-sm text-blue-700">{booking.email}</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="font-medium text-gray-900">{booking.userName}</div>
+                              <div className="text-sm text-gray-500">{booking.userEmail}</div>
+                            </>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {booking.tourName}
-                          </div>
+                          {booking._type === "trip_request"
+                            ? (
+                              <div className="text-sm text-blue-900 font-semibold">
+                                {booking.itineraries?.title || "Custom Trip"}
+                              </div>
+                            )
+                            : (
+                              <div className="text-sm text-gray-900">{booking.tourName}</div>
+                            )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(booking.date).toLocaleDateString("id-ID", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                          {booking._type === "trip_request"
+                            ? `${new Date(booking.start_date).toLocaleDateString("id-ID", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })} - ${new Date(booking.end_date).toLocaleDateString("id-ID", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}`
+                            : new Date(booking.date).toLocaleDateString("id-ID", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {booking.participants}
+                          {booking._type === "trip_request"
+                            ? booking.group_size
+                            : booking.participants}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div className="font-medium">
-                            $
-                            {booking.total_amount
-                              ? Number(booking.total_amount).toFixed(2)
-                              : "0.00"}
-                          </div>
+                          {booking._type === "trip_request" ? (
+                            <span className="text-blue-700 font-semibold">-</span>
+                          ) : (
+                            <div className="font-medium">
+                              $
+                              {booking.total_amount
+                                ? Number(booking.total_amount).toFixed(2)
+                                : "0.00"}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              booking.payment_status === "paid"
-                                ? "bg-green-100 text-green-800"
-                                : booking.payment_status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : booking.payment_status === "failed"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {booking.payment_status || "Unknown"}
-                          </span>
+                          {booking._type === "trip_request" ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              -
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${booking.payment_status === "paid"
+                                  ? "bg-green-100 text-green-800"
+                                  : booking.payment_status === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : booking.payment_status === "failed"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }`}
+                            >
+                              {booking.payment_status || "Unknown"}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                              booking.status
-                            )}`}
-                          >
-                            {booking.status}
-                          </span>
+                          {booking._type === "trip_request" ? (
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${booking.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : booking.status === "approved"
+                                    ? "bg-green-100 text-green-800"
+                                    : booking.status === "rejected"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }`}
+                            >
+                              {booking.status}
+                            </span>
+                          ) : (
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                                booking.status
+                              )}`}
+                            >
+                              {booking.status}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            className="text-teal-600 hover:text-teal-900 mr-3"
-                            onClick={() => handleViewDetails(booking)}
-                          >
-                            Details
-                          </button>
-                          <button
-                            className="text-blue-600 hover:text-blue-900"
-                            onClick={() => handleSendMessage(booking)}
-                          >
-                            Message
-                          </button>
+                          {/* Actions for both trip requests and bookings */}
+                          {booking._type === "trip_request" ? (
+                            <>
+                              <button
+                                className="text-teal-600 hover:text-teal-900 mr-3"
+                                onClick={() => handleViewDetails(booking)}
+                              >
+                                View
+                              </button>
+                              {/* Allow cancel if status is pending or approved */}
+                              {(booking.status === "pending" || booking.status === "approved") && (
+                                <button
+                                  className="text-red-600 hover:text-red-900 mr-3"
+                                  onClick={async () => {
+                                    if (!window.confirm("Are you sure you want to cancel this trip request?")) return;
+                                    try {
+                                      await updateItineraryRequestStatus(booking.id, "cancelled");
+                                      setToast({
+                                        isVisible: true,
+                                        type: "success",
+                                        message: "Trip request cancelled successfully!",
+                                      });
+                                      fetchBookings();
+                                    } catch (err) {
+                                      setToast({
+                                        isVisible: true,
+                                        type: "error",
+                                        message: "Failed to cancel trip request.",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="text-teal-600 hover:text-teal-900 mr-3"
+                                onClick={() => handleViewDetails(booking)}
+                              >
+                                Details
+                              </button>
+                              <button
+                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                onClick={() => handleSendMessage(booking)}
+                              >
+                                Message
+                              </button>
+                              {/* Allow cancel if status is confirmed or pending */}
+                              {(booking.status === "confirmed" || booking.status === "pending") && (
+                                <button
+                                  className="text-red-600 hover:text-red-900"
+                                  onClick={async () => {
+                                    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+                                    try {
+                                      await updateBookingStatusSupabase(Number(booking.id), "cancelled");
+                                      setToast({
+                                        isVisible: true,
+                                        type: "success",
+                                        message: "Booking cancelled successfully!",
+                                      });
+                                      fetchBookings();
+                                    } catch {
+                                      setToast({
+                                        isVisible: true,
+                                        type: "error",
+                                        message: "Failed to cancel booking.",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -544,8 +686,7 @@ const BookingsContent: React.FC<BookingsContentProps> = ({ tourGuideId }) => {
                         colSpan={8}
                         className="px-6 py-10 text-center text-gray-500"
                       >
-                        No bookings found. New bookings will appear here once
-                        customers make reservations for your tours.
+                        No bookings or trip requests found. New bookings or trip requests will appear here once customers make reservations or request a trip.
                       </td>
                     </tr>
                   )}

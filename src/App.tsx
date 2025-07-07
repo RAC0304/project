@@ -74,7 +74,7 @@ function AppContent() {
             <Route path="/destinations" element={<DestinationsListPage />} />
             <Route path="/destinations/:id" element={<DestinationPage />} />
             <Route path="/itineraries" element={<ItinerariesPage />} />
-            <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
+            <Route path="/itineraries/:slug" element={<ItineraryDetailPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/tour-guides" element={<TourGuidesPage />} />
             <Route path="/tour-guides/:id" element={<TourGuideProfile />} />

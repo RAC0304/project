@@ -80,7 +80,7 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({ itinerary }) => {
           </div>
 
           <Link
-            to={`/itineraries/${itinerary.id}`}
+            to={`/itineraries/${itinerary.slug}`}
             className="inline-block bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors"
           >
             View Itinerary
