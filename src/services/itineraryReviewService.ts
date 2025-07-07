@@ -175,7 +175,7 @@ export const updateItineraryReview = async (
                 ...updates,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', reviewId)
+            .eq('id', String(reviewId))
             .select(`
         *,
         users (
@@ -207,7 +207,7 @@ export const deleteItineraryReview = async (
         const { error } = await supabase
             .from('itinerary_reviews')
             .delete()
-            .eq('id', reviewId);
+            .eq('id', String(reviewId));
 
         if (error) {
             console.error('Error deleting itinerary review:', error);
@@ -283,7 +283,7 @@ export const incrementReviewHelpfulCount = async (
         const { data: currentReview, error: fetchError } = await supabase
             .from('itinerary_reviews')
             .select('helpful_count')
-            .eq('id', reviewId)
+            .eq('id', String(reviewId))
             .single();
 
         if (fetchError) {
@@ -298,7 +298,7 @@ export const incrementReviewHelpfulCount = async (
                 helpful_count: (currentReview.helpful_count || 0) + 1,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', reviewId);
+            .eq('id', String(reviewId));
 
         if (error) {
             console.error('Error incrementing review helpful count:', error);

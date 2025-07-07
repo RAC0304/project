@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Building, Smartphone, CheckCircle } from 'lucide-react';
-import { paymentService, PaymentData } from '../services/paymentService';
+import { paymentService } from '../../services/paymentService';
 
-interface PaymentModalProps {
+interface ItineraryPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    booking: {
+    itineraryBooking: {
         id: number;
         title: string;
         amount: number;
         participants: number;
-        source?: 'bookings' | 'itinerary_bookings';
+        currency?: string;
     };
     userDetails: {
         name: string;
@@ -18,16 +18,14 @@ interface PaymentModalProps {
         phone: string;
     };
     onPaymentSuccess: () => void;
-    source?: 'bookings' | 'itinerary_bookings';
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({
+const ItineraryPaymentModal: React.FC<ItineraryPaymentModalProps> = ({
     isOpen,
     onClose,
-    booking,
+    itineraryBooking,
     userDetails,
-    onPaymentSuccess,
-    source
+    onPaymentSuccess
 }) => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'bank_transfer' | 'e_wallet'>('credit_card');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -36,9 +34,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const paymentMethods = paymentService.getAvailablePaymentMethods();
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('id-ID', {
+        const currency = itineraryBooking.currency || 'USD';
+        return new Intl.NumberFormat(currency === 'IDR' ? 'id-ID' : 'en-US', {
             style: 'currency',
-            currency: 'IDR',
+            currency,
             minimumFractionDigits: 0,
         }).format(amount);
     };
@@ -47,21 +46,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         setIsProcessing(true);
         setPaymentResult(null);
 
-        // Determine source: prefer booking.source, fallback to prop, then 'bookings'
-        const paymentSource = booking.source || source || 'bookings';
-
-        // Build paymentData for paymentService
         const paymentData: any = {
-            amount: booking.amount,
+            amount: itineraryBooking.amount,
             paymentMethod: selectedPaymentMethod,
             customerDetails: userDetails,
-            source: paymentSource,
+            source: 'itinerary_bookings',
+            itineraryBookingId: itineraryBooking.id,
         };
-        if (paymentSource === 'itinerary_bookings') {
-            paymentData.itineraryBookingId = booking.id;
-        } else {
-            paymentData.bookingId = booking.id;
-        }
 
         try {
             const result = await paymentService.processPayment(paymentData);
@@ -71,8 +62,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     success: true,
                     message: `Payment successful! Transaction ID: ${result.transactionId}`
                 });
-
-                // Call success callback after a short delay to show success message
                 setTimeout(() => {
                     onPaymentSuccess();
                     onClose();
@@ -127,19 +116,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="p-6">
                     {/* Booking Summary */}
                     <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h3 className="font-medium text-gray-900 mb-2">Booking Summary</h3>
+                        <h3 className="font-medium text-gray-900 mb-2">Itinerary Booking Summary</h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Tour:</span>
-                                <span className="font-medium">{booking.title}</span>
+                                <span className="text-gray-600">Itinerary:</span>
+                                <span className="font-medium">{itineraryBooking.title}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Participants:</span>
-                                <span className="font-medium">{booking.participants}</span>
+                                <span className="font-medium">{itineraryBooking.participants}</span>
                             </div>
                             <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2 mt-2">
                                 <span>Total Amount:</span>
-                                <span className="text-teal-600">{formatCurrency(booking.amount)}</span>
+                                <span className="text-teal-600">{formatCurrency(itineraryBooking.amount)}</span>
                             </div>
                         </div>
                     </div>
@@ -158,9 +147,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                                     onClick={() => setSelectedPaymentMethod(method.id as any)}
                                 >
                                     <div className="flex items-center">
-                                        <div className={`mr-3 ${selectedPaymentMethod === method.id ? 'text-teal-600' : 'text-gray-400'}`}>
-                                            {getPaymentMethodIcon(method.id)}
-                                        </div>
+                                        <div className={`mr-3 ${selectedPaymentMethod === method.id ? 'text-teal-600' : 'text-gray-400'}`}>{getPaymentMethodIcon(method.id)}</div>
                                         <div className="flex-1">
                                             <div className="font-medium text-gray-900">{method.name}</div>
                                             <div className="text-sm text-gray-500">{method.description}</div>
@@ -216,7 +203,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                                     Processing...
                                 </div>
                             ) : (
-                                `Pay ${formatCurrency(booking.amount)}`
+                                `Pay ${formatCurrency(itineraryBooking.amount)}`
                             )}
                         </button>
                     </div>
@@ -226,4 +213,4 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     );
 };
 
-export default PaymentModal;
+export default ItineraryPaymentModal;

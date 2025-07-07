@@ -161,28 +161,71 @@ export const getUserItineraryBookings = async (
 // Get user's itinerary requests
 export const getUserItineraryRequests = async (
     userId: string
-): Promise<ItineraryRequest[]> => {
+): Promise<any[]> => {
     try {
-        const { data, error } = await supabase
+        // First, fetch itinerary requests
+        const { data: requests, error: reqError } = await supabase
             .from('itinerary_requests')
             .select(`
-        *,
-        itineraries (
-          id,
-          title,
-          duration,
-          image_url
-        )
-      `)
+                *,
+                itineraries (
+                    id, 
+                    title, 
+                    duration, 
+                    image_url
+                )
+            `)
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching user itinerary requests:', error);
-            throw error;
+        if (reqError) {
+            console.error('Error fetching itinerary requests:', reqError);
+            throw reqError;
         }
 
-        return data || [];
+        if (!requests || requests.length === 0) {
+            return [];
+        }
+
+        // Then, fetch all bookings for these requests
+        // Ambil semua booking untuk user ini dan itinerary terkait
+        const { data: bookings, error: bookError } = await supabase
+            .from('itinerary_bookings')
+            .select('*')
+            .eq('user_id', userId);
+
+        if (bookError) {
+            console.error('Error fetching itinerary bookings:', bookError);
+            throw bookError;
+        }
+
+        // Buat map dengan key: itinerary_id+user_id
+        const bookingMap = new Map();
+        (bookings || []).forEach(booking => {
+            // Hanya booking yang statusnya confirmed yang dipakai untuk pembayaran
+            if (booking.status === 'confirmed') {
+                bookingMap.set(`${booking.itinerary_id}_${booking.user_id}`, booking);
+            }
+        });
+
+        // Gabungkan request dengan booking yang cocok (user_id & itinerary_id & status confirmed)
+        const formattedRequests = (requests || []).map(req => {
+            const booking = bookingMap.get(`${req.itinerary_id}_${req.user_id}`) || null;
+            return {
+                ...req,
+                itinerary_booking: booking,
+                // Map booking fields ke level request untuk backward compatibility
+                status: booking?.status || req.status,
+                payment_status: booking?.payment_status,
+                total_price: booking?.total_price,
+                currency: booking?.currency || req.currency || 'IDR',
+                start_date: booking?.start_date || req.start_date,
+                end_date: booking?.end_date || req.end_date,
+                amount: booking?.total_price ?? req.amount ?? 0
+            };
+        });
+
+        return formattedRequests;
     } catch (error) {
         console.error('Error in getUserItineraryRequests:', error);
         throw error;
@@ -201,7 +244,7 @@ export const updateItineraryBookingStatus = async (
                 status,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', bookingId);
+            .eq('id', String(bookingId));
 
         if (error) {
             console.error('Error updating itinerary booking status:', error);
@@ -225,7 +268,7 @@ export const updateItineraryRequestStatus = async (
                 status,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', requestId);
+            .eq('id', String(requestId));
 
         if (error) {
             console.error('Error updating itinerary request status:', error);
@@ -423,7 +466,7 @@ export const deleteItineraryBooking = async (
         const { error } = await supabase
             .from('itinerary_bookings')
             .delete()
-            .eq('id', bookingId);
+            .eq('id', String(bookingId));
 
         if (error) {
             console.error('Error deleting itinerary booking:', error);
@@ -443,7 +486,7 @@ export const deleteItineraryRequest = async (
         const { error } = await supabase
             .from('itinerary_requests')
             .delete()
-            .eq('id', requestId);
+            .eq('id', String(requestId));
 
         if (error) {
             console.error('Error deleting itinerary request:', error);

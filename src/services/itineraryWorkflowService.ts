@@ -91,7 +91,7 @@ export const updateRequestStatus = async (
         const { error } = await supabase
             .from('itinerary_requests')
             .update(updateData)
-            .eq('id', requestId);
+            .eq('id', String(requestId));
 
         if (error) {
             console.error('Error updating request status:', error);
@@ -175,7 +175,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
         const { error } = await supabase
             .from('itinerary_notifications')
             .update({ is_read: true })
-            .eq('id', notificationId);
+            .eq('id', String(notificationId));
 
         if (error) {
             console.error('Error marking notification as read:', error);

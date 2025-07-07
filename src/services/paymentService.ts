@@ -1,7 +1,8 @@
 import { supabase } from "../utils/supabaseClient";
 
 export interface PaymentData {
-    bookingId: number;
+    bookingId?: number;
+    itineraryBookingId?: number;
     amount: number;
     paymentMethod: 'credit_card' | 'bank_transfer' | 'e_wallet';
     customerDetails: {
@@ -9,6 +10,7 @@ export interface PaymentData {
         email: string;
         phone: string;
     };
+    source?: 'bookings' | 'itinerary_bookings';
 }
 
 export interface PaymentResult {
@@ -26,76 +28,143 @@ class PaymentService {
      */
     async processPayment(paymentData: PaymentData): Promise<PaymentResult> {
         try {
-            // Verify booking exists and is confirmed
-            const { data: booking, error: bookingError } = await supabase
-                .from('bookings')
-                .select('id, status, payment_status, total_amount')
-                .eq('id', paymentData.bookingId)
-                .single();
+            const source = paymentData.source || 'bookings';
+            let booking: any = null;
+            let bookingError: any = null;
+            let updateError: any = null;
+            let bookingId: number | undefined = undefined;
+            let itineraryBookingId: number | undefined = undefined;
 
-            if (bookingError || !booking) {
+            if (source === 'itinerary_bookings') {
+                // Custom itinerary booking
+                itineraryBookingId = paymentData.itineraryBookingId;
+                const { data, error } = await supabase
+                    .from('itinerary_bookings')
+                    .select('id, status, payment_status, total_price')
+                    .eq('id', itineraryBookingId)
+                    .single();
+                booking = data;
+                bookingError = error;
+                if (bookingError || !booking) {
+                    return {
+                        success: false,
+                        error: 'Custom itinerary booking not found'
+                    };
+                }
+                if (booking.status !== 'confirmed') {
+                    return {
+                        success: false,
+                        error: 'Booking must be confirmed before payment'
+                    };
+                }
+                if (booking.payment_status === 'paid') {
+                    return {
+                        success: false,
+                        error: 'Payment already completed for this booking'
+                    };
+                }
+                // Simulate payment processing
+                const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                // Update itinerary_booking payment status
+                const { error: updateErr } = await supabase
+                    .from('itinerary_bookings')
+                    .update({
+                        payment_status: 'paid',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', String(itineraryBookingId));
+                updateError = updateErr;
+                if (updateError) {
+                    console.error('Error updating payment status:', updateError);
+                    return {
+                        success: false,
+                        error: 'Failed to update payment status'
+                    };
+                }
+                // Create payment record (khusus itinerary_booking, booking_id tidak diisi)
+                const { error: paymentRecordError } = await supabase
+                    .from('payments')
+                    .insert([{
+                        itinerary_booking_id: itineraryBookingId,
+                        amount: paymentData.amount,
+                        payment_method: paymentData.paymentMethod,
+                        transaction_id: transactionId,
+                        status: 'completed',
+                        created_at: new Date().toISOString()
+                        // booking_id tidak diisi
+                    }]);
+                if (paymentRecordError) {
+                    console.warn('Warning: Could not create payment record:', paymentRecordError);
+                }
                 return {
-                    success: false,
-                    error: 'Booking not found'
+                    success: true,
+                    transactionId
+                };
+            } else {
+                // Regular booking
+                bookingId = paymentData.bookingId;
+                const { data, error } = await supabase
+                    .from('bookings')
+                    .select('id, status, payment_status, total_amount')
+                    .eq('id', bookingId)
+                    .single();
+                booking = data;
+                bookingError = error;
+                if (bookingError || !booking) {
+                    return {
+                        success: false,
+                        error: 'Booking not found'
+                    };
+                }
+                if (booking.status !== 'confirmed') {
+                    return {
+                        success: false,
+                        error: 'Booking must be confirmed before payment'
+                    };
+                }
+                if (booking.payment_status === 'paid') {
+                    return {
+                        success: false,
+                        error: 'Payment already completed for this booking'
+                    };
+                }
+                // Simulate payment processing
+                const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                // Update booking payment status
+                const { error: updateErr } = await supabase
+                    .from('bookings')
+                    .update({
+                        payment_status: 'paid',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', bookingId);
+                updateError = updateErr;
+                if (updateError) {
+                    console.error('Error updating payment status:', updateError);
+                    return {
+                        success: false,
+                        error: 'Failed to update payment status'
+                    };
+                }
+                // Create payment record (regular booking, booking_id diisi)
+                const { error: paymentRecordError } = await supabase
+                    .from('payments')
+                    .insert([{
+                        booking_id: bookingId,
+                        amount: paymentData.amount,
+                        payment_method: paymentData.paymentMethod,
+                        transaction_id: transactionId,
+                        status: 'completed',
+                        created_at: new Date().toISOString()
+                    }]);
+                if (paymentRecordError) {
+                    console.warn('Warning: Could not create payment record:', paymentRecordError);
+                }
+                return {
+                    success: true,
+                    transactionId
                 };
             }
-
-            if (booking.status !== 'confirmed') {
-                return {
-                    success: false,
-                    error: 'Booking must be confirmed before payment'
-                };
-            }
-
-            if (booking.payment_status === 'paid') {
-                return {
-                    success: false,
-                    error: 'Payment already completed for this booking'
-                };
-            }
-
-            // Simulate payment processing (in real app, integrate with payment gateway)
-            const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-            // Update booking payment status
-            const { error: updateError } = await supabase
-                .from('bookings')
-                .update({
-                    payment_status: 'paid',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', paymentData.bookingId);
-
-            if (updateError) {
-                console.error('Error updating payment status:', updateError);
-                return {
-                    success: false,
-                    error: 'Failed to update payment status'
-                };
-            }
-
-            // Create payment record
-            const { error: paymentRecordError } = await supabase
-                .from('payments')
-                .insert([{
-                    booking_id: paymentData.bookingId,
-                    amount: paymentData.amount,
-                    payment_method: paymentData.paymentMethod,
-                    transaction_id: transactionId,
-                    status: 'completed',
-                    created_at: new Date().toISOString()
-                }]);
-
-            // Don't fail if payment record creation fails (booking payment status is more important)
-            if (paymentRecordError) {
-                console.warn('Warning: Could not create payment record:', paymentRecordError);
-            }
-
-            return {
-                success: true,
-                transactionId
-            };
-
         } catch (error) {
             console.error('Payment processing error:', error);
             return {

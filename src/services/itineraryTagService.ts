@@ -101,7 +101,7 @@ export const deleteTag = async (tagId: string): Promise<void> => {
         const { error } = await supabase
             .from('itinerary_tags')
             .delete()
-            .eq('id', tagId);
+            .eq('id', String(tagId));
 
         if (error) {
             console.error('Error deleting tag:', error);

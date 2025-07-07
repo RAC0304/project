@@ -213,7 +213,7 @@ export const getItineraryById = async (id: string): Promise<Itinerary | null> =>
         const { data: itineraryData, error: itineraryError } = await supabase
             .from('itineraries')
             .select('*')
-            .eq('id', numericId)
+            .eq('id', String(numericId))
             .eq('status', 'published')
             .single();
 
@@ -605,7 +605,7 @@ export const getRelatedItineraries = async (
         const { data: currentItinerary, error: currentError } = await supabase
             .from('itineraries')
             .select('category, difficulty')
-            .eq('id', itineraryId)
+            .eq('id', String(itineraryId))
             .single();
 
         if (currentError) {

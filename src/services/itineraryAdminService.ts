@@ -115,7 +115,7 @@ export const updateItinerary = async (
                 ...updates,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', itineraryId);
+            .eq('id', String(itineraryId));
 
         if (error) {
             console.error('Error updating itinerary:', error);
@@ -141,7 +141,7 @@ export const deleteItinerary = async (
         const { error } = await supabase
             .from('itineraries')
             .delete()
-            .eq('id', itineraryId);
+            .eq('id', String(itineraryId));
 
         if (error) {
             console.error('Error deleting itinerary:', error);
@@ -185,7 +185,7 @@ export const updateItineraryDay = async (
         const { error } = await supabase
             .from('itinerary_days')
             .update(updates)
-            .eq('id', dayId);
+            .eq('id', String(dayId));
 
         if (error) {
             console.error('Error updating itinerary day:', error);
@@ -217,7 +217,7 @@ export const deleteItineraryDay = async (
         const { error } = await supabase
             .from('itinerary_days')
             .delete()
-            .eq('id', dayId);
+            .eq('id', String(dayId));
 
         if (error) {
             console.error('Error deleting itinerary day:', error);
@@ -311,7 +311,7 @@ export const updateItineraryActivity = async (
         const { error } = await supabase
             .from('itinerary_activities')
             .update(updates)
-            .eq('id', activityId);
+            .eq('id', String(activityId));
 
         if (error) {
             console.error('Error updating itinerary activity:', error);
@@ -331,7 +331,7 @@ export const deleteItineraryActivity = async (
         const { error } = await supabase
             .from('itinerary_activities')
             .delete()
-            .eq('id', activityId);
+            .eq('id', String(activityId));
 
         if (error) {
             console.error('Error deleting itinerary activity:', error);
@@ -447,7 +447,7 @@ export const removeImageFromItinerary = async (
         const { error } = await supabase
             .from('itinerary_images')
             .delete()
-            .eq('id', imageId);
+            .eq('id', String(imageId));
 
         if (error) {
             console.error('Error removing image from itinerary:', error);

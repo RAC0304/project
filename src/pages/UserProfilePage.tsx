@@ -24,6 +24,7 @@ import {
 } from "../services/userActivityService";
 import AllActivitiesModal from "../components/AllActivitiesModal";
 import PaymentModal from "../components/PaymentModal";
+import ItineraryPaymentModal from "../components/itineraries/ItineraryPaymentModal";
 import { chatService, ChatMessage } from "../services/chatService";
 
 const UserProfilePage: React.FC = () => {
@@ -86,11 +87,14 @@ const UserProfilePage: React.FC = () => {
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<{
-    id: number;
+    id?: number;
+    itineraryBookingId?: number;
     title: string;
     amount: number;
     participants: number;
+    source?: 'bookings' | 'itinerary_bookings';
   } | null>(null);
+  const [showItineraryPaymentModal, setShowItineraryPaymentModal] = useState(false);
 
   // Chat modal state
   const [showChatModal, setShowChatModal] = useState(false);
@@ -332,14 +336,29 @@ const UserProfilePage: React.FC = () => {
   };
 
   // Function to handle payment for confirmed bookings
+  // Tambahkan property 'source' untuk membedakan bookings dan itinerary_bookings
   const handlePayNow = (booking: {
-    id: number;
+    id?: number;
+    itineraryBookingId?: number;
     title: string;
     amount: number;
     participants: number;
+    source?: 'bookings' | 'itinerary_bookings';
   }) => {
-    setSelectedBookingForPayment(booking);
-    setShowPaymentModal(true);
+    if (booking.source === 'itinerary_bookings') {
+      setSelectedBookingForPayment({
+        ...booking,
+        itineraryBookingId: booking.itineraryBookingId ?? booking.id,
+        source: 'itinerary_bookings',
+      });
+      setShowItineraryPaymentModal(true);
+    } else {
+      setSelectedBookingForPayment({
+        ...booking,
+        source: 'bookings',
+      });
+      setShowPaymentModal(true);
+    }
   };
 
   // Function to handle successful payment
@@ -794,8 +813,8 @@ const UserProfilePage: React.FC = () => {
                   {" "}
                   <label
                     className={`p-2 bg-teal-500 rounded-full text-white ${isLoading
-                        ? "opacity-70 cursor-not-allowed"
-                        : "hover:bg-teal-600 cursor-pointer"
+                      ? "opacity-70 cursor-not-allowed"
+                      : "hover:bg-teal-600 cursor-pointer"
                       } transition-colors shadow-md`}
                   >
                     {isLoading ? (
@@ -818,8 +837,8 @@ const UserProfilePage: React.FC = () => {
                         onClick={handleRemoveImage}
                         disabled={isLoading}
                         className={`p-2 bg-red-500 rounded-full text-white ${isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-red-600"
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-red-600"
                           } transition-colors shadow-md`}
                         title="Remove photo"
                       >
@@ -842,8 +861,8 @@ const UserProfilePage: React.FC = () => {
                     onClick={testImageStorage}
                     disabled={isLoading}
                     className={`mt-3 text-xs px-2 py-1 bg-gray-200 rounded ${isLoading
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-300"
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-gray-300"
                       }`}
                   >
                     Test Storage
@@ -872,8 +891,8 @@ const UserProfilePage: React.FC = () => {
                         onClick={handleSaveChanges}
                         disabled={isLoading}
                         className={`flex items-center text-sm bg-teal-600 text-white px-3 py-1 rounded-md ${isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-teal-700"
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-teal-700"
                           }`}
                       >
                         {isLoading ? "Saving..." : "Save Changes"}
@@ -882,8 +901,8 @@ const UserProfilePage: React.FC = () => {
                         onClick={handleCancelEdit}
                         disabled={isLoading}
                         className={`flex items-center text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-md ${isLoading
-                            ? "opacity-70 cursor-not-allowed"
-                            : "hover:bg-gray-200"
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:bg-gray-200"
                           }`}
                       >
                         Cancel
@@ -894,8 +913,8 @@ const UserProfilePage: React.FC = () => {
                       onClick={() => setIsEditing(true)}
                       disabled={isLoading}
                       className={`flex items-center text-sm text-teal-600 ${isLoading
-                          ? "opacity-70 cursor-not-allowed"
-                          : "hover:text-teal-700"
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:text-teal-700"
                         }`}
                     >
                       <Settings className="w-4 h-4 mr-1" />
@@ -1086,8 +1105,8 @@ const UserProfilePage: React.FC = () => {
                       <div className="flex items-center space-x-3">
                         <label
                           className={`flex items-center space-x-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg ${isLoading
-                              ? "opacity-70 cursor-not-allowed"
-                              : "cursor-pointer hover:bg-teal-100"
+                            ? "opacity-70 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-teal-100"
                             } transition-colors`}
                         >
                           {isLoading ? (
@@ -1113,8 +1132,8 @@ const UserProfilePage: React.FC = () => {
                               onClick={handleRemoveImage}
                               disabled={isLoading}
                               className={`px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 ${isLoading
-                                  ? "opacity-70 cursor-not-allowed"
-                                  : "hover:bg-red-100"
+                                ? "opacity-70 cursor-not-allowed"
+                                : "hover:bg-red-100"
                                 } transition-colors`}
                             >
                               {isLoading ? "Removing..." : "Remove Photo"}
@@ -1125,8 +1144,8 @@ const UserProfilePage: React.FC = () => {
                             onClick={testImageStorage}
                             disabled={isLoading}
                             className={`px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 ${isLoading
-                                ? "opacity-70 cursor-not-allowed"
-                                : "hover:bg-blue-100"
+                              ? "opacity-70 cursor-not-allowed"
+                              : "hover:bg-blue-100"
                               } transition-colors`}
                             title="Test Supabase storage functionality"
                           >
@@ -1150,8 +1169,8 @@ const UserProfilePage: React.FC = () => {
                   onClick={handleLogout}
                   disabled={isLoading}
                   className={`flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg ${isLoading
-                      ? "opacity-70 cursor-not-allowed"
-                      : "hover:bg-red-600"
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:bg-red-600"
                     } transition-colors duration-300`}
                 >
                   <LogOut className="w-4 h-4" />
@@ -1163,6 +1182,36 @@ const UserProfilePage: React.FC = () => {
 
           {/* Right Column: Stats and Activity */}
           <div className="md:col-span-1">
+            {/* Trip Requests Notification */}
+            {user?.id && (
+              <div className="mb-6">
+                <TripRequestsNotification 
+                  userId={user.id}
+                  onPayNow={(booking) => {
+                    if (booking.source === 'itinerary_bookings') {
+                      setSelectedBookingForPayment({
+                        id: booking.itineraryBookingId,
+                        title: booking.title,
+                        amount: booking.amount,
+                        participants: booking.participants,
+                        source: 'itinerary_bookings'
+                      });
+                      setShowItineraryPaymentModal(true);
+                    } else {
+                      setSelectedBookingForPayment({
+                        id: booking.id,
+                        title: booking.title,
+                        amount: booking.amount,
+                        participants: booking.participants,
+                        source: 'bookings'
+                      });
+                      setShowPaymentModal(true);
+                    }
+                  }}
+                />
+              </div>
+            )}
+            
             <div className="bg-white rounded-xl shadow-md p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Account Statistics
@@ -1198,8 +1247,8 @@ const UserProfilePage: React.FC = () => {
                   onClick={refreshActivities}
                   disabled={activitiesLoading}
                   className={`p-2 rounded-lg transition-colors ${activitiesLoading
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-teal-50 text-teal-600 hover:bg-teal-100"
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-teal-50 text-teal-600 hover:bg-teal-100"
                     }`}
                   title="Refresh activities"
                 >
@@ -1329,14 +1378,14 @@ const UserProfilePage: React.FC = () => {
                                   {activity.details?.status && (
                                     <span
                                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1 ${activity.details.status === "confirmed"
-                                          ? "bg-green-50 text-green-700 border border-green-200"
+                                        ? "bg-green-50 text-green-700 border border-green-200"
+                                        : activity.details.status ===
+                                          "pending"
+                                          ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
                                           : activity.details.status ===
-                                            "pending"
-                                            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                            : activity.details.status ===
-                                              "cancelled"
-                                              ? "bg-red-50 text-red-700 border border-red-200"
-                                              : "bg-gray-50 text-gray-700 border border-gray-200"
+                                            "cancelled"
+                                            ? "bg-red-50 text-red-700 border border-red-200"
+                                            : "bg-gray-50 text-gray-700 border border-gray-200"
                                         }`}
                                     >
                                       {activity.details.status}
@@ -1387,10 +1436,10 @@ const UserProfilePage: React.FC = () => {
                           {activity.type !== "booking" && activity.details && (
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.type === "message"
-                                  ? "bg-green-50 text-green-700 border border-green-200"
-                                  : activity.type === "tour_request"
-                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                    : "bg-gray-50 text-gray-700 border border-gray-200"
+                                ? "bg-green-50 text-green-700 border border-green-200"
+                                : activity.type === "tour_request"
+                                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                  : "bg-gray-50 text-gray-700 border border-gray-200"
                                 }`}
                             >
                               {activity.type === "message"
@@ -1470,8 +1519,9 @@ const UserProfilePage: React.FC = () => {
         onChatWithTourGuide={handleChatWithTourGuide}
       />
 
-      {/* Payment Modal */}
-      {selectedBookingForPayment && (
+
+      {/* Payment Modal for regular bookings */}
+      {selectedBookingForPayment && selectedBookingForPayment.source !== 'itinerary_bookings' && (
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => {
@@ -1480,8 +1530,31 @@ const UserProfilePage: React.FC = () => {
           }}
           booking={selectedBookingForPayment}
           userDetails={{
-            name: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""
-              }`.trim(),
+            name: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim(),
+            email: user.email || "",
+            phone: user.profile?.phone || "",
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
+          source={selectedBookingForPayment.source}
+        />
+      )}
+
+      {/* Payment Modal for itinerary bookings */}
+      {selectedBookingForPayment && selectedBookingForPayment.source === 'itinerary_bookings' && (
+        <ItineraryPaymentModal
+          isOpen={showItineraryPaymentModal}
+          onClose={() => {
+            setShowItineraryPaymentModal(false);
+            setSelectedBookingForPayment(null);
+          }}
+          itineraryBooking={{
+            id: selectedBookingForPayment.itineraryBookingId ?? selectedBookingForPayment.id!, // fallback for legacy
+            title: selectedBookingForPayment.title,
+            amount: selectedBookingForPayment.amount,
+            participants: selectedBookingForPayment.participants,
+          }}
+          userDetails={{
+            name: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim(),
             email: user.email || "",
             phone: user.profile?.phone || "",
           }}
@@ -1516,14 +1589,14 @@ const UserProfilePage: React.FC = () => {
                   <div
                     key={msg.id}
                     className={`mb-2 flex ${msg.sender_id === parseInt(user.id)
-                        ? "justify-end"
-                        : "justify-start"
+                      ? "justify-end"
+                      : "justify-start"
                       }`}
                   >
                     <div
                       className={`px-3 py-1 rounded-lg ${msg.sender_id === parseInt(user.id)
-                          ? "bg-teal-600 text-white"
-                          : "bg-gray-200 text-gray-800"
+                        ? "bg-teal-600 text-white"
+                        : "bg-gray-200 text-gray-800"
                         } max-w-[70%]`}
                     >
                       <span>{msg.content}</span>
