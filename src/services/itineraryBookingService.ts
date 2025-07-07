@@ -276,6 +276,108 @@ export const getItineraryBookingById = async (
 };
 
 // Get itinerary request by ID
+// Get itinerary booking by itinerary_id, user_id, and date range
+// Improved getItineraryBookingByRequest function
+export const getItineraryBookingByRequest = async (
+    itinerary_id: string,
+    user_id: string,
+    start_date: string,
+    end_date: string
+) => {
+    try {
+        console.log('[getItineraryBookingByRequest] Input params:', {
+            itinerary_id,
+            user_id,
+            start_date,
+            end_date
+        });
+
+        // Method 1: Exact match first
+        const { data: exactMatch, error: exactError } = await supabase
+            .from('itinerary_bookings')
+            .select('*')
+            .eq('itinerary_id', itinerary_id)
+            .eq('user_id', user_id)
+            .eq('start_date', start_date)
+            .eq('end_date', end_date)
+            .maybeSingle();
+
+        if (exactError && exactError.code !== 'PGRST116') {
+            console.error('[getItineraryBookingByRequest] Exact match error:', exactError);
+        }
+
+        if (exactMatch) {
+            console.log('[getItineraryBookingByRequest] Found exact match:', exactMatch);
+            return exactMatch;
+        }
+
+        // Method 2: Range overlap query
+        const { data: rangeMatch, error: rangeError } = await supabase
+            .from('itinerary_bookings')
+            .select('*')
+            .eq('itinerary_id', itinerary_id)
+            .eq('user_id', user_id)
+            .lte('start_date', end_date)
+            .gte('end_date', start_date)
+            .maybeSingle();
+
+        if (rangeError && rangeError.code !== 'PGRST116') {
+            console.error('[getItineraryBookingByRequest] Range match error:', rangeError);
+        }
+
+        if (rangeMatch) {
+            console.log('[getItineraryBookingByRequest] Found range match:', rangeMatch);
+            return rangeMatch;
+        }
+
+        // Method 3: Fallback - just match itinerary and user
+        const { data: fallbackMatch, error: fallbackError } = await supabase
+            .from('itinerary_bookings')
+            .select('*')
+            .eq('itinerary_id', itinerary_id)
+            .eq('user_id', user_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (fallbackError && fallbackError.code !== 'PGRST116') {
+            console.error('[getItineraryBookingByRequest] Fallback match error:', fallbackError);
+        }
+
+        if (fallbackMatch) {
+            console.log('[getItineraryBookingByRequest] Found fallback match:', fallbackMatch);
+            return fallbackMatch;
+        }
+
+        console.log('[getItineraryBookingByRequest] No match found');
+        return null;
+
+    } catch (error) {
+        console.error('[getItineraryBookingByRequest] Unexpected error:', error);
+        return null;
+    }
+};
+
+// Alternative: Get all bookings for debugging
+export const getAllItineraryBookingsForDebug = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('itinerary_bookings')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('[getAllItineraryBookingsForDebug] Error:', error);
+            return [];
+        }
+
+        console.log('[getAllItineraryBookingsForDebug] All bookings:', data);
+        return data || [];
+    } catch (error) {
+        console.error('[getAllItineraryBookingsForDebug] Unexpected error:', error);
+        return [];
+    }
+};
 export const getItineraryRequestById = async (
     requestId: string
 ): Promise<ItineraryRequest | null> => {

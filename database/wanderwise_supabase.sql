@@ -134,9 +134,9 @@ CREATE TABLE public.itinerary_bookings (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT itinerary_bookings_pkey PRIMARY KEY (id),
-  CONSTRAINT itinerary_bookings_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
   CONSTRAINT itinerary_bookings_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
-  CONSTRAINT itinerary_bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT itinerary_bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT itinerary_bookings_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
 );
 CREATE TABLE public.itinerary_days (
   id bigint NOT NULL DEFAULT nextval('itinerary_days_id_seq'::regclass),
@@ -182,8 +182,8 @@ CREATE TABLE public.itinerary_notifications (
   email_sent_at timestamp without time zone,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT itinerary_notifications_pkey PRIMARY KEY (id),
-  CONSTRAINT notifications_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.itinerary_requests(id),
-  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT notifications_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.itinerary_requests(id)
 );
 CREATE TABLE public.itinerary_request_status_history (
   id bigint NOT NULL DEFAULT nextval('itinerary_request_status_history_id_seq'::regclass),
@@ -194,8 +194,8 @@ CREATE TABLE public.itinerary_request_status_history (
   changed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   notes text,
   CONSTRAINT itinerary_request_status_history_pkey PRIMARY KEY (id),
-  CONSTRAINT request_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id),
-  CONSTRAINT request_status_history_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.itinerary_requests(id)
+  CONSTRAINT request_status_history_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.itinerary_requests(id),
+  CONSTRAINT request_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.itinerary_requests (
   id bigint NOT NULL DEFAULT nextval('itinerary_requests_id_seq'::regclass),
@@ -262,8 +262,8 @@ CREATE TABLE public.itinerary_tour_guides (
   tour_guide_id bigint NOT NULL,
   assigned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT itinerary_tour_guides_pkey PRIMARY KEY (id),
-  CONSTRAINT itinerary_tour_guides_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
-  CONSTRAINT itinerary_tour_guides_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id)
+  CONSTRAINT itinerary_tour_guides_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id),
+  CONSTRAINT itinerary_tour_guides_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
 );
 CREATE TABLE public.messages (
   id bigint NOT NULL DEFAULT nextval('messages_id_seq'::regclass),
@@ -279,8 +279,8 @@ CREATE TABLE public.messages (
   attachment_type text,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
   CONSTRAINT messages_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
-  CONSTRAINT messages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id)
+  CONSTRAINT messages_tour_guide_id_fkey FOREIGN KEY (tour_guide_id) REFERENCES public.tour_guides(id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.payments (
   id bigint NOT NULL DEFAULT nextval('payments_id_seq'::regclass),
