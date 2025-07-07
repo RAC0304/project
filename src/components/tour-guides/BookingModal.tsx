@@ -275,13 +275,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ guide, onClose }) => {
                       </span>
                     </p>
                     <p className="flex items-center">
-                      <Users className="w-3 h-3 mr-1 inline text-gray-500" />
-                      Max group size:{" "}
-                      <span className="font-medium ml-1">
-                        {selectedTourDetails.maxGroupSize}
-                      </span>
-                    </p>
-                    <p className="flex items-center">
                       <DollarSign className="w-3 h-3 mr-1 inline text-gray-500" />
                       Price per person:{" "}
                       <span className="font-medium ml-1">
