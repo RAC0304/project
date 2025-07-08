@@ -252,10 +252,7 @@ const SearchForm: React.FC = () => {
             {/* Header with close button */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-white">
               <h2 className="text-2xl font-bold text-teal-700 flex items-center gap-2">
-                <Search className="w-6 h-6 text-teal-500" /> Daftar Tour Guides
-                {modalData?.destination && (
-                  <span className="text-teal-600 font-semibold"> di {modalData.destination}</span>
-                )}
+                <Search className="w-6 h-6 text-teal-500" /> Tour Guides for Destination: {modalData?.destination || 'Unknown Destination'}
               </h2>
               <button
                 className="text-gray-400 hover:text-teal-600 text-3xl font-bold transition-all"
