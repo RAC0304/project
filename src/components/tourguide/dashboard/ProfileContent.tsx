@@ -300,22 +300,23 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     const fileExt = file.name.split(".").pop();
     const filePath = `profiles/${user.id}.${fileExt}`;
     try {
-      // Upload ke bucket avatars
+      // Remove old image if exists (optional, Supabase upsert will overwrite)
+      // Upload to bucket avatars with upsert true
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true, contentType: file.type });
-      if (uploadError) {
+      if (uploadError && uploadError.message !== "The resource already exists") {
         setToast({
           isVisible: true,
           type: "error",
-          message: "Failed to upload image to storage.",
+          message: `Failed to upload image: ${uploadError.message}`,
         });
         setIsImageLoading(false);
         return;
       }
       // Get public URL
-      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      const publicUrl = data?.publicUrl;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = urlData?.publicUrl;
       if (!publicUrl) {
         setToast({
           isVisible: true,
@@ -325,34 +326,33 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
         setIsImageLoading(false);
         return;
       }
-      setProfileImage(publicUrl);
-      // Update profile_picture di table users
+      // Update profile_picture in users table
       const { error: updateError } = await supabase
         .from("users")
         .update({ profile_picture: publicUrl })
         .eq("id", user.id);
-      if (!updateError) {
-        setToast({
-          isVisible: true,
-          type: "success",
-          message: "Profile image updated!",
-        });
-        // Update the user context with new profile picture
-        updateProfilePicture(publicUrl);
-        // Force refresh user data by calling fetchTourGuide
-        await fetchTourGuide();
-      } else {
+      if (updateError) {
         setToast({
           isVisible: true,
           type: "error",
-          message: "Failed to update profile image URL.",
+          message: `Failed to update profile image URL: ${updateError.message}`,
         });
+        setIsImageLoading(false);
+        return;
       }
-    } catch {
+      setProfileImage(publicUrl);
+      setToast({
+        isVisible: true,
+        type: "success",
+        message: "Profile image updated!",
+      });
+      updateProfilePicture(publicUrl);
+      await fetchTourGuide();
+    } catch (err: any) {
       setToast({
         isVisible: true,
         type: "error",
-        message: "Failed to upload image. Please try again.",
+        message: `Failed to upload image. ${err?.message || "Please try again."}`,
       });
     } finally {
       setIsImageLoading(false);
@@ -365,34 +365,60 @@ const ProfileContent: React.FC<ProfileContentProps> = ({ user }) => {
     const defaultImage = DEFAULT_PROFILE_IMAGE(user);
     setIsImageLoading(true);
     try {
-      setProfileImage(defaultImage);
+      // Remove all possible user images in avatars bucket (by user id)
+      // List all files in 'profiles/' folder
+      const { data: listData, error: listError } = await supabase.storage.from("avatars").list("profiles", { limit: 100 });
+      if (listError) {
+        setToast({
+          isVisible: true,
+          type: "error",
+          message: `Failed to list images: ${listError.message}`,
+        });
+        setIsImageLoading(false);
+        return;
+      }
+      // Filter files that belong to this user (by prefix user.id)
+      const userFiles = (listData || []).filter(f => f.name.startsWith(`${user.id}.`)).map(f => `profiles/${f.name}`);
+      if (userFiles.length > 0) {
+        const { error: removeError } = await supabase.storage.from("avatars").remove(userFiles);
+        if (removeError) {
+          setToast({
+            isVisible: true,
+            type: "error",
+            message: `Failed to remove image from storage: ${removeError.message}`,
+          });
+          setIsImageLoading(false);
+          return;
+        }
+      }
+      // Set to default in users table
       const { error } = await supabase
         .from("users")
         .update({ profile_picture: defaultImage })
         .eq("id", user.id);
-      if (!error) {
-        setToast({
-          isVisible: true,
-          type: "success",
-          message: "Profile image removed.",
-        });
-        // Update the user context with default profile picture
-        updateProfilePicture(defaultImage);
-        // Force refresh user data by calling fetchTourGuide
-        await fetchTourGuide();
-      } else {
+      if (error) {
         setToast({
           isVisible: true,
           type: "error",
-          message: "Failed to remove profile image.",
+          message: `Failed to remove profile image: ${error.message}`,
         });
         setProfileImage(user?.profile_picture || "");
+        setIsImageLoading(false);
+        return;
       }
-    } catch {
+      setProfileImage(defaultImage);
+      setToast({
+        isVisible: true,
+        type: "success",
+        message: "Profile image removed.",
+      });
+      updateProfilePicture(defaultImage);
+      await fetchTourGuide();
+    } catch (err: any) {
       setToast({
         isVisible: true,
         type: "error",
-        message: "Failed to remove profile image.",
+        message: `Failed to remove profile image. ${err?.message || ""}`,
       });
       setProfileImage(user?.profile_picture || "");
     } finally {
