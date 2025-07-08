@@ -37,7 +37,8 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.30.0",
     "react-toastify": "^11.0.5",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "swiper": "^11.2.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

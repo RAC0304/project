@@ -24,7 +24,8 @@ const DestinationsListPage: React.FC = () => {
     clearFilters,
     total
   } = useDestinations({
-    search: searchParams.get("search") || undefined
+    search: searchParams.get("search") || undefined,
+    location: searchParams.get("location") || undefined
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {

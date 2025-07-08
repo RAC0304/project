@@ -87,8 +87,10 @@ export const useDestinations = (initialFilters: DestinationFilters = {}): UseDes
 
 
             // Ambil semua destinasi tanpa limit
+
             const filters: DestinationFilters = {
                 search: searchTerm || undefined,
+                location: initialFilters.location || undefined,
                 categories: selectedCategories.length > 0 ? selectedCategories : undefined
                 // Tidak ada limit dan offset untuk menampilkan semua data
             };

@@ -12,7 +12,7 @@ import { getRandomDestinations } from "../services/destinationService";
 import { itineraries } from "../data/itineraries";
 import { culturalInsights } from "../data/culturalInsights";
 import DestinationCard from "../components/destinations/DestinationCard";
-import ItineraryCard from "../components/itineraries/ItineraryCard";
+import ItineraryDetails from "../components/itineraries/ItineraryDetails";
 import CulturalInsightCard from "../components/culture/CulturalInsightCard";
 import IndonesiaMap from "../components/maps/IndonesiaMapLeaflet";
 import SearchForm from "../components/common/SearchForm";
@@ -88,11 +88,10 @@ const HomePage: React.FC = () => {
 
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center">
           <div
-            className={`max-w-3xl transition-all duration-1000 transform ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-10 opacity-0"
-            }`}
+            className={`max-w-3xl transition-all duration-1000 transform ${isVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-10 opacity-0"
+              }`}
           >
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Discover the Magic of{" "}
@@ -231,7 +230,7 @@ const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {featuredItineraries.map((itinerary) => (
-            <ItineraryCard key={itinerary.id} itinerary={itinerary} />
+            <ItineraryDetails key={itinerary.id} itinerary={itinerary} />
           ))}
         </div>
       </section>

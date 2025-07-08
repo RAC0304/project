@@ -1,8 +1,32 @@
+/**
+ * Get destination images and name by destination id (JOIN destination_images + destinations)
+ */
+export const getDestinationImagesAndNameById = async (destinationId: string) => {
+  const { data, error } = await supabase
+    .from("destination_images")
+    .select("image_url, destinations(name)")
+    .eq("destination_id", destinationId)
+    .order("id");
+
+  if (error) {
+    console.error("Error fetching destination images:", error);
+    return { images: [], name: "" };
+  }
+
+  const images = data?.map((row: any) => row.image_url) || [];
+  // Ambil nama dari relasi destinations (ambil dari baris pertama, array only)
+  let name = "";
+  if (data && data[0] && Array.isArray(data[0].destinations) && data[0].destinations.length > 0) {
+    name = data[0].destinations[0].name;
+  }
+  return { images, name };
+};
 import { supabase } from "../utils/supabaseClient";
 import { Destination, DestinationCategory } from "../types";
 
 export interface DestinationFilters {
   search?: string;
+  location?: string;
   categories?: DestinationCategory[];
   limit?: number;
   offset?: number;
@@ -21,7 +45,7 @@ export const getDestinations = async (
   filters: DestinationFilters = {}
 ): Promise<DestinationResponse> => {
   try {
-    const { search, categories, limit = 50, offset = 0 } = filters;
+    const { search, location, categories, limit = 50, offset = 0 } = filters;
 
     // Start building the query
     let query = supabase
@@ -39,8 +63,10 @@ export const getDestinations = async (
       )
       .range(offset, offset + limit - 1);
 
-    // Add search filter if provided
-    if (search) {
+    // Add location filter if provided
+    if (location) {
+      query = query.eq("location", location);
+    } else if (search) {
       query = query.or(
         `name.ilike.%${search}%,location.ilike.%${search}%,description.ilike.%${search}%`
       );

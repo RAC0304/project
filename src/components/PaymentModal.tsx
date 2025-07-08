@@ -11,6 +11,7 @@ interface PaymentModalProps {
         amount: number;
         participants: number;
         source?: 'bookings' | 'itinerary_bookings';
+        currency?: string; // allow currency override
     };
     userDetails: {
         name: string;
@@ -35,10 +36,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     const paymentMethods = paymentService.getAvailablePaymentMethods();
 
+    // Use USD if booking.currency is USD, else fallback to IDR
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('id-ID', {
+        const currency = booking.currency === 'USD' ? 'USD' : 'IDR';
+        const locale = currency === 'USD' ? 'en-US' : 'id-ID';
+        return new Intl.NumberFormat(locale, {
             style: 'currency',
-            currency: 'IDR',
+            currency,
             minimumFractionDigits: 0,
         }).format(amount);
     };

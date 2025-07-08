@@ -87,7 +87,7 @@ const UserProfilePage: React.FC = () => {
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<{
-    id?: number;
+    id: number;
     itineraryBookingId?: number;
     title: string;
     amount: number;
@@ -337,6 +337,7 @@ const UserProfilePage: React.FC = () => {
 
   // Function to handle payment for confirmed bookings
   // Tambahkan property 'source' untuk membedakan bookings dan itinerary_bookings
+  // Improved: Only allow payment if itineraryBookingId exists for itinerary_bookings
   const handlePayNow = (booking: {
     id?: number;
     itineraryBookingId?: number;
@@ -344,17 +345,27 @@ const UserProfilePage: React.FC = () => {
     amount: number;
     participants: number;
     source?: 'bookings' | 'itinerary_bookings';
+    currency?: string;
   }) => {
     if (booking.source === 'itinerary_bookings') {
+      // Use alias for id: always pass id as 'id' for modal and Supabase query
+      const itineraryBookingId = Number(booking.itineraryBookingId ?? booking.id);
+      if (!itineraryBookingId || isNaN(itineraryBookingId)) {
+        alert('Booking tidak valid atau belum dikonfirmasi. Tidak dapat melakukan pembayaran.');
+        return;
+      }
       setSelectedBookingForPayment({
         ...booking,
-        itineraryBookingId: booking.itineraryBookingId ?? booking.id,
+        id: itineraryBookingId, // alias for modal and query, always number
+        itineraryBookingId: itineraryBookingId,
         source: 'itinerary_bookings',
       });
       setShowItineraryPaymentModal(true);
     } else {
+      // Ensure id is always a number for regular bookings
       setSelectedBookingForPayment({
         ...booking,
+        id: Number(booking.id ?? 0), // always number
         source: 'bookings',
       });
       setShowPaymentModal(true);
@@ -1182,36 +1193,6 @@ const UserProfilePage: React.FC = () => {
 
           {/* Right Column: Stats and Activity */}
           <div className="md:col-span-1">
-            {/* Trip Requests Notification */}
-            {user?.id && (
-              <div className="mb-6">
-                <TripRequestsNotification 
-                  userId={user.id}
-                  onPayNow={(booking) => {
-                    if (booking.source === 'itinerary_bookings') {
-                      setSelectedBookingForPayment({
-                        id: booking.itineraryBookingId,
-                        title: booking.title,
-                        amount: booking.amount,
-                        participants: booking.participants,
-                        source: 'itinerary_bookings'
-                      });
-                      setShowItineraryPaymentModal(true);
-                    } else {
-                      setSelectedBookingForPayment({
-                        id: booking.id,
-                        title: booking.title,
-                        amount: booking.amount,
-                        participants: booking.participants,
-                        source: 'bookings'
-                      });
-                      setShowPaymentModal(true);
-                    }
-                  }}
-                />
-              </div>
-            )}
-            
             <div className="bg-white rounded-xl shadow-md p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Account Statistics
@@ -1433,21 +1414,41 @@ const UserProfilePage: React.FC = () => {
                           )}
 
                           {/* Handle other activity types */}
-                          {activity.type !== "booking" && activity.details && (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activity.type === "message"
-                                ? "bg-green-50 text-green-700 border border-green-200"
-                                : activity.type === "tour_request"
-                                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                  : "bg-gray-50 text-gray-700 border border-gray-200"
-                                }`}
-                            >
-                              {activity.type === "message"
-                                ? "Message"
-                                : activity.type === "tour_request"
-                                  ? "Tour Request"
-                                  : activity.type}
+                          {activity.type === "message" && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                              Message
                             </span>
+                          )}
+
+                          {activity.type === "tour_request" && activity.details && (
+                            <>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Tour Request
+                              </span>
+                              {/* Status Badge for Itinerary Bookings */}
+                              {activity.details.status === 'confirmed' && activity.details.paymentStatus === 'pending' ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2 bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                  Awaiting Payment
+                                </span>
+                              ) : activity.details.status === 'confirmed' && activity.details.paymentStatus === 'paid' ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2 bg-green-100 text-green-800 border border-green-200">
+                                  Paid
+                                </span>
+                              ) : activity.details.status ? (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2 ${activity.details.status === 'approved' || activity.details.status === 'confirmed'
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : activity.details.status === 'pending'
+                                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                      : activity.details.status === 'rejected'
+                                        ? 'bg-red-100 text-red-800 border border-red-200'
+                                        : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                    }`}
+                                >
+                                  {activity.details.status.charAt(0).toUpperCase() + activity.details.status.slice(1)}
+                                </span>
+                              ) : null}
+                            </>
                           )}
                         </div>
                       </div>
@@ -1528,7 +1529,10 @@ const UserProfilePage: React.FC = () => {
             setShowPaymentModal(false);
             setSelectedBookingForPayment(null);
           }}
-          booking={selectedBookingForPayment}
+          booking={{
+            ...selectedBookingForPayment,
+            currency: 'USD', // Force currency to USD
+          }}
           userDetails={{
             name: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim(),
             email: user.email || "",
